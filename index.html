@@ -24,29 +24,7 @@
   </main>
 
   <div>
-    Listen to the microphone and make the background color change with the volume
-    <br>
-    <button id="start">Start</button>
-    <button id="stop">Stop</button>
-    <div id="volume">Volume: 0</div>
-  </div>
-
-  <div>
-    When I press a button, have the computer say something
-    <br>
-    <button id="speak-button">Speak</button>
-  </div>
-
-  <div>
-    detect when a word is said
-    <br>
-    <button id="start-speech">Start Speech Recognition</button>
-    <button id="stop-speech">Stop Speech Recognition</button>
-    <div id="transcript">Transcript: </div>
-  </div>
-
-  <div>
-    detext when a specific word is said
+    detect when a specific word is said
     <br>
     words: hello
     <div id="detected-word">Detected word: </div>
@@ -54,6 +32,52 @@
     <button id="stop-detect-word">Stop detecting</button>
 
     <script>
+      //function to calc the jaro distance between two strings
+      function jaroDistance(s1, s2) {
+        if (s1 === s2) return 1.0;
+
+        const len1 = s1.length;
+        const len2 = s2.length;
+
+        if (len1 === 0 || len2 === 0) return 0.0;
+
+        const maxDist = Math.floor(Math.max(len1, len2) / 2) - 1;
+        let matches = 0;
+        let transpositions = 0;
+
+        const m1 = new Array(len1).fill(false);
+        const m2 = new Array(len2).fill(false);
+
+        for (let i = 0; i < len1; i++) {
+          for (let j = Math.max(0, i - maxDist); j < Math.min(len2, i + maxDist + 1); j++) {
+            if (!m1[i] && !m2[j] && s1[i] === s2[j]) {
+              matches++;
+              m1[i] = true;
+              m2[j] = true;
+              break;
+            }
+          }
+        }
+
+        if (matches === 0) return 0.0;
+
+        let k = 0;
+        for (let i = 0; i < len1; i++) {
+          if (m1[i]) {
+            while (!m2[k]) k++;
+            if (s1[i] !== s2[k]) {
+              transpositions++;
+            }
+            k++;
+          }
+        }
+
+        // Jaro distance formula
+        const jaro = (matches / len1 + matches / len2 + (matches - transpositions / 2) / matches) / 3;
+        return jaro;
+      }
+
+
       // Function to generate trigrams from a string
       function generateTrigrams(str) {
         const trigrams = new Set();
@@ -64,7 +88,6 @@
         }
         return trigrams;
       }
-
 
       // Function to calculate trigram similarity
       function calculateTrigramSimilarity(str1, str2) {
@@ -103,120 +126,38 @@
       // Get references to HTML elements for displaying results and controlling recognition
       const output = document.querySelector('#detected-word');
       const startBtn = document.querySelector('#start-detect-word');
+      const stopBtn = document.querySelector('#stop-detect-word');
 
-      // Event listener for when speech recognition results are available
       recognition.addEventListener('result', (event) => {
         const last = event.results.length - 1;
         const command = event.results[last][0].transcript;
         output.textContent = 'You said: ' + command;
-        console.log('Confidence: ' + event.results[last][0].confidence);
-        console.log('Detected command:', command);
         const targetWord = 'ribbit';
         const similarity = calculateTrigramSimilarity(command.toLowerCase(), targetWord.toLowerCase());
+        const jaroDistanceValue = jaroDistance(command.toLowerCase(), targetWord.toLowerCase());
+        if (similarity > 0.3 || jaroDistanceValue > 0.7) {
+          output.textContent += ' (Detected target word!)';
+          console.log('Detected target word!');
+        }
         console.log(`Trigram similarity with "${command}" to "${targetWord}":`, similarity);
+        console.log(`Jaro distance with "${command}" to "${targetWord}":`, jaroDistanceValue);
       });
 
-      // Event listener for when the speech recognition service disconnects
-      recognition.addEventListener('end', () => {
-        console.log('Speech recognition service disconnected.');
-      });
-
-      // Event listener for errors during speech recognition
-      recognition.addEventListener('error', (event) => {
-        output.textContent = 'Error occurred in speech recognition: ' + event.error;
-        console.error('Speech recognition error:', event.error);
-      });
-
-      // Event listener for the start button to initiate speech recognition
       startBtn.addEventListener('click', () => {
         recognition.start();
         output.textContent = 'Listening...';
         console.log('Speech recognition started.');
       });
+      stopBtn.addEventListener('click', () => {
+        recognition.stop();
+        output.textContent = 'Stopped listening.';
+        console.log('Speech recognition stopped.');
+      });
     </script>
   </div>
-
 </body>
 <script>
-  // Text to Speech
-  const speakButton = document.getElementById('speak-button');
-  speakButton.addEventListener('click', () => {
-    const speech = new p5.Speech(); // new P5.Speech object
-    speech.speak('Hello! This is a test.');
-  });
 
-
-  // // Speech Recognition
-  // const words = ["hello", "test", "javascript"];
-  // const grammar = '#JSGF V1.0; grammar words; public <word> = ' + words.join(' | ') + ' ;';
-  // const grammarList = new (window.SpeechGrammarList || window.webkitSpeechGrammarList)();
-  // grammarList.addFromString(grammar, 1);
-  // const startSpeechButton = document.getElementById('start-speech');
-  // const stopSpeechButton = document.getElementById('stop-speech');
-  // const transcriptDisplay = document.getElementById('transcript');
-
-  // const speechRec = new p5.SpeechRec('en-US', gotSpeech);
-  // speechRec.continuous = true; // keep recognizing
-  // speechRec.interimResults = true; // only final results
-  // speechRec.maxAlternatives = 10
-  // speechRec.rec.maxAlternatives = 10;
-  // speechRec.grammars = grammarList;
-  // speechRec.rec.grammar = grammarList;
-
-  // startSpeechButton.addEventListener('click', () => {
-  //   speechRec.start();
-  // });
-
-  // stopSpeechButton.addEventListener('click', () => {
-  //   speechRec.stop();
-  // });
-  // function gotSpeech() {
-  //   if (speechRec.resultValue) {
-  //     console.log(speechRec);
-  //     const said = speechRec.resultString.toLowerCase();
-  //     transcriptDisplay.textContent = `Transcript: ${said}`;
-  //     words.forEach(word => {
-  //       if (said.includes(word)) {
-  //         console.log(`Detected word: ${word}`);
-  //         const speech = new p5.Speech();
-  //         speech.speak(`You said the word ${word}`);
-  //       }
-  //     });
-  //   }
-  // }
-
-  // Microphone Volume Visualization
-  const startButton = document.getElementById('start');
-  const stopButton = document.getElementById('stop');
-  const volumeDisplay = document.getElementById('volume');
-  let micStream;
-  let audioContext;
-  let analyser;
-  let dataArray;
-
-  startButton.addEventListener('click', async () => {
-    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const source = audioContext.createMediaStreamSource(micStream);
-    analyser = audioContext.createAnalyser();
-    source.connect(analyser);
-    analyser.fftSize = 2048;
-    dataArray = new Uint8Array(analyser.frequencyBinCount);
-    visualize();
-  });
-
-  stopButton.addEventListener('click', () => {
-    micStream.getTracks().forEach(track => track.stop());
-    audioContext.close();
-  });
-
-  function visualize() {
-    analyser.getByteFrequencyData(dataArray);
-    const volume = dataArray.reduce((a, b) => a + b) / dataArray.length;
-    volumeDisplay.textContent = `Volume: ${volume}`;
-    document.body.style.backgroundColor = `rgb(${volume * 10}, 0, 0)`;
-    requestAnimationFrame(visualize);
-  }
 </script>
 
 </html>

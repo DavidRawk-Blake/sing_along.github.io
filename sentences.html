@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sing Along - Timestamp Word Highlighting</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .sentence-container {
+            font-size: 2em;
+            line-height: 1.6;
+            margin: 40px 0;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .word {
+            display: inline-block;
+            margin: 0 8px;
+            padding: 5px 10px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .word.highlighted {
+            background-color: #ffd700;
+            color: #333;
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.5);
+        }
+
+        .word.past {
+            color: #888;
+            opacity: 0.7;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .play-btn {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .play-btn:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+        }
+
+        .pause-btn {
+            background-color: #ffc107;
+            color: #333;
+        }
+
+        .pause-btn:hover {
+            background-color: #e0a800;
+            transform: translateY(-2px);
+        }
+
+        .reset-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .reset-btn:hover {
+            background-color: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .next-btn, .prev-btn {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .next-btn:hover, .prev-btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
+        .sentence-info {
+            color: #666;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+
+        .time-display {
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            color: #333;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Sing Along</h1>
+        
+        <div class="sentence-info">
+            <span id="sentence-counter">Sentence 1 of 3</span>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        
+        <div class="time-display" id="time-display">00:00.000</div>
+        
+        <div class="sentence-container" id="sentence-container">
+            <div id="sentence-display"></div>
+        </div>
+        
+        <div class="controls">
+            <button class="prev-btn" id="prev-sentence">⏮️ Previous</button>
+            <button class="play-btn" id="play-btn">▶️ Play</button>
+            <button class="pause-btn" id="pause-btn">⏸️ Pause</button>
+            <button class="reset-btn" id="reset-btn">🔄 Reset</button>
+            <button class="next-btn" id="next-sentence">⏭️ Next</button>
+        </div>
+    </div>
+
+    <script>
+        // Sample data with sentences, words, and timestamps
+        const songData = [
+            {
+                sentence: "Hello world this is amazing",
+                words: [
+                    { text: "Hello", start: 0, end: 500 },
+                    { text: "world", start: 500, end: 1000 },
+                    { text: "this", start: 1000, end: 1300 },
+                    { text: "is", start: 1300, end: 1500 },
+                    { text: "amazing", start: 1500, end: 2200 }
+                ]
+            },
+            {
+                sentence: "We can sing along together",
+                words: [
+                    { text: "We", start: 0, end: 300 },
+                    { text: "can", start: 300, end: 600 },
+                    { text: "sing", start: 600, end: 1100 },
+                    { text: "along", start: 1100, end: 1600 },
+                    { text: "together", start: 1600, end: 2300 }
+                ]
+            },
+            {
+                sentence: "Music brings joy to everyone",
+                words: [
+                    { text: "Music", start: 0, end: 600 },
+                    { text: "brings", start: 600, end: 1100 },
+                    { text: "joy", start: 1100, end: 1400 },
+                    { text: "to", start: 1400, end: 1600 },
+                    { text: "everyone", start: 1600, end: 2400 }
+                ]
+            }
+        ];
+
+        class SingAlongPlayer {
+            constructor() {
+                this.currentSentenceIndex = 0;
+                this.currentTime = 0;
+                this.isPlaying = false;
+                this.startTime = null;
+                this.pausedTime = 0;
+                this.animationFrame = null;
+                
+                this.initializeElements();
+                this.setupEventListeners();
+                this.displayCurrentSentence();
+            }
+
+            initializeElements() {
+                this.sentenceDisplay = document.getElementById('sentence-display');
+                this.playBtn = document.getElementById('play-btn');
+                this.pauseBtn = document.getElementById('pause-btn');
+                this.resetBtn = document.getElementById('reset-btn');
+                this.nextBtn = document.getElementById('next-sentence');
+                this.prevBtn = document.getElementById('prev-sentence');
+                this.progressFill = document.getElementById('progress-fill');
+                this.timeDisplay = document.getElementById('time-display');
+                this.sentenceCounter = document.getElementById('sentence-counter');
+            }
+
+            setupEventListeners() {
+                this.playBtn.addEventListener('click', () => this.play());
+                this.pauseBtn.addEventListener('click', () => this.pause());
+                this.resetBtn.addEventListener('click', () => this.reset());
+                this.nextBtn.addEventListener('click', () => this.nextSentence());
+                this.prevBtn.addEventListener('click', () => this.previousSentence());
+            }
+
+            displayCurrentSentence() {
+                const currentSong = songData[this.currentSentenceIndex];
+                this.sentenceDisplay.innerHTML = '';
+                
+                currentSong.words.forEach((word, index) => {
+                    const wordElement = document.createElement('span');
+                    wordElement.className = 'word';
+                    wordElement.textContent = word.text;
+                    wordElement.dataset.index = index;
+                    this.sentenceDisplay.appendChild(wordElement);
+                });
+
+                this.updateSentenceCounter();
+                this.updateButtonStates();
+            }
+
+            updateSentenceCounter() {
+                this.sentenceCounter.textContent = `Sentence ${this.currentSentenceIndex + 1} of ${songData.length}`;
+            }
+
+            updateButtonStates() {
+                this.prevBtn.disabled = this.currentSentenceIndex === 0;
+                this.nextBtn.disabled = this.currentSentenceIndex === songData.length - 1;
+            }
+
+            play() {
+                if (!this.isPlaying) {
+                    this.isPlaying = true;
+                    this.startTime = performance.now() - this.pausedTime;
+                    this.animate();
+                }
+            }
+
+            pause() {
+                this.isPlaying = false;
+                this.pausedTime = this.currentTime;
+                if (this.animationFrame) {
+                    cancelAnimationFrame(this.animationFrame);
+                }
+            }
+
+            reset() {
+                this.pause();
+                this.currentTime = 0;
+                this.pausedTime = 0;
+                this.startTime = null;
+                this.updateDisplay();
+                this.clearHighlights();
+            }
+
+            nextSentence() {
+                if (this.currentSentenceIndex < songData.length - 1) {
+                    this.currentSentenceIndex++;
+                    this.reset();
+                    this.displayCurrentSentence();
+                }
+            }
+
+            previousSentence() {
+                if (this.currentSentenceIndex > 0) {
+                    this.currentSentenceIndex--;
+                    this.reset();
+                    this.displayCurrentSentence();
+                }
+            }
+
+            animate() {
+                if (this.isPlaying) {
+                    this.currentTime = performance.now() - this.startTime;
+                    this.updateDisplay();
+                    this.updateHighlights();
+                    this.animationFrame = requestAnimationFrame(() => this.animate());
+                }
+            }
+
+            updateDisplay() {
+                const totalDuration = this.getTotalDuration();
+                const progress = Math.min((this.currentTime / totalDuration) * 100, 100);
+                this.progressFill.style.width = `${progress}%`;
+                
+                const seconds = Math.floor(this.currentTime / 1000);
+                const milliseconds = Math.floor(this.currentTime % 1000);
+                this.timeDisplay.textContent = `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`;
+            }
+
+            getTotalDuration() {
+                const currentSong = songData[this.currentSentenceIndex];
+                return currentSong.words[currentSong.words.length - 1].end;
+            }
+
+            updateHighlights() {
+                const currentSong = songData[this.currentSentenceIndex];
+                const words = this.sentenceDisplay.querySelectorAll('.word');
+                
+                words.forEach((wordElement, index) => {
+                    const word = currentSong.words[index];
+                    wordElement.className = 'word';
+                    
+                    if (this.currentTime >= word.start && this.currentTime < word.end) {
+                        wordElement.classList.add('highlighted');
+                    } else if (this.currentTime >= word.end) {
+                        wordElement.classList.add('past');
+                    }
+                });
+
+                // Auto-advance to next sentence when current one ends
+                if (this.currentTime >= this.getTotalDuration()) {
+                    this.pause();
+                    setTimeout(() => {
+                        if (this.currentSentenceIndex < songData.length - 1) {
+                            this.nextSentence();
+                        }
+                    }, 500);
+                }
+            }
+
+            clearHighlights() {
+                const words = this.sentenceDisplay.querySelectorAll('.word');
+                words.forEach(word => {
+                    word.className = 'word';
+                });
+            }
+        }
+
+        // Initialize the player when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new SingAlongPlayer();
+        });
+    </script>
+</body>
+</html>
