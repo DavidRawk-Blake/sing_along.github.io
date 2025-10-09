@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <title>Sing along</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1, width=device-width">
+  <meta name="robots" content="noindex, nofollow">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/IDMNYU/p5.js-speech@0.0.3/lib/p5.speech.js"></script>
+  <style>
+    body {
+      background-color: red;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>Sing along</h1>
+    play two songs at once
+    <br>
+    <audio controls>
+      <source src="song1.mp3" type="audio/mpeg">
+      Your browser does not support the audio element.
+    </audio>
+    <br>
+    <audio controls>
+      <source src="song2.mp3" type="audio/mpeg">
+      Your browser does not support the audio element.
+    </audio>
+  </main>
+
+  <div>
+    Listen to the microphone and make the background color change with the volume
+    <br>
+    <button id="start">Start</button>
+    <button id="stop">Stop</button>
+    <div id="volume">Volume: 0</div>
+  </div>
+
+  <div>
+    When I press a button, have the computer say something
+    <br>
+    <button id="speak-button">Speak</button>
+  </div>
+
+  <div>
+    detect when a word is said
+    <br>
+    <button id="start-speech">Start Speech Recognition</button>
+    <button id="stop-speech">Stop Speech Recognition</button>
+    <div id="transcript">Transcript: </div>
+  </div>
+
+ 
+</body>
+<script>
+        // Text to Speech
+        const speakButton = document.getElementById('speak-button');
+        speakButton.addEventListener('click', () => {
+          const speech = new p5.Speech(); // new P5.Speech object
+          speech.speak('Hello! This is a test.');
+        });
+
+        // Speech Recognition
+        const words = ["hello", "test", "javascript"];
+        const startSpeechButton = document.getElementById('start-speech');
+        const stopSpeechButton = document.getElementById('stop-speech');
+        const transcriptDisplay = document.getElementById('transcript');
+
+        const speechRec = new p5.SpeechRec('en-US', gotSpeech);
+        speechRec.continuous = true; // keep recognizing
+        speechRec.interimResults = true; // only final results
+
+        startSpeechButton.addEventListener('click', () => {
+          speechRec.start();
+        });
+
+        stopSpeechButton.addEventListener('click', () => {
+          speechRec.stop();
+        });
+        function gotSpeech() {
+          if (speechRec.resultValue) {
+            const said = speechRec.resultString.toLowerCase();
+            transcriptDisplay.textContent = `Transcript: ${said}`;
+            words.forEach(word => {
+              if (said.includes(word)) {
+                console.log(`Detected word: ${word}`);
+                const speech = new p5.Speech();
+                speech.speak(`You said the word ${word}`);
+              }
+            });
+          }
+        }
+
+        // Microphone Volume Visualization
+        const startButton = document.getElementById('start');
+        const stopButton = document.getElementById('stop');
+        const volumeDisplay = document.getElementById('volume');
+        let micStream;
+        let audioContext;
+        let analyser;
+        let dataArray;
+
+        startButton.addEventListener('click', async () => {
+          micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          const source = audioContext.createMediaStreamSource(micStream);
+          analyser = audioContext.createAnalyser();
+          source.connect(analyser);
+          analyser.fftSize = 2048;
+          dataArray = new Uint8Array(analyser.frequencyBinCount);
+          visualize();
+        });
+
+        stopButton.addEventListener('click', () => {
+          micStream.getTracks().forEach(track => track.stop());
+          audioContext.close();
+        });
+
+        function visualize() {
+          analyser.getByteFrequencyData(dataArray);
+          const volume = dataArray.reduce((a, b) => a + b) / dataArray.length;
+          volumeDisplay.textContent = `Volume: ${volume}`;
+          document.body.style.backgroundColor = `rgb(${volume * 10}, 0, 0)`;
+          requestAnimationFrame(visualize);
+        }
+</script>
+
+</html>
