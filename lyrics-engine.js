@@ -5,68 +5,9 @@
 
 class LyricsEngine {
     constructor() {
-        // Sample lyrics data with timestamps
-        this.lyricsData = {
-            offset: 17, // 17-second delay before lyrics start
-            outro: 3,   // 3-second outro period after song ends
-            sentences: [
-                {
-                    words: [
-                        { text: "Twinkle", duration: 1.4, recognise: false },
-                        { text: "twinkle", duration: 1.4, recognise: false },
-                        { text: "little", duration: 1.3, recognise: true },
-                        { text: "star", duration: 2.0, recognise: false }
-                    ]
-                },
-                {
-                    words: [
-                        { text: "How", duration: 0.49, recognise: true },
-                        { text: "I", duration: 0.46, recognise: true },
-                        { text: "wonder", duration: 1.32, recognise: true },
-                        { text: "what", duration: 0.69, recognise: true },
-                        { text: "you", duration: 0.46, recognise: true },
-                        { text: "are", duration: 2.0, recognise: true }
-                    ]
-                },
-                {
-                    words: [
-                        { text: "Up", duration: 0.75, recognise: true },
-                        { text: "above", duration: 1.4, recognise: true },
-                        { text: "the", duration: 0.6, recognise: true },
-                        { text: "world", duration: 0.6, recognise: true },
-                        { text: "so", duration: 0.7, recognise: true },
-                        { text: "high", duration: 1.8, recognise: false }
-                    ]
-                },
-                {
-                    words: [
-                        { text: "Like", duration: 0.6, recognise: true },
-                        { text: "a", duration: 0.7, recognise: false },
-                        { text: "diamond", duration: 1.3, recognise: true },
-                        { text: "in", duration: 0.4, recognise: true },
-                        { text: "the", duration: 0.8, recognise: true },
-                        { text: "sky", duration: 2.0, recognise: true }
-                    ]
-                },
-                {
-                    words: [
-                        { text: "Twinkle", duration: 1.2, recognise: false },
-                        { text: "twinkle", duration: 1.1, recognise: false },
-                        { text: "little", duration: 1.5, recognise: true },
-                        { text: "star", duration: 2.0, recognise: false }
-                    ]
-                },{
-                    words: [
-                        { text: "How", duration: 0.49, recognise: true },
-                        { text: "I", duration: 0.46, recognise: true },
-                        { text: "wonder", duration: 1.32, recognise: true },
-                        { text: "what", duration: 0.69, recognise: true },
-                        { text: "you", duration: 0.46, recognise: true },
-                        { text: "are", duration: 3.0, recognise: true }
-                    ]
-                },
-            ]
-        };
+        // Lyrics data - will be loaded from JSON file
+        this.lyricsData = null;
+        this.isDataLoaded = false;
 
         // State management
         this.currentSentenceIndex = 0;
@@ -76,6 +17,67 @@ class LyricsEngine {
         this.startTime = 0;
         this.animationFrame = null;
         this.onStop = null; // Callback for when animation should stop
+    }
+
+    /**
+     * Load lyrics data from JSON file
+     * @param {string} dataFile - Path to the JSON file (default: 'lyrics-data.json')
+     * @returns {Promise<boolean>} - True if loaded successfully, false otherwise
+     */
+    async loadLyricsData(dataFile = 'lyrics-data.json') {
+        try {
+            const response = await fetch(dataFile);
+            if (!response.ok) {
+                throw new Error(`Failed to load lyrics data: ${response.status} ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            
+            // Validate data structure
+            if (!this.validateLyricsData(data)) {
+                throw new Error('Invalid lyrics data structure');
+            }
+            
+            this.lyricsData = data;
+            this.isDataLoaded = true;
+            console.log('Lyrics data loaded successfully');
+            return true;
+            
+        } catch (error) {
+            console.error('Error loading lyrics data:', error);
+            
+            // Fallback to minimal default data
+            this.lyricsData = {
+                offset: 17,
+                outro: 3,
+                sentences: [{
+                    words: [{ text: "Loading failed...", duration: 1.0, recognise: false }]
+                }]
+            };
+            this.isDataLoaded = false;
+            return false;
+        }
+    }
+
+    /**
+     * Validate lyrics data structure
+     * @param {Object} data - Data to validate
+     * @returns {boolean} - True if valid, false otherwise
+     */
+    validateLyricsData(data) {
+        if (!data || typeof data !== 'object') return false;
+        if (typeof data.offset !== 'number') return false;
+        if (typeof data.outro !== 'number') return false;
+        if (!Array.isArray(data.sentences)) return false;
+        
+        return data.sentences.every(sentence => 
+            Array.isArray(sentence.words) && 
+            sentence.words.every(word => 
+                typeof word.text === 'string' && 
+                typeof word.duration === 'number' &&
+                typeof word.recognise === 'boolean'
+            )
+        );
     }
 
     /**
@@ -271,6 +273,12 @@ class LyricsEngine {
      */
     animate() {
         if (!this.isPlaying) return;
+        
+        // Safety check: ensure lyrics data is loaded
+        if (!this.lyricsData || !this.isDataLoaded) {
+            console.warn('Lyrics data not loaded, stopping animation');
+            return;
+        }
         
         const rawTime = this.audioPlayer.currentTime || (Date.now() - this.startTime) / 1000;
         const currentTime = rawTime - this.lyricsData.offset;

@@ -96,13 +96,23 @@
   let lyricsEngine;
 
   // Initialize when DOM is loaded
-  document.addEventListener('DOMContentLoaded', function () {
+  document.addEventListener('DOMContentLoaded', async function () {
     // Get references to audio elements
     song1 = document.getElementById('song1');
     song2 = document.getElementById('song2');
 
     // Initialize lyrics engine
     lyricsEngine = new LyricsEngine();
+    
+    // Load lyrics data first
+    const dataLoaded = await lyricsEngine.loadLyricsData();
+    if (!dataLoaded) {
+      console.warn('Failed to load lyrics data, using fallback');
+      // Show error message in sentence display
+      document.getElementById('sentenceDisplay').innerHTML = '⚠️ Failed to load lyrics data. Please refresh the page.';
+    }
+    
+    // Initialize with DOM elements after data is loaded
     lyricsEngine.initialize({
       sentenceDisplay: document.getElementById('sentenceDisplay'),
       progressFill: document.getElementById('progressFill'),
