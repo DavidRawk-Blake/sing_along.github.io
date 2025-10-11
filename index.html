@@ -44,6 +44,16 @@
           Put your favorite drawings, photos, or messages in here! 🖍️📸🎶
         </p>
 
+        <!-- Lyrics Display Area -->
+        <div class="lyrics-container">
+          <div id="sentenceDisplay" class="sentence-display">
+            Click "Play" to begin your sing-along experience! 🎤
+          </div>
+          <div class="progress-container">
+            <div id="progressFill" class="progress-fill"></div>
+          </div>
+        </div>
+
         <div class="media-controls">
           <button id="playBtn" class="control-button play-button" onclick="playAction()" title="Play">▶</button>
           <button id="pauseBtn" class="control-button pause-button" onclick="pauseAction()" title="Pause">⏸</button>
@@ -75,16 +85,29 @@
 
 </body>
 
+<script src="lyrics-engine.js"></script>
 <script>
   // Audio control functionality for the musical picture frame
-  // Global variables for audio elements
+  // Global variables for audio elements and lyrics
   let song1, song2;
+  let lyricsEngine;
+  let isPlaying = false;
+  let startTime = 0;
+  let animationFrame = null;
 
   // Initialize when DOM is loaded
   document.addEventListener('DOMContentLoaded', function () {
     // Get references to audio elements
     song1 = document.getElementById('song1');
     song2 = document.getElementById('song2');
+
+    // Initialize lyrics engine
+    lyricsEngine = new LyricsEngine();
+    lyricsEngine.initialize({
+      sentenceDisplay: document.getElementById('sentenceDisplay'),
+      progressFill: document.getElementById('progressFill'),
+      audioPlayer: song1 // Use song1 as primary for timing
+    });
 
     // Reset when songs end
     song1.addEventListener('ended', () => {
@@ -109,27 +132,80 @@
     console.log('Audio controls initialized after DOM loaded');
   });
 
+  // Lyrics animation loop
+  function animateLyrics() {
+    if (!isPlaying) return;
+
+    const currentTime = song1.currentTime || (Date.now() - startTime) / 1000;
+    
+    // Find current sentence using lyrics engine
+    let sentenceIndex = lyricsEngine.findCurrentSentenceIndex(currentTime);
+    
+    if (sentenceIndex === -1 && lyricsEngine.isSongFinished(currentTime)) {
+      // Song finished
+      stopLyrics();
+      return;
+    }
+
+    if (sentenceIndex !== -1) {
+      lyricsEngine.updateState({ currentSentenceIndex: sentenceIndex });
+      lyricsEngine.displaySentence(sentenceIndex, currentTime);
+    }
+    
+    lyricsEngine.updateProgress(currentTime);
+    animationFrame = requestAnimationFrame(animateLyrics);
+  }
+
+  // Start lyrics display
+  function startLyrics() {
+    isPlaying = true;
+    startTime = Date.now();
+    lyricsEngine.updateState({ isPlaying: true, currentSentenceIndex: 0 });
+    animateLyrics();
+  }
+
+  // Pause lyrics display
+  function pauseLyrics() {
+    isPlaying = false;
+    lyricsEngine.updateState({ isPlaying: false });
+    if (animationFrame) {
+      cancelAnimationFrame(animationFrame);
+    }
+  }
+
+  // Stop and reset lyrics display
+  function stopLyrics() {
+    isPlaying = false;
+    lyricsEngine.reset();
+    if (animationFrame) {
+      cancelAnimationFrame(animationFrame);
+    }
+  }
+
   // Global functions for onclick handlers
   function playAction() {
-    console.log('Playing both songs simultaneously');
+    console.log('Playing both songs simultaneously with lyrics');
     song1.play().catch(e => console.log('Song1 play error:', e));
     song2.play().catch(e => console.log('Song2 play error:', e));
+    startLyrics();
     addPressedEffect(document.getElementById('playBtn'));
   }
 
   function pauseAction() {
-    console.log('Paused both songs');
+    console.log('Paused both songs and lyrics');
     song1.pause();
     song2.pause();
+    pauseLyrics();
     addPressedEffect(document.getElementById('pauseBtn'));
   }
 
   function restartAction() {
-    console.log('Stopped and reset both songs');
+    console.log('Stopped and reset both songs and lyrics');
     song1.pause();
     song2.pause();
     song1.currentTime = 0;
     song2.currentTime = 0;
+    stopLyrics();
     addPressedEffect(document.getElementById('restartBtn'));
   }
 
