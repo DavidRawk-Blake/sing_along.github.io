@@ -23,9 +23,9 @@
             <div class="wavy-border"></div>
             <div class="grass-field">
                 <div class="media-controls">
-                    <button class="control-button play-button">▶</button>
-                    <button class="control-button pause-button">⏸</button>
-                    <button class="control-button restart-button">⏮</button>
+                    <button id="playBtn" class="control-button play-button">▶</button>
+                    <button id="pauseBtn" class="control-button pause-button">⏸</button>
+                    <button id="restartBtn" class="control-button restart-button">⏮</button>
                 </div>
             </div>
             
@@ -47,5 +47,17 @@
             </div>
         </div>
     </div>
+
+    <!-- Hidden audio elements -->
+    <audio id="song1" preload="auto">
+        <source src="song1.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+    <audio id="song2" preload="auto">
+        <source src="song2.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <script src="script.js"></script>
 </body>
 </html>
