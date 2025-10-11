@@ -175,9 +175,9 @@ body {
     width: 50pt;
     height: 50pt;
     border-radius: 50%;
-    border: none;
+    border: 3px solid #003366;
     background: rgba(255, 255, 255, 0.9);
-    color: #228B22;
+    color: white;
     font-size: 18px;
     display: flex;
     align-items: center;
@@ -187,8 +187,22 @@ body {
     transition: all 0.2s ease;
 }
 
+.play-button {
+    background: #32CD32;
+    color: white;
+}
+
+.pause-button {
+    background: #FFD700;
+    color: white;
+}
+
+.restart-button {
+    background: #4169E1;
+    color: white;
+}
+
 .control-button:hover {
-    background: rgba(255, 255, 255, 1);
     transform: scale(1.05);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
@@ -198,15 +212,15 @@ body {
 }
 
 .play-button:hover {
-    color: #32CD32;
+    background: #228B22;
 }
 
 .pause-button:hover {
-    color: #FFD700;
+    background: #FFA500;
 }
 
 .restart-button:hover {
-    color: #FF6B6B;
+    background: #1E90FF;
 }
 
 .frame-content {
