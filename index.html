@@ -1,163 +1,47 @@
 <!doctype html>
 <html lang="en">
-
 <head>
-  <title>Sing along</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="initial-scale=1, width=device-width">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kid's Wavy Picture Frame</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-
-<body style="background-color: turquoise;">
-  <main>
-    <h1>Sing along</h1>
-    play two songs at once
-    <br>
-    <audio controls>
-      <source src="song1.mp3" type="audio/mpeg">
-      Your browser does not support the audio element.
-    </audio>
-    <br>
-    <audio controls>
-      <source src="song2.mp3" type="audio/mpeg">
-      Your browser does not support the audio element.
-    </audio>
-  </main>
-
-  <div>
-    detect when a specific word is said
-    <br>
-    words: hello
-    <div id="detected-word">Detected word: </div>
-    <button id="start-detect-word">start detecting</button>
-    <button id="stop-detect-word">Stop detecting</button>
-
-    <script>
-      //function to calc the jaro distance between two strings
-      function jaroDistance(s1, s2) {
-        if (s1 === s2) return 1.0;
-
-        const len1 = s1.length;
-        const len2 = s2.length;
-
-        if (len1 === 0 || len2 === 0) return 0.0;
-
-        const maxDist = Math.floor(Math.max(len1, len2) / 2) - 1;
-        let matches = 0;
-        let transpositions = 0;
-
-        const m1 = new Array(len1).fill(false);
-        const m2 = new Array(len2).fill(false);
-
-        for (let i = 0; i < len1; i++) {
-          for (let j = Math.max(0, i - maxDist); j < Math.min(len2, i + maxDist + 1); j++) {
-            if (!m1[i] && !m2[j] && s1[i] === s2[j]) {
-              matches++;
-              m1[i] = true;
-              m2[j] = true;
-              break;
-            }
-          }
-        }
-
-        if (matches === 0) return 0.0;
-
-        let k = 0;
-        for (let i = 0; i < len1; i++) {
-          if (m1[i]) {
-            while (!m2[k]) k++;
-            if (s1[i] !== s2[k]) {
-              transpositions++;
-            }
-            k++;
-          }
-        }
-
-        // Jaro distance formula
-        const jaro = (matches / len1 + matches / len2 + (matches - transpositions / 2) / matches) / 3;
-        return jaro;
-      }
-
-
-      // Function to generate trigrams from a string
-      function generateTrigrams(str) {
-        const trigrams = new Set();
-        // Pad the string with spaces to capture leading/trailing trigrams
-        const paddedStr = " " + str + " ";
-        for (let i = 0; i < paddedStr.length - 2; i++) {
-          trigrams.add(paddedStr.substring(i, i + 3));
-        }
-        return trigrams;
-      }
-
-      // Function to calculate trigram similarity
-      function calculateTrigramSimilarity(str1, str2) {
-        if (str1 === str2) return 1.0; // Identical strings have 100% similarity
-
-        const trigrams1 = generateTrigrams(str1);
-        const trigrams2 = generateTrigrams(str2);
-
-        let commonTrigramsCount = 0;
-        for (const trigram of trigrams1) {
-          if (trigrams2.has(trigram)) {
-            commonTrigramsCount++;
-          }
-        }
-
-        const totalUniqueTrigrams = trigrams1.size + trigrams2.size - commonTrigramsCount;
-
-        if (totalUniqueTrigrams === 0) return 0.0; // Avoid division by zero
-
-        return commonTrigramsCount / totalUniqueTrigrams;
-      }
-
-
-      // Check for browser compatibility and use prefixed versions if necessary
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const SpeechRecognitionEvent = window.SpeechRecognitionEvent || window.webkitSpeechRecognitionEvent;
-
-      // Create a new SpeechRecognition object
-      const recognition = new SpeechRecognition();
-      // Set properties for the recognition object
-      recognition.lang = 'en-US'; // Set the language for recognition
-      recognition.interimResults = true; // Get interim results as well
-      recognition.maxAlternatives = 1; // Get only the most likely alternative
-      recognition.continuous = true; // Keep recognizing until stopped
-
-      // Get references to HTML elements for displaying results and controlling recognition
-      const output = document.querySelector('#detected-word');
-      const startBtn = document.querySelector('#start-detect-word');
-      const stopBtn = document.querySelector('#stop-detect-word');
-
-      recognition.addEventListener('result', (event) => {
-        const last = event.results.length - 1;
-        const command = event.results[last][0].transcript;
-        output.textContent = 'You said: ' + command;
-        const targetWord = 'ribbit';
-        const similarity = calculateTrigramSimilarity(command.toLowerCase(), targetWord.toLowerCase());
-        const jaroDistanceValue = jaroDistance(command.toLowerCase(), targetWord.toLowerCase());
-        if (similarity > 0.3 || jaroDistanceValue > 0.7) {
-          output.textContent += ' (Detected target word!)';
-          console.log('Detected target word!');
-        }
-        console.log(`Trigram similarity with "${command}" to "${targetWord}":`, similarity);
-        console.log(`Jaro distance with "${command}" to "${targetWord}":`, jaroDistanceValue);
-      });
-
-      startBtn.addEventListener('click', () => {
-        recognition.start();
-        output.textContent = 'Listening...';
-        console.log('Speech recognition started.');
-      });
-      stopBtn.addEventListener('click', () => {
-        recognition.stop();
-        output.textContent = 'Stopped listening.';
-        console.log('Speech recognition stopped.');
-      });
-    </script>
-  </div>
+<body>
+    <div class="outside-notes">
+        <div class="floating-note">🎵</div>
+        <div class="floating-note">🎶</div>
+        <div class="floating-note">♪</div>
+        <div class="floating-note">♫</div>
+        <div class="floating-note">🎼</div>
+        <div class="floating-note">♬</div>
+        <div class="floating-note">🎤</div>
+        <div class="floating-note">🎧</div>
+    </div>
+    
+    <div class="kids-frame-container">
+        <div class="wavy-purple-frame">
+            <div class="wavy-border"></div>
+            <div class="grass-field"></div>
+            
+            <div class="frame-content">
+                <div class="fun-decorations">
+                    <div class="musical-note">🎵</div>
+                    <div class="musical-note">🎶</div>
+                    <div class="musical-note">♪</div>
+                    <div class="musical-note">♫</div>
+                    <div class="hearts">💜</div>
+                    <div class="hearts">💖</div>
+                    <div class="crayon-stroke"></div>
+                    <div class="crayon-stroke"></div>
+                </div>
+                
+                <h1>My Musical Picture Frame! 🎼</h1>
+                <p>This is a super cool wavy purple picture frame that looks like it was made just for kids! The wiggly borders and fun colors make everything inside look extra special! 🎵🎨</p>
+                <p style="font-size: 0.9em; transform: rotate(-1deg);">
+                    Put your favorite drawings, photos, or messages in here! 🖍️📸🎶
+                </p>
+            </div>
+        </div>
+    </div>
 </body>
-<script>
-
-</script>
-
 </html>
