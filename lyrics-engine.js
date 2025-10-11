@@ -5,9 +5,72 @@
 
 class LyricsEngine {
     constructor() {
-        // Lyrics data - will be loaded from JSON file
-        this.lyricsData = null;
-        this.isDataLoaded = false;
+        // Lyrics data - now hardcoded to prevent loading failures
+        this.lyricsData = {
+            offset: 17,
+            outro: 3,
+            song_1_source: "song1.mp3",
+            song_2_source: "song2.mp3",
+            sentences: [
+                {
+                    words: [
+                        { text: "Twinkle", duration: 1.4, recognise: false },
+                        { text: "twinkle", duration: 1.4, recognise: false },
+                        { text: "little", duration: 1.3, recognise: true },
+                        { text: "star", duration: 2.0, recognise: false }
+                    ]
+                },
+                {
+                    words: [
+                        { text: "How", duration: 0.49, recognise: true },
+                        { text: "I", duration: 0.46, recognise: true },
+                        { text: "wonder", duration: 1.32, recognise: true },
+                        { text: "what", duration: 0.69, recognise: true },
+                        { text: "you", duration: 0.46, recognise: true },
+                        { text: "are", duration: 1.5, recognise: true }
+                    ]
+                },
+                {
+                    words: [
+                        { text: "", duration: 0.5, recognise: false },
+                        { text: "Up", duration: 0.75, recognise: true },
+                        { text: "above", duration: 1.2, recognise: true },
+                        { text: "the", duration: 0.6, recognise: true },
+                        { text: "world", duration: 0.6, recognise: true },
+                        { text: "so", duration: 0.7, recognise: true },
+                        { text: "high", duration: 1.8, recognise: false }
+                    ]
+                },
+                {
+                    words: [
+                        { text: "Like", duration: 0.6, recognise: true },
+                        { text: "a", duration: 0.7, recognise: false },
+                        { text: "diamond", duration: 1.3, recognise: true },
+                        { text: "in", duration: 0.4, recognise: true },
+                        { text: "the", duration: 0.8, recognise: true },
+                        { text: "sky", duration: 2.0, recognise: true }
+                    ]
+                },
+                {
+                    words: [
+                        { text: "Twinkle", duration: 1.2, recognise: false },
+                        { text: "twinkle", duration: 1.1, recognise: false },
+                        { text: "little", duration: 1.5, recognise: true },
+                        { text: "star", duration: 2.0, recognise: false }
+                    ]
+                },
+                {
+                    words: [
+                        { text: "How", duration: 0.49, recognise: true },
+                        { text: "I", duration: 0.46, recognise: true },
+                        { text: "wonder", duration: 1.32, recognise: true },
+                        { text: "what", duration: 0.69, recognise: true },
+                        { text: "you", duration: 0.46, recognise: true },
+                        { text: "are", duration: 3.0, recognise: true }
+                    ]
+                }
+            ]
+        };
 
         // State management
         this.currentSentenceIndex = 0;
@@ -17,109 +80,6 @@ class LyricsEngine {
         this.startTime = 0;
         this.animationFrame = null;
         this.onStop = null; // Callback for when animation should stop
-    }
-
-    /**
-     * Load lyrics data from the hardcoded lyrics-data.json file
-     * @returns {Promise<boolean>} - True if loaded successfully, false otherwise
-     */
-    async loadLyricsData() {
-        try {
-            const response = await fetch('lyrics-data.json');
-            if (!response.ok) {
-                throw new Error(`Failed to load lyrics-data.json: ${response.status} ${response.statusText}`);
-            }
-            
-            const data = await response.json();
-            
-            // Validate data structure
-            if (!this.validateLyricsData(data)) {
-                throw new Error('Invalid lyrics data structure in lyrics-data.json');
-            }
-            
-            this.lyricsData = data;
-            this.isDataLoaded = true;
-            console.log('Lyrics data loaded successfully from lyrics-data.json');
-            return true;
-            
-        } catch (error) {
-            console.error('Error loading lyrics-data.json:', error);
-            
-            // Fallback to minimal default data
-            this.lyricsData = {
-                offset: 17,
-                outro: 3,
-                song_1_source: "song1.mp3",
-                song_2_source: "song2.mp3",
-                sentences: [{
-                    words: [{ text: "Loading failed...", duration: 1.0, recognise: false }]
-                }]
-            };
-            this.isDataLoaded = false;
-            return false;
-        }
-    }
-
-    /**
-     * Validate lyrics data structure
-     * @param {Object} data - Data to validate
-     * @returns {boolean} - True if valid, false otherwise
-     */
-    validateLyricsData(data) {
-        if (!data || typeof data !== 'object') return false;
-        if (typeof data.offset !== 'number') return false;
-        if (typeof data.outro !== 'number') return false;
-        if (typeof data.song_1_source !== 'string') return false;
-        if (typeof data.song_2_source !== 'string') return false;
-        if (!Array.isArray(data.sentences)) return false;
-        
-        return data.sentences.every(sentence => 
-            Array.isArray(sentence.words) && 
-            sentence.words.every(word => 
-                typeof word.text === 'string' && 
-                typeof word.duration === 'number' &&
-                typeof word.recognise === 'boolean'
-            )
-        );
-    }
-
-    /**
-     * Verify that audio sources are accessible
-     * @returns {Promise<boolean>} - True if both audio sources are accessible
-     */
-    async verifyAudioSources() {
-        if (!this.lyricsData) {
-            console.warn('No lyrics data available from lyrics-data.json for audio verification');
-            return false;
-        }
-        
-        try {
-            // Check if audio files exist/are accessible using HEAD requests
-            const checkAudio = async (src) => {
-                try {
-                    const response = await fetch(src, { method: 'HEAD' });
-                    return response.ok;
-                } catch (error) {
-                    console.warn(`Audio source ${src} not accessible:`, error.message);
-                    return false;
-                }
-            };
-            
-            const song1Available = await checkAudio(this.lyricsData.song_1_source);
-            const song2Available = await checkAudio(this.lyricsData.song_2_source);
-            
-            if (song1Available && song2Available) {
-                console.log('All audio sources verified successfully');
-                return true;
-            } else {
-                console.warn(`Audio verification failed - Song 1: ${song1Available}, Song 2: ${song2Available}`);
-                return false;
-            }
-            
-        } catch (error) {
-            console.error('Audio source verification error:', error);
-            return false;
-        }
     }
 
     /**
@@ -316,9 +276,9 @@ class LyricsEngine {
     animate() {
         if (!this.isPlaying) return;
         
-        // Safety check: ensure lyrics data is loaded
-        if (!this.lyricsData || !this.isDataLoaded) {
-            console.warn('Lyrics data not loaded, stopping animation');
+        // Safety check: ensure lyrics data exists (should always be true now)
+        if (!this.lyricsData) {
+            console.error('Critical error: lyrics data missing');
             return;
         }
         

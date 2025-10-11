@@ -97,47 +97,25 @@
   const AUDIO_MIME_TYPE = 'audio/mpeg';
 
   // Initialize when DOM is loaded
-  document.addEventListener('DOMContentLoaded', async function () {
+  document.addEventListener('DOMContentLoaded', function () {
     // Get references to audio elements
     song1 = document.getElementById('song1');
     song2 = document.getElementById('song2');
 
-    // Initialize lyrics engine
+    // Initialize lyrics engine (data is now hardcoded, so this always succeeds)
     lyricsEngine = new LyricsEngine();
     
-    // Load lyrics data first
-    const dataLoaded = await lyricsEngine.loadLyricsData();
-    if (!dataLoaded) {
-      console.warn('Failed to load lyrics data, using fallback');
-      // Set emergency fallback sources
-      song1.src = 'song1.mp3';
-      song2.src = 'song2.mp3';
-      console.log('Using emergency fallback audio sources');
-      // Show error message in sentence display
-      document.getElementById('sentenceDisplay').innerHTML = '⚠️ Failed to load lyrics data. Please refresh the page.';
-    } else {
-      // Set audio sources dynamically from loaded data
-      if (lyricsEngine.lyricsData.song_1_source) {
-        song1.src = lyricsEngine.lyricsData.song_1_source;
-        song1.type = AUDIO_MIME_TYPE;
-        console.log(`Song 1 source set to: ${song1.src} (${AUDIO_MIME_TYPE})`);
-      } else {
-        console.error('No song_1_source found in lyrics data');
-      }
-      
-      if (lyricsEngine.lyricsData.song_2_source) {
-        song2.src = lyricsEngine.lyricsData.song_2_source;
-        song2.type = AUDIO_MIME_TYPE;
-        console.log(`Song 2 source set to: ${song2.src} (${AUDIO_MIME_TYPE})`);
-      } else {
-        console.error('No song_2_source found in lyrics data');
-      }
-      
-      // Verify audio sources are accessible
-      const audioReady = await lyricsEngine.verifyAudioSources();
-      if (!audioReady) {
-        console.warn('Some audio files may not be accessible - karaoke may not work properly');
-      }
+    // Set audio sources directly from lyrics data (no loading needed)
+    if (lyricsEngine.lyricsData.song_1_source) {
+      song1.src = lyricsEngine.lyricsData.song_1_source;
+      song1.type = AUDIO_MIME_TYPE;
+      console.log(`Song 1 source set to: ${song1.src} (${AUDIO_MIME_TYPE})`);
+    }
+    
+    if (lyricsEngine.lyricsData.song_2_source) {
+      song2.src = lyricsEngine.lyricsData.song_2_source;
+      song2.type = AUDIO_MIME_TYPE;
+      console.log(`Song 2 source set to: ${song2.src} (${AUDIO_MIME_TYPE})`);
     }
     
     // Initialize with DOM elements after data is loaded
