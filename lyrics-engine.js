@@ -7,6 +7,7 @@ class LyricsEngine {
     constructor() {
         // Sample lyrics data with timestamps
         this.lyricsData = {
+            offset: 17, // 17-second delay before lyrics start
             sentences: [
                 {
                     text: "Twinkle twinkle little star",
@@ -68,7 +69,6 @@ class LyricsEngine {
         // Animation and timing state
         this.startTime = 0;
         this.animationFrame = null;
-        this.TIMING_OFFSET = 3; // 3-second delay before lyrics start
         this.onStop = null; // Callback for when animation should stop
     }
 
@@ -80,6 +80,7 @@ class LyricsEngine {
         this.sentenceDisplay = elements.sentenceDisplay;
         this.progressFill = elements.progressFill;
         this.audioPlayer = elements.audioPlayer;
+        this.timestampDisplay = elements.timestampDisplay;
     }
 
     /**
@@ -176,10 +177,14 @@ class LyricsEngine {
      */
     animate() {
         if (!this.isPlaying) return;
-
-        const currentTime = (this.audioPlayer.currentTime || (Date.now() - this.startTime) / 1000) - this.TIMING_OFFSET;
         
-        // Handle intro period (first 3 seconds)
+        const rawTime = this.audioPlayer.currentTime || (Date.now() - this.startTime) / 1000;
+        const currentTime = rawTime - this.lyricsData.offset;
+        
+        // Update timestamp display for debugging
+        if (this.timestampDisplay) {
+            this.timestampDisplay.textContent = `${rawTime.toFixed(2)}s`;
+        }        // Handle intro period (first 3 seconds)
         if (currentTime < 0) {
             const remainingTime = Math.ceil(Math.abs(currentTime));
             

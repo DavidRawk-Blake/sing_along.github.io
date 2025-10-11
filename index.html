@@ -9,6 +9,9 @@
 </head>
 
 <body>
+  <!-- Timestamp Display for Debugging -->
+  <div id="timestampDisplay" class="timestamp-display">0.00s</div>
+  
   <div class="outside-notes">
     <div class="floating-note">🎵</div>
     <div class="floating-note">🎶</div>
@@ -103,7 +106,8 @@
     lyricsEngine.initialize({
       sentenceDisplay: document.getElementById('sentenceDisplay'),
       progressFill: document.getElementById('progressFill'),
-      audioPlayer: song1 // Use song1 as primary for timing
+      audioPlayer: song1, // Use song1 as primary for timing
+      timestampDisplay: document.getElementById('timestampDisplay')
     });
 
     // Reset when songs end
