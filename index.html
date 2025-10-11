@@ -93,19 +93,8 @@
   let song1, song2;
   let lyricsEngine;
 
-  // Helper function to determine MIME type from filename
-  function getMimeType(filename) {
-    const ext = filename.split('.').pop().toLowerCase();
-    switch(ext) {
-      case 'mp3': return 'audio/mpeg';
-      case 'wav': return 'audio/wav';
-      case 'ogg': return 'audio/ogg';
-      case 'm4a': return 'audio/mp4';
-      case 'aac': return 'audio/aac';
-      case 'flac': return 'audio/flac';
-      default: return 'audio/mpeg';
-    }
-  }
+  // Audio MIME type constant (all songs are MP3)
+  const AUDIO_MIME_TYPE = 'audio/mpeg';
 
   // Initialize when DOM is loaded
   document.addEventListener('DOMContentLoaded', async function () {
@@ -130,16 +119,16 @@
       // Set audio sources dynamically from loaded data
       if (lyricsEngine.lyricsData.song_1_source) {
         song1.src = lyricsEngine.lyricsData.song_1_source;
-        song1.type = getMimeType(lyricsEngine.lyricsData.song_1_source);
-        console.log(`Song 1 source set to: ${song1.src} (${song1.type})`);
+        song1.type = AUDIO_MIME_TYPE;
+        console.log(`Song 1 source set to: ${song1.src} (${AUDIO_MIME_TYPE})`);
       } else {
         console.error('No song_1_source found in lyrics data');
       }
       
       if (lyricsEngine.lyricsData.song_2_source) {
         song2.src = lyricsEngine.lyricsData.song_2_source;
-        song2.type = getMimeType(lyricsEngine.lyricsData.song_2_source);
-        console.log(`Song 2 source set to: ${song2.src} (${song2.type})`);
+        song2.type = AUDIO_MIME_TYPE;
+        console.log(`Song 2 source set to: ${song2.src} (${AUDIO_MIME_TYPE})`);
       } else {
         console.error('No song_2_source found in lyrics data');
       }
