@@ -560,3 +560,139 @@ p {
     animation: introGlow 1s ease-in-out infinite;
     font-size: 1.3em;
 }
+
+/* Fireworks Celebration Styles */
+.fireworks-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+
+.fireworks-container.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.firework {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    animation: fireworkBurst 2s ease-out forwards;
+}
+
+.firework.spark1 { 
+    background: #FF6B6B; 
+    animation-delay: 0s;
+    top: 20vh; left: 20vw;
+}
+
+.firework.spark2 { 
+    background: #4ECDC4; 
+    animation-delay: 0.2s;
+    top: 30vh; right: 25vw;
+}
+
+.firework.spark3 { 
+    background: #45B7D1; 
+    animation-delay: 0.4s;
+    top: 15vh; left: 70vw;
+}
+
+.firework.spark4 { 
+    background: #96CEB4; 
+    animation-delay: 0.1s;
+    bottom: 25vh; left: 15vw;
+}
+
+.firework.spark5 { 
+    background: #FFEAA7; 
+    animation-delay: 0.3s;
+    bottom: 20vh; right: 20vw;
+}
+
+.firework.spark6 { 
+    background: #DDA0DD; 
+    animation-delay: 0.5s;
+    top: 40vh; left: 50vw;
+}
+
+@keyframes fireworkBurst {
+    0% {
+        transform: scale(0) rotate(0deg);
+        box-shadow: 
+            0 0 0px currentColor,
+            0 0 0px currentColor,
+            0 0 0px currentColor,
+            0 0 0px currentColor;
+    }
+    15% {
+        transform: scale(1) rotate(180deg);
+    }
+    100% {
+        transform: scale(0) rotate(360deg);
+        box-shadow: 
+            0 -50px 20px currentColor,
+            50px 0px 20px currentColor,
+            0 50px 20px currentColor,
+            -50px 0px 20px currentColor,
+            35px -35px 15px currentColor,
+            35px 35px 15px currentColor,
+            -35px 35px 15px currentColor,
+            -35px -35px 15px currentColor;
+    }
+}
+
+/* Sparkle effects */
+.sparkle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: white;
+    border-radius: 50%;
+    animation: sparkle 1.5s ease-in-out infinite;
+}
+
+.sparkle:nth-child(odd) {
+    animation-delay: 0.5s;
+}
+
+@keyframes sparkle {
+    0%, 100% { 
+        opacity: 0; 
+        transform: scale(0) rotate(0deg);
+    }
+    50% { 
+        opacity: 1; 
+        transform: scale(1) rotate(180deg);
+    }
+}
+
+/* Celebration message styling */
+.celebration-message {
+    font-size: 2.5em !important;
+    background: linear-gradient(45deg, #FF6B6B, #4ECDC4, #45B7D1, #96CEB4, #FFEAA7);
+    background-size: 400% 400%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: celebrationGradient 2s ease-in-out infinite, celebrationBounce 1s ease-in-out infinite;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+@keyframes celebrationGradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+@keyframes celebrationBounce {
+    0%, 100% { transform: translateY(0px) scale(1); }
+    50% { transform: translateY(-10px) scale(1.05); }
+}

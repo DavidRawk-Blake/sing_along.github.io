@@ -102,7 +102,7 @@ class LyricsEngine {
         if (!this.sentenceDisplay) return;
 
         if (sentenceIndex >= this.lyricsData.sentences.length) {
-            this.sentenceDisplay.innerHTML = 'Song completed! 🎉';
+            this.sentenceDisplay.innerHTML = '<div class="celebration-message">🎉 Congratulations! 🎉<br>Amazing singing! 🎤✨<br>You did fantastic! �</div>';
             return;
         }
 

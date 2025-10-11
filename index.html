@@ -12,6 +12,20 @@
   <!-- Timestamp Display for Debugging -->
   <div id="timestampDisplay" class="timestamp-display">0.00s</div>
   
+  <!-- Fireworks Celebration Container -->
+  <div id="fireworksContainer" class="fireworks-container">
+    <div class="firework spark1"></div>
+    <div class="firework spark2"></div>
+    <div class="firework spark3"></div>
+    <div class="firework spark4"></div>
+    <div class="firework spark5"></div>
+    <div class="firework spark6"></div>
+    <div class="sparkle" style="top: 10vh; left: 30vw;"></div>
+    <div class="sparkle" style="top: 80vh; right: 40vw;"></div>
+    <div class="sparkle" style="bottom: 30vh; left: 60vw;"></div>
+    <div class="sparkle" style="top: 50vh; right: 10vw;"></div>
+  </div>
+  
   <div class="outside-notes">
     <div class="floating-note">🎵</div>
     <div class="floating-note">🎶</div>
@@ -194,6 +208,15 @@
   function stopLyrics() {
     songHasCompleted = true; // Mark song as completed
     lyricsEngine.pauseAnimation(); // Just pause, don't reset
+    
+    // Reset audio to beginning but keep paused
+    song1.pause();
+    song2.pause();
+    song1.currentTime = 0;
+    song2.currentTime = 0;
+    
+    // Show fireworks celebration
+    showFireworks();
   }
 
   // Rewind function for 5-second back functionality
@@ -302,6 +325,7 @@
     if (songHasCompleted) {
       songHasCompleted = false; // Reset completion flag
       lyricsEngine.stopAnimation(); // Reset lyrics to initial state
+      hideFireworks(); // Hide any active fireworks celebration
       console.log('Song completion reset - lyrics can restart now');
     }
     
@@ -316,6 +340,29 @@
     setTimeout(() => {
       button.classList.remove('pressed');
     }, 150);
+  }
+
+  // Fireworks celebration functions
+  function showFireworks() {
+    const fireworksContainer = document.getElementById('fireworksContainer');
+    
+    if (fireworksContainer) {
+      // Show fireworks
+      fireworksContainer.classList.add('active');
+      
+      // Hide fireworks after celebration (4 seconds)
+      setTimeout(() => {
+        hideFireworks();
+      }, 4000);
+    }
+  }
+
+  function hideFireworks() {
+    const fireworksContainer = document.getElementById('fireworksContainer');
+    
+    if (fireworksContainer) {
+      fireworksContainer.classList.remove('active');
+    }
   }
 </script>
 
