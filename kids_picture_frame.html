@@ -138,22 +138,107 @@
             overflow: hidden;
         }
 
-        .star {
+        .musical-note {
             position: absolute;
             color: #C084FC;
             font-size: 20px;
-            animation: twinkle 2s ease-in-out infinite;
+            animation: musicalFloat 2s ease-in-out infinite;
         }
 
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.3; transform: scale(1) rotate(0deg); }
-            50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
+        @keyframes musicalFloat {
+            0%, 100% { opacity: 0.4; transform: scale(1) rotate(0deg) translateY(0px); }
+            50% { opacity: 1; transform: scale(1.2) rotate(10deg) translateY(-5px); }
         }
 
-        .star:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
-        .star:nth-child(2) { top: 20%; right: 15%; animation-delay: 0.5s; }
-        .star:nth-child(3) { bottom: 25%; left: 12%; animation-delay: 1s; }
-        .star:nth-child(4) { bottom: 15%; right: 10%; animation-delay: 1.5s; }
+        .musical-note:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+        .musical-note:nth-child(2) { top: 20%; right: 15%; animation-delay: 0.5s; }
+        .musical-note:nth-child(3) { bottom: 25%; left: 12%; animation-delay: 1s; }
+        .musical-note:nth-child(4) { bottom: 15%; right: 10%; animation-delay: 1.5s; }
+
+        /* Musical notes outside the frame */
+        .outside-notes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .floating-note {
+            position: absolute;
+            font-size: 24px;
+            animation: drift 8s ease-in-out infinite;
+        }
+
+        @keyframes drift {
+            0%, 100% { 
+                opacity: 0.2; 
+                transform: scale(0.8) rotate(0deg) translateY(0px) translateX(0px); 
+            }
+            25% { 
+                opacity: 0.6; 
+                transform: scale(1.1) rotate(5deg) translateY(-15px) translateX(10px); 
+            }
+            50% { 
+                opacity: 0.8; 
+                transform: scale(1.2) rotate(-3deg) translateY(-20px) translateX(-5px); 
+            }
+            75% { 
+                opacity: 0.4; 
+                transform: scale(0.9) rotate(8deg) translateY(-10px) translateX(15px); 
+            }
+        }
+
+        .floating-note:nth-child(1) { 
+            top: 10%; left: 5%; 
+            color: #A855F7; 
+            animation-delay: 0s; 
+            animation-duration: 6s;
+        }
+        .floating-note:nth-child(2) { 
+            top: 25%; right: 8%; 
+            color: #C084FC; 
+            animation-delay: 1s; 
+            animation-duration: 7s;
+        }
+        .floating-note:nth-child(3) { 
+            bottom: 20%; left: 3%; 
+            color: #8B5CF6; 
+            animation-delay: 2s; 
+            animation-duration: 8s;
+        }
+        .floating-note:nth-child(4) { 
+            bottom: 35%; right: 5%; 
+            color: #DDD6FE; 
+            animation-delay: 3s; 
+            animation-duration: 5s;
+        }
+        .floating-note:nth-child(5) { 
+            top: 50%; left: 2%; 
+            color: #9333EA; 
+            animation-delay: 1.5s; 
+            animation-duration: 9s;
+        }
+        .floating-note:nth-child(6) { 
+            top: 70%; right: 3%; 
+            color: #A855F7; 
+            animation-delay: 4s; 
+            animation-duration: 6s;
+        }
+        .floating-note:nth-child(7) { 
+            top: 15%; left: 50%; 
+            color: #C084FC; 
+            animation-delay: 2.5s; 
+            animation-duration: 7s;
+        }
+        .floating-note:nth-child(8) { 
+            bottom: 10%; left: 45%; 
+            color: #7C3AED; 
+            animation-delay: 5s; 
+            animation-duration: 8s;
+        }
 
         .hearts {
             position: absolute;
@@ -200,26 +285,37 @@
     </style>
 </head>
 <body>
+    <div class="outside-notes">
+        <div class="floating-note">🎵</div>
+        <div class="floating-note">🎶</div>
+        <div class="floating-note">♪</div>
+        <div class="floating-note">♫</div>
+        <div class="floating-note">🎼</div>
+        <div class="floating-note">♬</div>
+        <div class="floating-note">🎤</div>
+        <div class="floating-note">🎧</div>
+    </div>
+    
     <div class="kids-frame-container">
         <div class="wavy-purple-frame">
             <div class="wavy-border"></div>
             
             <div class="frame-content">
                 <div class="fun-decorations">
-                    <div class="star">⭐</div>
-                    <div class="star">✨</div>
-                    <div class="star">🌟</div>
-                    <div class="star">⭐</div>
+                    <div class="musical-note">🎵</div>
+                    <div class="musical-note">🎶</div>
+                    <div class="musical-note">♪</div>
+                    <div class="musical-note">♫</div>
                     <div class="hearts">💜</div>
                     <div class="hearts">💖</div>
                     <div class="crayon-stroke"></div>
                     <div class="crayon-stroke"></div>
                 </div>
                 
-                <h1>My Fun Picture Frame!</h1>
-                <p>This is a super cool wavy purple picture frame that looks like it was made just for kids! The wiggly borders and fun colors make everything inside look extra special! ✨🎨</p>
+                <h1>My Musical Picture Frame! 🎼</h1>
+                <p>This is a super cool wavy purple picture frame that looks like it was made just for kids! The wiggly borders and fun colors make everything inside look extra special! 🎵🎨</p>
                 <p style="font-size: 0.9em; transform: rotate(-1deg);">
-                    Put your favorite drawings, photos, or messages in here! 🖍️📸
+                    Put your favorite drawings, photos, or messages in here! 🖍️📸🎶
                 </p>
             </div>
         </div>
