@@ -161,6 +161,54 @@ body {
     );
 }
 
+.media-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 15px;
+    z-index: 2;
+}
+
+.control-button {
+    width: 50pt;
+    height: 50pt;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.9);
+    color: #228B22;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+}
+
+.control-button:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.control-button:active {
+    transform: scale(0.95);
+}
+
+.play-button:hover {
+    color: #32CD32;
+}
+
+.pause-button:hover {
+    color: #FFD700;
+}
+
+.restart-button:hover {
+    color: #FF6B6B;
+}
+
 .frame-content {
     position: relative;
     z-index: 1;
