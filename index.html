@@ -92,6 +92,7 @@
   // Global variables for audio elements and lyrics
   let song1, song2;
   let lyricsEngine;
+  let songHasCompleted = false; // Track if song has finished to prevent auto-restart
 
   // Audio MIME type constant (all songs are MP3)
   const AUDIO_MIME_TYPE = 'audio/mpeg';
@@ -191,7 +192,8 @@
 
   // Stop and reset lyrics display
   function stopLyrics() {
-    lyricsEngine.stopAnimation();
+    songHasCompleted = true; // Mark song as completed
+    lyricsEngine.pauseAnimation(); // Just pause, don't reset
   }
 
   // Rewind function for 5-second back functionality
@@ -215,7 +217,13 @@
       // Resume playback
       song1.play().catch(e => console.log('Song1 play error:', e));
       song2.play().catch(e => console.log('Song2 play error:', e));
-      startLyrics();
+      
+      // Only restart lyrics if song hasn't completed, or if we're going back in time
+      if (!songHasCompleted) {
+        startLyrics();
+      } else {
+        console.log('Song has completed - use restart button to reset lyrics');
+      }
     }, 100); // 100ms pause for smooth transition
   }
 
@@ -241,7 +249,13 @@
       // Resume playback
       song1.play().catch(e => console.log('Song1 play error:', e));
       song2.play().catch(e => console.log('Song2 play error:', e));
-      startLyrics();
+      
+      // Only restart lyrics if song hasn't completed
+      if (!songHasCompleted) {
+        startLyrics();
+      } else {
+        console.log('Song has completed - use restart button to reset lyrics');
+      }
     }, 100); // 100ms pause for smooth transition
   }
 
@@ -250,7 +264,14 @@
     console.log('Playing both songs simultaneously with lyrics');
     song1.play().catch(e => console.log('Song1 play error:', e));
     song2.play().catch(e => console.log('Song2 play error:', e));
-    startLyrics();
+    
+    // Only restart lyrics if song hasn't completed yet
+    if (!songHasCompleted) {
+      startLyrics();
+    } else {
+      console.log('Song has completed - lyrics will not restart automatically');
+    }
+    
     addPressedEffect(document.getElementById('playBtn'));
   }
 
@@ -276,6 +297,14 @@
 
   function restartAction() {
     rewindFiveSeconds();
+    
+    // If song has completed, allow lyrics to restart from the new position
+    if (songHasCompleted) {
+      songHasCompleted = false; // Reset completion flag
+      lyricsEngine.stopAnimation(); // Reset lyrics to initial state
+      console.log('Song completion reset - lyrics can restart now');
+    }
+    
     addPressedEffect(document.getElementById('restartBtn'));
   }
 
