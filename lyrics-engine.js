@@ -12,7 +12,6 @@ class LyricsEngine {
                 {
                     text: "Twinkle twinkle little star",
                     startTime: 0,
-                    endTime: 4,
                     words: [
                         { text: "Twinkle", duration: 1.4 },
                         { text: "twinkle", duration: 1.3 },
@@ -23,7 +22,6 @@ class LyricsEngine {
                 {
                     text: "How I wonder what you are",
                     startTime: 4,
-                    endTime: 8,
                     words: [
                         { text: "How", duration: 0.6 },
                         { text: "I", duration: 0.4 },
@@ -36,7 +34,6 @@ class LyricsEngine {
                 {
                     text: "Up above the world so high",
                     startTime: 8,
-                    endTime: 12,
                     words: [
                         { text: "Up", duration: 0.6 },
                         { text: "above", duration: 0.8 },
@@ -49,7 +46,6 @@ class LyricsEngine {
                 {
                     text: "Like a diamond in the sky",
                     startTime: 12,
-                    endTime: 16,
                     words: [
                         { text: "Like", duration: 0.6 },
                         { text: "a", duration: 0.2 },
@@ -138,7 +134,7 @@ class LyricsEngine {
         if (!this.progressFill) return;
 
         const totalDuration = Math.max(
-            ...this.lyricsData.sentences.map(s => s.endTime),
+            ...this.lyricsData.sentences.map(s => this.calculateSentenceEndTime(s)),
             (this.audioPlayer && this.audioPlayer.duration) || 16
         );
         const progress = (currentTime / totalDuration) * 100;
@@ -158,7 +154,7 @@ class LyricsEngine {
         }
         
         return this.lyricsData.sentences.findIndex(sentence => 
-            currentTime >= sentence.startTime && currentTime < sentence.endTime
+            currentTime >= sentence.startTime && currentTime < this.calculateSentenceEndTime(sentence)
         );
     }
 
@@ -169,7 +165,7 @@ class LyricsEngine {
      */
     isSongFinished(currentTime) {
         const lastSentence = this.lyricsData.sentences[this.lyricsData.sentences.length - 1];
-        return currentTime >= lastSentence.endTime;
+        return currentTime >= this.calculateSentenceEndTime(lastSentence);
     }
 
     /**
@@ -191,6 +187,16 @@ class LyricsEngine {
      */
     getSentenceCount() {
         return this.lyricsData.sentences.length;
+    }
+
+    /**
+     * Calculate the end time of a sentence based on word durations
+     * @param {Object} sentence - Sentence object with words array
+     * @returns {number} - Calculated end time (startTime + total word duration)
+     */
+    calculateSentenceEndTime(sentence) {
+        const totalDuration = sentence.words.reduce((sum, word) => sum + word.duration, 0);
+        return sentence.startTime + totalDuration;
     }
 
     /**
