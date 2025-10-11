@@ -237,16 +237,20 @@ class LyricsEngine {
         // Update timestamp display for debugging
         if (this.timestampDisplay) {
             this.timestampDisplay.textContent = `${rawTime.toFixed(2)}s`;
-        }        // Handle intro period (first 3 seconds)
+        }        // Handle intro period (offset duration)
         if (currentTime < 0) {
             const remainingTime = Math.ceil(Math.abs(currentTime));
             
-            if (remainingTime > 2) {
-                this.sentenceDisplay.innerHTML = '🎵 Get ready to sing along! 🎵<br>Starting in 3...';
+            if (remainingTime > 10) {
+                this.sentenceDisplay.innerHTML = `🎵 Get ready to sing along! 🎵<br>Starting in ${remainingTime}...`;
+            } else if (remainingTime > 5) {
+                this.sentenceDisplay.innerHTML = `🎤 Almost ready! 🎤<br>Starting in ${remainingTime}...`;
+            } else if (remainingTime > 2) {
+                this.sentenceDisplay.innerHTML = `✨ Get ready! ✨<br>Starting in ${remainingTime}...`;
             } else if (remainingTime > 1) {
-                this.sentenceDisplay.innerHTML = '🎤 Ready? 🎤<br>Starting in 2...';
+                this.sentenceDisplay.innerHTML = `� Ready? �<br>Starting in ${remainingTime}...`;
             } else {
-                this.sentenceDisplay.innerHTML = '✨ Here we go! ✨<br>Starting in 1...';
+                this.sentenceDisplay.innerHTML = `🌟 Here we go! 🌟<br>Starting in ${remainingTime}...`;
             }
             
             this.animationFrame = requestAnimationFrame(() => this.animate());
@@ -285,7 +289,7 @@ class LyricsEngine {
         
         // Show initial intro message
         if (this.sentenceDisplay) {
-            this.sentenceDisplay.innerHTML = '🎵 Get ready to sing along! 🎵<br>Starting in 3...';
+            this.sentenceDisplay.innerHTML = `🎵 Get ready to sing along! 🎵<br>Starting in ${this.lyricsData.offset}...`;
         }
         
         this.animate();
