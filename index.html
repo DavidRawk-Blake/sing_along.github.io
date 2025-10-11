@@ -25,14 +25,14 @@
       <div class="wavy-border"></div>
       <div class="grass-field">
         <div class="media-controls">
-          <button id="playBtn" class="control-button play-button">▶</button>
-          <button id="pauseBtn" class="control-button pause-button">⏸</button>
-          <button id="restartBtn" class="control-button restart-button">⏮</button>
+          <button id="playBtn" class="control-button play-button" onclick="playAction()">▶</button>
+          <button id="pauseBtn" class="control-button pause-button" onclick="pauseAction()">⏸</button>
+          <button id="restartBtn" class="control-button restart-button" onclick="restartAction()">⏮</button>
         </div>
       </div>
 
       <div class="frame-content">
-        <h1>Lets Sing Along 🎼</h1>
+        <h1>🎼 Lets Sing Along 🎼</h1>
 
         <div class="fun-decorations">
           <div class="musical-note">🎵</div>
@@ -75,33 +75,14 @@
 
 <script>
   // Audio control functionality for the musical picture frame
-  // Wait for DOM to be fully loaded before setting up event listeners
+  // Global variables for audio elements
+  let song1, song2;
+
+  // Initialize when DOM is loaded
   document.addEventListener('DOMContentLoaded', function () {
-    // Get references to audio elements and buttons
-    const song1 = document.getElementById('song1');
-    const song2 = document.getElementById('song2');
-    const playButton = document.getElementById('playBtn');
-    const pauseButton = document.getElementById('pauseBtn');
-    const restartButton = document.getElementById('restartBtn');
-
-    // Play song1 only
-    playButton.addEventListener('click', () => {
-      console.log('Playing song1.mp3');
-      song1.play().catch(e => console.log('Song1 play error:', e));
-    });
-
-    // Pause song1
-    pauseButton.addEventListener('click', () => {
-      console.log('Paused song1');
-      song1.pause();
-    });
-
-    // Stop song1 (reset to beginning)
-    restartButton.addEventListener('click', () => {
-      console.log('Stopped and reset song1');
-      song1.pause();
-      song1.currentTime = 0;
-    });
+    // Get references to audio elements
+    song1 = document.getElementById('song1');
+    song2 = document.getElementById('song2');
 
     // Reset when song1 ends
     song1.addEventListener('ended', () => {
@@ -109,27 +90,47 @@
       console.log('Song1 ended and reset to beginning');
     });
 
-    // Add pressed effect functionality for better visual feedback
-    function addPressedEffect(button) {
-      button.classList.add('pressed');
-
-      // Remove pressed class after short delay
-      setTimeout(() => {
-        button.classList.remove('pressed');
-      }, 150);
-    }
-
-    // Add pressed effect to all buttons
-    [playButton, pauseButton, restartButton].forEach(button => {
+    // Add pressed effect to buttons on mouse/touch events
+    const buttons = [document.getElementById('playBtn'), document.getElementById('pauseBtn'), document.getElementById('restartBtn')];
+    buttons.forEach(button => {
       // Handle mouse events
       button.addEventListener('mousedown', () => addPressedEffect(button));
-
       // Handle touch events for mobile devices
       button.addEventListener('touchstart', () => addPressedEffect(button), { passive: true });
     });
 
     console.log('Audio controls initialized after DOM loaded');
   });
+
+  // Global functions for onclick handlers
+  function playAction() {
+    console.log('Playing song1.mp3');
+    song1.play().catch(e => console.log('Song1 play error:', e));
+    addPressedEffect(document.getElementById('playBtn'));
+  }
+
+  function pauseAction() {
+    console.log('Paused song1');
+    song1.pause();
+    addPressedEffect(document.getElementById('pauseBtn'));
+  }
+
+  function restartAction() {
+    console.log('Stopped and reset song1');
+    song1.pause();
+    song1.currentTime = 0;
+    addPressedEffect(document.getElementById('restartBtn'));
+  }
+
+  // Add pressed effect functionality for better visual feedback
+  function addPressedEffect(button) {
+    button.classList.add('pressed');
+
+    // Remove pressed class after short delay
+    setTimeout(() => {
+      button.classList.remove('pressed');
+    }, 150);
+  }
 </script>
 
 </html>
