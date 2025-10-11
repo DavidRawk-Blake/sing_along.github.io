@@ -50,6 +50,8 @@ class LyricsEngine {
             this.lyricsData = {
                 offset: 17,
                 outro: 3,
+                song_1_source: "song1.mp3",
+                song_2_source: "song2.mp3",
                 sentences: [{
                     words: [{ text: "Loading failed...", duration: 1.0, recognise: false }]
                 }]
@@ -68,6 +70,8 @@ class LyricsEngine {
         if (!data || typeof data !== 'object') return false;
         if (typeof data.offset !== 'number') return false;
         if (typeof data.outro !== 'number') return false;
+        if (typeof data.song_1_source !== 'string') return false;
+        if (typeof data.song_2_source !== 'string') return false;
         if (!Array.isArray(data.sentences)) return false;
         
         return data.sentences.every(sentence => 
@@ -78,6 +82,45 @@ class LyricsEngine {
                 typeof word.recognise === 'boolean'
             )
         );
+    }
+
+    /**
+     * Verify that audio sources are accessible
+     * @returns {Promise<boolean>} - True if both audio sources are accessible
+     */
+    async verifyAudioSources() {
+        if (!this.lyricsData) {
+            console.warn('No lyrics data available for audio verification');
+            return false;
+        }
+        
+        try {
+            // Check if audio files exist/are accessible using HEAD requests
+            const checkAudio = async (src) => {
+                try {
+                    const response = await fetch(src, { method: 'HEAD' });
+                    return response.ok;
+                } catch (error) {
+                    console.warn(`Audio source ${src} not accessible:`, error.message);
+                    return false;
+                }
+            };
+            
+            const song1Available = await checkAudio(this.lyricsData.song_1_source);
+            const song2Available = await checkAudio(this.lyricsData.song_2_source);
+            
+            if (song1Available && song2Available) {
+                console.log('All audio sources verified successfully');
+                return true;
+            } else {
+                console.warn(`Audio verification failed - Song 1: ${song1Available}, Song 2: ${song2Available}`);
+                return false;
+            }
+            
+        } catch (error) {
+            console.error('Audio source verification error:', error);
+            return false;
+        }
     }
 
     /**

@@ -1,6 +1,8 @@
 {
   "offset": 17,
   "outro": 3,
+  "song_1_source": "song1.mp3",
+  "song_2_source": "song2.mp3",
   "sentences": [
     {
       "words": [

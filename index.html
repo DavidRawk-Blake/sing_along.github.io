@@ -110,6 +110,22 @@
       console.warn('Failed to load lyrics data, using fallback');
       // Show error message in sentence display
       document.getElementById('sentenceDisplay').innerHTML = '⚠️ Failed to load lyrics data. Please refresh the page.';
+    } else {
+      // Set audio sources dynamically from loaded data
+      if (lyricsEngine.lyricsData.song_1_source) {
+        song1.src = lyricsEngine.lyricsData.song_1_source;
+        console.log(`Song 1 source set to: ${song1.src}`);
+      }
+      if (lyricsEngine.lyricsData.song_2_source) {
+        song2.src = lyricsEngine.lyricsData.song_2_source;
+        console.log(`Song 2 source set to: ${song2.src}`);
+      }
+      
+      // Verify audio sources are accessible
+      const audioReady = await lyricsEngine.verifyAudioSources();
+      if (!audioReady) {
+        console.warn('Some audio files may not be accessible - karaoke may not work properly');
+      }
     }
     
     // Initialize with DOM elements after data is loaded
