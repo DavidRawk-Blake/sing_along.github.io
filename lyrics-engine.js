@@ -304,7 +304,14 @@ class LyricsEngine {
             const songEndTime = this.calculateSentenceEndTime(lastSentenceIndex);
             const outroRemaining = Math.ceil((songEndTime + this.lyricsData.outro) - currentTime);
             
-            this.sentenceDisplay.innerHTML = `🎉 Great job singing along! 🎉<br>Song completed... ${outroRemaining}s`;
+            // Keep the last sentence visible during outro instead of showing completion message
+            this.displaySentence(lastSentenceIndex, currentTime);
+            
+            // Update timestamp to show outro countdown for debugging
+            if (this.timestampDisplay) {
+                this.timestampDisplay.textContent = `${rawTime.toFixed(2)}s (Outro: ${outroRemaining}s)`;
+            }
+            
             this.updateProgress(currentTime);
             this.animationFrame = requestAnimationFrame(() => this.animate());
             return;
