@@ -429,3 +429,40 @@ p {
 
 .hearts:nth-child(5) { top: 30%; left: 5%; animation-delay: 0s; }
 .hearts:nth-child(6) { top: 70%; right: 8%; animation-delay: 2s; }
+
+/* Audio section styling */
+.audio-section {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 600px;
+    box-shadow: 0 4px 12px rgba(147, 51, 234, 0.2);
+    font-family: 'Comic Sans MS', cursive, sans-serif;
+}
+
+.audio-section h3 {
+    text-align: center;
+    color: #7C3AED;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.audio-player {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.audio-player label {
+    color: #6B46C1;
+    font-weight: bold;
+    min-width: 60px;
+}
+
+.audio-player audio {
+    flex: 1;
+    border-radius: 8px;
+    filter: sepia(20%) hue-rotate(280deg) saturate(1.2);
+}

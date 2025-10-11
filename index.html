@@ -1,120 +1,135 @@
 <!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sing Along</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="outside-notes">
-        <div class="floating-note">🎵</div>
-        <div class="floating-note">🎶</div>
-        <div class="floating-note">♪</div>
-        <div class="floating-note">♫</div>
-        <div class="floating-note">🎼</div>
-        <div class="floating-note">♬</div>
-        <div class="floating-note">🎤</div>
-        <div class="floating-note">🎧</div>
-    </div>
-    
-    <div class="kids-frame-container">
-        <div class="wavy-purple-frame">
-            <div class="wavy-border"></div>
-            <div class="grass-field">
-                <div class="media-controls">
-                    <button id="playBtn" class="control-button play-button">▶</button>
-                    <button id="pauseBtn" class="control-button pause-button">⏸</button>
-                    <button id="restartBtn" class="control-button restart-button">⏮</button>
-                </div>
-            </div>
-            
-            <div class="frame-content">
-                <h1>Lets Sing Along 🎼</h1>
-                
-                <div class="fun-decorations">
-                    <div class="musical-note">🎵</div>
-                    <div class="musical-note">🎶</div>
-                    <div class="musical-note">♪</div>
-                    <div class="musical-note">♫</div>
-                    <div class="hearts">💜</div>
-                    <div class="hearts">💖</div>
-                </div>
-                <p>This is a super cool wavy purple picture frame that looks like it was made just for kids! The wiggly borders and fun colors make everything inside look extra special! 🎵🎨</p>
-                <p style="font-size: 0.9em; transform: rotate(-1deg);">
-                    Put your favorite drawings, photos, or messages in here! 🖍️📸🎶
-                </p>
-            </div>
-        </div>
-    </div>
 
-    <!-- Hidden audio elements -->
-    <audio id="song1" preload="auto">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sing Along</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="outside-notes">
+    <div class="floating-note">🎵</div>
+    <div class="floating-note">🎶</div>
+    <div class="floating-note">♪</div>
+    <div class="floating-note">♫</div>
+    <div class="floating-note">🎼</div>
+    <div class="floating-note">♬</div>
+    <div class="floating-note">🎤</div>
+    <div class="floating-note">🎧</div>
+  </div>
+
+  <div class="kids-frame-container">
+    <div class="wavy-purple-frame">
+      <div class="wavy-border"></div>
+      <div class="grass-field">
+        <div class="media-controls">
+          <button id="playBtn" class="control-button play-button">▶</button>
+          <button id="pauseBtn" class="control-button pause-button">⏸</button>
+          <button id="restartBtn" class="control-button restart-button">⏮</button>
+        </div>
+      </div>
+
+      <div class="frame-content">
+        <h1>Lets Sing Along 🎼</h1>
+
+        <div class="fun-decorations">
+          <div class="musical-note">🎵</div>
+          <div class="musical-note">🎶</div>
+          <div class="musical-note">♪</div>
+          <div class="musical-note">♫</div>
+          <div class="hearts">💜</div>
+          <div class="hearts">💖</div>
+        </div>
+        <p>This is a super cool wavy purple picture frame that looks like it was made just for kids! The wiggly borders
+          and fun colors make everything inside look extra special! 🎵🎨</p>
+        <p style="font-size: 0.9em; transform: rotate(-1deg);">
+          Put your favorite drawings, photos, or messages in here! 🖍️📸🎶
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio elements with native controls -->
+  <div class="audio-section">
+    <h3>🎵 Audio Tracks</h3>
+    <div class="audio-player">
+      <label for="song1">Song 1:</label>
+      <audio id="song1" controls preload="auto">
         <source src="song1.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
-    </audio>
-    <audio id="song2" preload="auto">
+      </audio>
+    </div>
+    <div class="audio-player">
+      <label for="song2">Song 2:</label>
+      <audio id="song2" controls preload="auto">
         <source src="song2.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
-    </audio>
+      </audio>
+    </div>
+  </div>
 
-    <script>
-        // Audio control functionality for the musical picture frame
-        // Wait for DOM to be fully loaded before setting up event listeners
-        document.addEventListener('DOMContentLoaded', function() {
-            // Get references to audio elements and buttons
-            const song1 = document.getElementById('song1');
-            const song2 = document.getElementById('song2');
-            const playButton = document.getElementById('playBtn');
-            const pauseButton = document.getElementById('pauseBtn');
-            const restartButton = document.getElementById('restartBtn');
 
-            // Play song1 only
-            playButton.addEventListener('click', () => {
-              console.log('Playing song1.mp3');
-                song1.play().catch(e => console.log('Song1 play error:', e));
-            });
-
-            // Pause song1
-            pauseButton.addEventListener('click', () => {
-              console.log('Paused song1');
-                song1.pause();
-            });
-
-            // Stop song1 (reset to beginning)
-            restartButton.addEventListener('click', () => {
-                console.log('Stopped and reset song1');
-                song1.pause();
-                song1.currentTime = 0;
-            });
-
-            // Reset when song1 ends
-            song1.addEventListener('ended', () => {
-                song1.currentTime = 0;
-                console.log('Song1 ended and reset to beginning');
-            });
-
-            // Add pressed effect functionality for better visual feedback
-            function addPressedEffect(button) {
-                button.classList.add('pressed');
-                
-                // Remove pressed class after short delay
-                setTimeout(() => {
-                    button.classList.remove('pressed');
-                }, 150);
-            }
-
-            // Add pressed effect to all buttons
-            [playButton, pauseButton, restartButton].forEach(button => {
-                // Handle mouse events
-                button.addEventListener('mousedown', () => addPressedEffect(button));
-                
-                // Handle touch events for mobile devices
-                button.addEventListener('touchstart', () => addPressedEffect(button), { passive: true });
-            });
-
-            console.log('Audio controls initialized after DOM loaded');
-        });
-    </script>
 </body>
+
+<script>
+  // Audio control functionality for the musical picture frame
+  // Wait for DOM to be fully loaded before setting up event listeners
+  document.addEventListener('DOMContentLoaded', function () {
+    // Get references to audio elements and buttons
+    const song1 = document.getElementById('song1');
+    const song2 = document.getElementById('song2');
+    const playButton = document.getElementById('playBtn');
+    const pauseButton = document.getElementById('pauseBtn');
+    const restartButton = document.getElementById('restartBtn');
+
+    // Play song1 only
+    playButton.addEventListener('click', () => {
+      console.log('Playing song1.mp3');
+      song1.play().catch(e => console.log('Song1 play error:', e));
+    });
+
+    // Pause song1
+    pauseButton.addEventListener('click', () => {
+      console.log('Paused song1');
+      song1.pause();
+    });
+
+    // Stop song1 (reset to beginning)
+    restartButton.addEventListener('click', () => {
+      console.log('Stopped and reset song1');
+      song1.pause();
+      song1.currentTime = 0;
+    });
+
+    // Reset when song1 ends
+    song1.addEventListener('ended', () => {
+      song1.currentTime = 0;
+      console.log('Song1 ended and reset to beginning');
+    });
+
+    // Add pressed effect functionality for better visual feedback
+    function addPressedEffect(button) {
+      button.classList.add('pressed');
+
+      // Remove pressed class after short delay
+      setTimeout(() => {
+        button.classList.remove('pressed');
+      }, 150);
+    }
+
+    // Add pressed effect to all buttons
+    [playButton, pauseButton, restartButton].forEach(button => {
+      // Handle mouse events
+      button.addEventListener('mousedown', () => addPressedEffect(button));
+
+      // Handle touch events for mobile devices
+      button.addEventListener('touchstart', () => addPressedEffect(button), { passive: true });
+    });
+
+    console.log('Audio controls initialized after DOM loaded');
+  });
+</script>
+
 </html>
