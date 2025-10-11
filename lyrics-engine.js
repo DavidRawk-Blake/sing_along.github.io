@@ -11,45 +11,41 @@ class LyricsEngine {
             outro: 3,   // 3-second outro period after song ends
             sentences: [
                 {
-                    text: "Twinkle twinkle little star",
                     words: [
-                        { text: "Twinkle", duration: 1.4 },
-                        { text: "twinkle", duration: 1.3 },
-                        { text: "little", duration: 1.1 },
-                        { text: "star", duration: 2.0 }
+                        { text: "Twinkle", duration: 1.4, recognise: false },
+                        { text: "twinkle", duration: 1.4, recognise: false },
+                        { text: "little", duration: 1.3, recognise: true },
+                        { text: "star", duration: 2.0, recognise: false }
                     ]
                 },
                 {
-                    text: "How I wonder what you are",
                     words: [
-                        { text: "How", duration: 0.69 },
-                        { text: "I", duration: 0.46 },
-                        { text: "wonder", duration: 1.32 },
-                        { text: "what", duration: 0.69 },
-                        { text: "you", duration: 0.46 },
-                        { text: "are", duration: 2.0 }
+                        { text: "How", duration: 0.69, recognise: true },
+                        { text: "I", duration: 0.46, recognise: true },
+                        { text: "wonder", duration: 1.32, recognise: true },
+                        { text: "what", duration: 0.69, recognise: true },
+                        { text: "you", duration: 0.46, recognise: true },
+                        { text: "are", duration: 2.5, recognise: true }
                     ]
                 },
                 {
-                    text: "Up above the world so high",
                     words: [
-                        { text: "Up", duration: 0.6 },
-                        { text: "above", duration: 0.8 },
-                        { text: "the", duration: 0.4 },
-                        { text: "world", duration: 0.6 },
-                        { text: "so", duration: 0.4 },
-                        { text: "high", duration: 0.2 }
+                        { text: "Up", duration: 0.6, recognise: true },
+                        { text: "above", duration: 0.8, recognise: true },
+                        { text: "the", duration: 0.4, recognise: true },
+                        { text: "world", duration: 0.6, recognise: true },
+                        { text: "so", duration: 0.4, recognise: true },
+                        { text: "high", duration: 0.2, recognise: true }
                     ]
                 },
                 {
-                    text: "Like a diamond in the sky",
                     words: [
-                        { text: "Like", duration: 0.6 },
-                        { text: "a", duration: 0.2 },
-                        { text: "diamond", duration: 0.8 },
-                        { text: "in", duration: 0.4 },
-                        { text: "the", duration: 0.4 },
-                        { text: "sky", duration: 0.6 }
+                        { text: "Like", duration: 0.6, recognise: true },
+                        { text: "a", duration: 0.2, recognise: true },
+                        { text: "diamond", duration: 0.8, recognise: true },
+                        { text: "in", duration: 0.4, recognise: true },
+                        { text: "the", duration: 0.4, recognise: true },
+                        { text: "sky", duration: 0.6, recognise: true }
                     ]
                 }
             ]
@@ -109,13 +105,19 @@ class LyricsEngine {
             const wordRelativeEnd = (wordStartTime + word.duration) * slowdownFactor;
             
             let className = 'word';
+            let fontSize = '';
             
             // Only highlight if not in early preview mode and timing is right
             if (!isEarlyPreview && relativeTime >= wordRelativeStart && relativeTime <= wordRelativeEnd) {
                 className += ' highlighted';
+                
+                // Double font size if recognise is true
+                if (word.recognise) {
+                    fontSize = 'font-size: 2em; ';
+                }
             }
             
-            html += `<span class="${className}">${word.text}</span>`;
+            html += `<span class="${className}" style="${fontSize}">${word.text}</span>`;
             
             // Add this word's duration to cumulative time for next word
             cumulativeTime += word.duration;
@@ -199,6 +201,15 @@ class LyricsEngine {
      */
     getSentenceCount() {
         return this.lyricsData.sentences.length;
+    }
+
+    /**
+     * Generate sentence text from words array
+     * @param {Object} sentence - Sentence object with words array
+     * @returns {string} - Generated text from words
+     */
+    generateSentenceText(sentence) {
+        return sentence.words.map(word => word.text).join(' ');
     }
 
     /**
