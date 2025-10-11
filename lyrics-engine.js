@@ -324,9 +324,9 @@ class LyricsEngine {
             // Keep the last sentence visible during outro instead of showing completion message
             this.displaySentence(lastSentenceIndex, currentTime);
             
-            // Update timestamp to show outro countdown for debugging
+            // Update timestamp display (no outro countdown shown)
             if (this.timestampDisplay) {
-                this.timestampDisplay.textContent = `${rawTime.toFixed(2)}s (Outro: ${outroRemaining}s)`;
+                this.timestampDisplay.textContent = `${rawTime.toFixed(2)}s`;
             }
             
             this.updateProgress(currentTime);
