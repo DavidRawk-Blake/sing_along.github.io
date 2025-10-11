@@ -521,3 +521,26 @@ p {
     width: 0%;
     transition: width 0.1s ease;
 }
+
+/* Intro message animations */
+.sentence-display br {
+    line-height: 0.5;
+}
+
+@keyframes introGlow {
+    0%, 100% { 
+        text-shadow: 0 0 5px #A855F7, 0 0 10px #C084FC;
+        transform: scale(1);
+    }
+    50% { 
+        text-shadow: 0 0 10px #7C3AED, 0 0 20px #DDD6FE;
+        transform: scale(1.02);
+    }
+}
+
+.sentence-display:has-text("Get ready"), 
+.sentence-display:has-text("Ready?"), 
+.sentence-display:has-text("Here we go!") {
+    animation: introGlow 1s ease-in-out infinite;
+    font-size: 1.3em;
+}
