@@ -8,6 +8,7 @@ class LyricsEngine {
         // Sample lyrics data with timestamps
         this.lyricsData = {
             offset: 17, // 17-second delay before lyrics start
+            outro: 3,   // 3-second outro period after song ends
             sentences: [
                 {
                     text: "Twinkle twinkle little star",
@@ -158,13 +159,25 @@ class LyricsEngine {
     }
 
     /**
-     * Check if the song has ended
+     * Check if the song has ended (including outro period)
      * @param {number} currentTime - Current playback time
-     * @returns {boolean} - Whether the song has finished
+     * @returns {boolean} - Whether the song has finished including outro
      */
     isSongFinished(currentTime) {
         const lastSentenceIndex = this.lyricsData.sentences.length - 1;
-        return currentTime >= this.calculateSentenceEndTime(lastSentenceIndex);
+        const songEndTime = this.calculateSentenceEndTime(lastSentenceIndex);
+        return currentTime >= (songEndTime + this.lyricsData.outro);
+    }
+
+    /**
+     * Check if lyrics have ended but outro is still playing
+     * @param {number} currentTime - Current playback time
+     * @returns {boolean} - Whether in outro period
+     */
+    isInOutroPeriod(currentTime) {
+        const lastSentenceIndex = this.lyricsData.sentences.length - 1;
+        const songEndTime = this.calculateSentenceEndTime(lastSentenceIndex);
+        return currentTime >= songEndTime && currentTime < (songEndTime + this.lyricsData.outro);
     }
 
     /**
@@ -257,11 +270,23 @@ class LyricsEngine {
             return;
         }
         
+        // Check if in outro period (lyrics finished but outro still playing)
+        if (this.isInOutroPeriod(currentTime)) {
+            const lastSentenceIndex = this.lyricsData.sentences.length - 1;
+            const songEndTime = this.calculateSentenceEndTime(lastSentenceIndex);
+            const outroRemaining = Math.ceil((songEndTime + this.lyricsData.outro) - currentTime);
+            
+            this.sentenceDisplay.innerHTML = `🎉 Great job singing along! 🎉<br>Song completed... ${outroRemaining}s`;
+            this.updateProgress(currentTime);
+            this.animationFrame = requestAnimationFrame(() => this.animate());
+            return;
+        }
+        
         // Find current sentence using lyrics engine (after delay)
         let sentenceIndex = this.findCurrentSentenceIndex(currentTime);
         
         if (sentenceIndex === -1 && this.isSongFinished(currentTime)) {
-            // Song finished - call stop callback if provided
+            // Song and outro finished - call stop callback if provided
             if (this.onStop) {
                 this.onStop();
             }
