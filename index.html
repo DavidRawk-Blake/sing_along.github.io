@@ -130,13 +130,18 @@
       button.addEventListener('touchstart', () => addPressedEffect(button), { passive: true });
     });
 
-    // Add keyboard support for rewind functionality
+    // Add keyboard support for rewind and skip functionality
     document.addEventListener('keydown', (event) => {
       if (event.key === 'ArrowLeft') {
         event.preventDefault(); // Prevent browser default behavior
         rewindFiveSeconds();
         addPressedEffect(document.getElementById('restartBtn')); // Visual feedback
         console.log('Left arrow key pressed - rewinding 5 seconds');
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault(); // Prevent browser default behavior
+        skipForwardFiveSeconds();
+        addPressedEffect(document.getElementById('playBtn')); // Visual feedback on play button
+        console.log('Right arrow key pressed - skipping forward 5 seconds');
       }
     });
 
@@ -171,6 +176,32 @@
     
     // Calculate new time (minimum 0 seconds)
     const newTime = Math.max(0, song1.currentTime - 5);
+    
+    // Set both audio tracks to new time
+    song1.currentTime = newTime;
+    song2.currentTime = newTime;
+    
+    // Brief pause before resuming (smoother transition)
+    setTimeout(() => {
+      // Resume playback
+      song1.play().catch(e => console.log('Song1 play error:', e));
+      song2.play().catch(e => console.log('Song2 play error:', e));
+      startLyrics();
+    }, 100); // 100ms pause for smooth transition
+  }
+
+  // Skip forward function for 5-second ahead functionality
+  function skipForwardFiveSeconds() {
+    console.log('Skipping forward 5 seconds');
+    
+    // Pause both songs first
+    song1.pause();
+    song2.pause();
+    pauseLyrics();
+    
+    // Calculate new time (with upper bounds checking)
+    const maxTime = Math.min(song1.duration || Infinity, song2.duration || Infinity);
+    const newTime = Math.min(maxTime, song1.currentTime + 5);
     
     // Set both audio tracks to new time
     song1.currentTime = newTime;
