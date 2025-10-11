@@ -64,6 +64,12 @@ class LyricsEngine {
         // State management
         this.currentSentenceIndex = 0;
         this.isPlaying = false;
+        
+        // Animation and timing state
+        this.startTime = 0;
+        this.animationFrame = null;
+        this.TIMING_OFFSET = 3; // 3-second delay before lyrics start
+        this.onStop = null; // Callback for when animation should stop
     }
 
     /**
@@ -163,6 +169,89 @@ class LyricsEngine {
      */
     getSentenceCount() {
         return this.lyricsData.sentences.length;
+    }
+
+    /**
+     * Main animation loop with timing offset and intro messages
+     */
+    animate() {
+        if (!this.isPlaying) return;
+
+        const currentTime = (this.audioPlayer.currentTime || (Date.now() - this.startTime) / 1000) - this.TIMING_OFFSET;
+        
+        // Handle intro period (first 3 seconds)
+        if (currentTime < 0) {
+            const remainingTime = Math.ceil(Math.abs(currentTime));
+            
+            if (remainingTime > 2) {
+                this.sentenceDisplay.innerHTML = '🎵 Get ready to sing along! 🎵<br>Starting in 3...';
+            } else if (remainingTime > 1) {
+                this.sentenceDisplay.innerHTML = '🎤 Ready? 🎤<br>Starting in 2...';
+            } else {
+                this.sentenceDisplay.innerHTML = '✨ Here we go! ✨<br>Starting in 1...';
+            }
+            
+            this.animationFrame = requestAnimationFrame(() => this.animate());
+            return;
+        }
+        
+        // Find current sentence using lyrics engine (after delay)
+        let sentenceIndex = this.findCurrentSentenceIndex(currentTime);
+        
+        if (sentenceIndex === -1 && this.isSongFinished(currentTime)) {
+            // Song finished - call stop callback if provided
+            if (this.onStop) {
+                this.onStop();
+            }
+            return;
+        }
+
+        if (sentenceIndex !== -1) {
+            this.currentSentenceIndex = sentenceIndex;
+            this.displaySentence(sentenceIndex, currentTime);
+        }
+        
+        this.updateProgress(currentTime);
+        this.animationFrame = requestAnimationFrame(() => this.animate());
+    }
+
+    /**
+     * Start the lyrics animation
+     * @param {Function} onStopCallback - Callback function to call when animation should stop
+     */
+    startAnimation(onStopCallback = null) {
+        this.isPlaying = true;
+        this.startTime = Date.now();
+        this.currentSentenceIndex = 0;
+        this.onStop = onStopCallback;
+        
+        // Show initial intro message
+        if (this.sentenceDisplay) {
+            this.sentenceDisplay.innerHTML = '🎵 Get ready to sing along! 🎵<br>Starting in 3...';
+        }
+        
+        this.animate();
+    }
+
+    /**
+     * Pause the lyrics animation
+     */
+    pauseAnimation() {
+        this.isPlaying = false;
+        if (this.animationFrame) {
+            cancelAnimationFrame(this.animationFrame);
+        }
+    }
+
+    /**
+     * Stop and reset the lyrics animation
+     */
+    stopAnimation() {
+        this.isPlaying = false;
+        if (this.animationFrame) {
+            cancelAnimationFrame(this.animationFrame);
+        }
+        this.reset();
     }
 
     /**

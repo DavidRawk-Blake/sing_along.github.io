@@ -91,12 +91,6 @@
   // Global variables for audio elements and lyrics
   let song1, song2;
   let lyricsEngine;
-  let isPlaying = false;
-  let startTime = 0;
-  let animationFrame = null;
-  
-  // Timing configuration
-  const TIMING_OFFSET = 3; // 3-second delay before lyrics start
 
   // Initialize when DOM is loaded
   document.addEventListener('DOMContentLoaded', function () {
@@ -135,76 +129,21 @@
     console.log('Audio controls initialized after DOM loaded');
   });
 
-  // Lyrics animation loop
-  function animateLyrics() {
-    if (!isPlaying) return;
 
-    const currentTime = (song1.currentTime || (Date.now() - startTime) / 1000) - TIMING_OFFSET;
-    
-    // Handle intro period (first 3 seconds)
-    if (currentTime < 0) {
-      const sentenceDisplay = document.getElementById('sentenceDisplay');
-      const remainingTime = Math.ceil(Math.abs(currentTime));
-      
-      if (remainingTime > 2) {
-        sentenceDisplay.innerHTML = '🎵 Get ready to sing along! 🎵<br>Starting in 3...';
-      } else if (remainingTime > 1) {
-        sentenceDisplay.innerHTML = '🎤 Ready? 🎤<br>Starting in 2...';
-      } else {
-        sentenceDisplay.innerHTML = '✨ Here we go! ✨<br>Starting in 1...';
-      }
-      
-      animationFrame = requestAnimationFrame(animateLyrics);
-      return;
-    }
-    
-    // Find current sentence using lyrics engine (after delay)
-    let sentenceIndex = lyricsEngine.findCurrentSentenceIndex(currentTime);
-    
-    if (sentenceIndex === -1 && lyricsEngine.isSongFinished(currentTime)) {
-      // Song finished
-      stopLyrics();
-      return;
-    }
-
-    if (sentenceIndex !== -1) {
-      lyricsEngine.updateState({ currentSentenceIndex: sentenceIndex });
-      lyricsEngine.displaySentence(sentenceIndex, currentTime);
-    }
-    
-    lyricsEngine.updateProgress(currentTime);
-    animationFrame = requestAnimationFrame(animateLyrics);
-  }
 
   // Start lyrics display
   function startLyrics() {
-    isPlaying = true;
-    startTime = Date.now();
-    lyricsEngine.updateState({ isPlaying: true, currentSentenceIndex: 0 });
-    
-    // Show initial intro message
-    const sentenceDisplay = document.getElementById('sentenceDisplay');
-    sentenceDisplay.innerHTML = '🎵 Get ready to sing along! 🎵<br>Starting in 3...';
-    
-    animateLyrics();
+    lyricsEngine.startAnimation(() => stopLyrics());
   }
 
   // Pause lyrics display
   function pauseLyrics() {
-    isPlaying = false;
-    lyricsEngine.updateState({ isPlaying: false });
-    if (animationFrame) {
-      cancelAnimationFrame(animationFrame);
-    }
+    lyricsEngine.pauseAnimation();
   }
 
   // Stop and reset lyrics display
   function stopLyrics() {
-    isPlaying = false;
-    lyricsEngine.reset();
-    if (animationFrame) {
-      cancelAnimationFrame(animationFrame);
-    }
+    lyricsEngine.stopAnimation();
   }
 
   // Global functions for onclick handlers
