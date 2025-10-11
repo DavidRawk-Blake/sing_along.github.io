@@ -72,14 +72,12 @@
     <div class="audio-player">
       <label for="song1">Song 1:</label>
       <audio id="song1" controls preload="auto">
-        <source src="song1.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
       </audio>
     </div>
     <div class="audio-player">
       <label for="song2">Song 2:</label>
       <audio id="song2" controls preload="auto">
-        <source src="song2.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
       </audio>
     </div>
@@ -95,6 +93,20 @@
   let song1, song2;
   let lyricsEngine;
 
+  // Helper function to determine MIME type from filename
+  function getMimeType(filename) {
+    const ext = filename.split('.').pop().toLowerCase();
+    switch(ext) {
+      case 'mp3': return 'audio/mpeg';
+      case 'wav': return 'audio/wav';
+      case 'ogg': return 'audio/ogg';
+      case 'm4a': return 'audio/mp4';
+      case 'aac': return 'audio/aac';
+      case 'flac': return 'audio/flac';
+      default: return 'audio/mpeg';
+    }
+  }
+
   // Initialize when DOM is loaded
   document.addEventListener('DOMContentLoaded', async function () {
     // Get references to audio elements
@@ -108,17 +120,28 @@
     const dataLoaded = await lyricsEngine.loadLyricsData();
     if (!dataLoaded) {
       console.warn('Failed to load lyrics data, using fallback');
+      // Set emergency fallback sources
+      song1.src = 'song1.mp3';
+      song2.src = 'song2.mp3';
+      console.log('Using emergency fallback audio sources');
       // Show error message in sentence display
       document.getElementById('sentenceDisplay').innerHTML = '⚠️ Failed to load lyrics data. Please refresh the page.';
     } else {
       // Set audio sources dynamically from loaded data
       if (lyricsEngine.lyricsData.song_1_source) {
         song1.src = lyricsEngine.lyricsData.song_1_source;
-        console.log(`Song 1 source set to: ${song1.src}`);
+        song1.type = getMimeType(lyricsEngine.lyricsData.song_1_source);
+        console.log(`Song 1 source set to: ${song1.src} (${song1.type})`);
+      } else {
+        console.error('No song_1_source found in lyrics data');
       }
+      
       if (lyricsEngine.lyricsData.song_2_source) {
         song2.src = lyricsEngine.lyricsData.song_2_source;
-        console.log(`Song 2 source set to: ${song2.src}`);
+        song2.type = getMimeType(lyricsEngine.lyricsData.song_2_source);
+        console.log(`Song 2 source set to: ${song2.src} (${song2.type})`);
+      } else {
+        console.error('No song_2_source found in lyrics data');
       }
       
       // Verify audio sources are accessible
@@ -146,6 +169,15 @@
       song2.currentTime = 0;
       console.log('Song2 ended and reset to beginning');
     });
+
+    // Add audio loading state listeners for debugging
+    song1.addEventListener('loadstart', () => console.log('Loading song 1...'));
+    song1.addEventListener('canplay', () => console.log('Song 1 ready to play'));
+    song1.addEventListener('error', (e) => console.error('Error loading song 1:', e));
+    
+    song2.addEventListener('loadstart', () => console.log('Loading song 2...'));
+    song2.addEventListener('canplay', () => console.log('Song 2 ready to play'));
+    song2.addEventListener('error', (e) => console.error('Error loading song 2:', e));
 
     // Add pressed effect to buttons on mouse/touch events
     const buttons = [document.getElementById('playBtn'), document.getElementById('pauseBtn'), document.getElementById('restartBtn')];
