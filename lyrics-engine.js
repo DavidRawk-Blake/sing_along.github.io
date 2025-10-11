@@ -4,73 +4,9 @@
  */
 
 class LyricsEngine {
-    constructor() {
-        // Lyrics data - now hardcoded to prevent loading failures
-        this.lyricsData = {
-            offset: 17,
-            outro: 3,
-            song_1_source: "song1.mp3",
-            song_2_source: "song2.mp3",
-            sentences: [
-                {
-                    words: [
-                        { text: "Twinkle", duration: 1.4, recognise: false },
-                        { text: "twinkle", duration: 1.4, recognise: false },
-                        { text: "little", duration: 1.3, recognise: true },
-                        { text: "star", duration: 2.0, recognise: false }
-                    ]
-                },
-                {
-                    words: [
-                        { text: "How", duration: 0.49, recognise: false },
-                        { text: "I", duration: 0.46, recognise: false },
-                        { text: "wonder", duration: 1.32, recognise: false },
-                        { text: "what", duration: 0.69, recognise: false },
-                        { text: "you", duration: 0.46, recognise: false },
-                        { text: "are", duration: 1.5, recognise: true }
-                    ]
-                },
-                {
-                    words: [
-                        { text: "", duration: 0.5, recognise: false },
-                        { text: "Up", duration: 0.75, recognise: false },
-                        { text: "above", duration: 1.2, recognise: false },
-                        { text: "the", duration: 0.6, recognise: true },
-                        { text: "world", duration: 0.6, recognise: false },
-                        { text: "so", duration: 0.7, recognise: false },
-                        { text: "high", duration: 1.8, recognise: false }
-                    ]
-                },
-                {
-                    words: [
-                        { text: "Like", duration: 0.6, recognise: false },
-                        { text: "a", duration: 0.7, recognise: false },
-                        { text: "diamond", duration: 1.3, recognise: true },
-                        { text: "in", duration: 0.4, recognise: false },
-                        { text: "the", duration: 0.8, recognise: true },
-                        { text: "sky", duration: 2.0, recognise: false }
-                    ]
-                },
-                {
-                    words: [
-                        { text: "Twinkle", duration: 1.2, recognise: false },
-                        { text: "twinkle", duration: 1.1, recognise: false },
-                        { text: "little", duration: 1.5, recognise: false },
-                        { text: "star", duration: 2.0, recognise: false }
-                    ]
-                },
-                {
-                    words: [
-                        { text: "How", duration: 0.49, recognise: false },
-                        { text: "I", duration: 0.46, recognise: false },
-                        { text: "wonder", duration: 1.32, recognise: true },
-                        { text: "what", duration: 0.69, recognise: false },
-                        { text: "you", duration: 0.46, recognise: false },
-                        { text: "are", duration: 3.0, recognise: false }
-                    ]
-                }
-            ]
-        };
+    constructor(lyricsData = null) {
+        // Accept external lyrics data or use global window.lyricsData
+        this.lyricsData = lyricsData || window.lyricsData;
 
         // State management
         this.currentSentenceIndex = 0;
