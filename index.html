@@ -53,8 +53,8 @@
     </div>
   </div>
 
-  <!-- Audio elements with native controls -->
-  <div class="audio-section">
+  <!-- Audio elements with native controls (hidden) -->
+  <div class="audio-section" style="display: none;">
     <h3>🎵 Audio Tracks</h3>
     <div class="audio-player">
       <label for="song1">Song 1:</label>
@@ -86,10 +86,15 @@
     song1 = document.getElementById('song1');
     song2 = document.getElementById('song2');
 
-    // Reset when song1 ends
+    // Reset when songs end
     song1.addEventListener('ended', () => {
       song1.currentTime = 0;
       console.log('Song1 ended and reset to beginning');
+    });
+
+    song2.addEventListener('ended', () => {
+      song2.currentTime = 0;
+      console.log('Song2 ended and reset to beginning');
     });
 
     // Add pressed effect to buttons on mouse/touch events
@@ -106,21 +111,25 @@
 
   // Global functions for onclick handlers
   function playAction() {
-    console.log('Playing song1.mp3');
+    console.log('Playing both songs simultaneously');
     song1.play().catch(e => console.log('Song1 play error:', e));
+    song2.play().catch(e => console.log('Song2 play error:', e));
     addPressedEffect(document.getElementById('playBtn'));
   }
 
   function pauseAction() {
-    console.log('Paused song1');
+    console.log('Paused both songs');
     song1.pause();
+    song2.pause();
     addPressedEffect(document.getElementById('pauseBtn'));
   }
 
   function restartAction() {
-    console.log('Stopped and reset song1');
+    console.log('Stopped and reset both songs');
     song1.pause();
+    song2.pause();
     song1.currentTime = 0;
+    song2.currentTime = 0;
     addPressedEffect(document.getElementById('restartBtn'));
   }
 
