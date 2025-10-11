@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kid's Wavy Picture Frame</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 30px;
+            background: linear-gradient(45deg, #FFE4E6, #E0E7FF, #F3E8FF, #FEF3C7);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease-in-out infinite;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .kids-frame-container {
+            position: relative;
+            padding: 40px;
+        }
+
+        .wavy-purple-frame {
+            width: 500px;
+            height: 350px;
+            position: relative;
+            background: #FFFFFF;
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(147, 51, 234, 0.3);
+        }
+
+        .wavy-border {
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            right: -15px;
+            bottom: -15px;
+            background: linear-gradient(135deg, #C084FC, #A855F7, #9333EA, #7C3AED, #DDD6FE);
+            border-radius: 35px;
+            z-index: -1;
+            animation: wiggle 3s ease-in-out infinite;
+        }
+
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(0.5deg) scale(1.01); }
+            50% { transform: rotate(-0.5deg) scale(1); }
+            75% { transform: rotate(0.3deg) scale(1.01); }
+        }
+
+        .wavy-border::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: linear-gradient(45deg, #8B5CF6, #C084FC, #DDD6FE, #A855F7);
+            border-radius: 45px;
+            z-index: -1;
+            clip-path: polygon(
+                0% 15%, 3% 8%, 8% 18%, 12% 5%, 18% 22%, 25% 8%, 30% 20%, 35% 12%, 
+                40% 25%, 45% 6%, 50% 20%, 55% 15%, 60% 28%, 65% 10%, 70% 22%, 75% 18%, 
+                80% 25%, 85% 12%, 90% 20%, 95% 8%, 100% 15%, 100% 85%, 95% 92%, 90% 82%, 
+                85% 95%, 80% 78%, 75% 88%, 70% 82%, 65% 92%, 60% 75%, 55% 88%, 50% 85%, 
+                45% 95%, 40% 78%, 35% 90%, 30% 82%, 25% 95%, 18% 80%, 12% 92%, 8% 85%, 
+                3% 92%, 0% 85%
+            );
+        }
+
+        .wavy-border::after {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            bottom: 5px;
+            background: linear-gradient(225deg, #F3E8FF, #E9D5FF, #DDD6FE, #C4B5FD);
+            border-radius: 25px;
+            z-index: -2;
+            opacity: 0.7;
+            clip-path: polygon(
+                0% 20%, 5% 12%, 12% 25%, 18% 8%, 25% 28%, 32% 15%, 38% 25%, 45% 10%, 
+                52% 30%, 58% 18%, 65% 25%, 72% 12%, 78% 28%, 85% 15%, 92% 22%, 100% 20%, 
+                100% 80%, 92% 88%, 85% 75%, 78% 92%, 72% 78%, 65% 85%, 58% 82%, 52% 90%, 
+                45% 75%, 38% 88%, 32% 80%, 25% 92%, 18% 78%, 12% 85%, 5% 88%, 0% 80%
+            );
+        }
+
+        .frame-content {
+            position: relative;
+            z-index: 1;
+            height: 100%;
+            padding: 30px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        h1 {
+            color: #7C3AED;
+            font-size: 2.2em;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 0px #DDD6FE;
+            transform: rotate(-2deg);
+        }
+
+        p {
+            color: #5B21B6;
+            font-size: 1.1em;
+            line-height: 1.5;
+            margin: 10px 0;
+            background: linear-gradient(45deg, #F3E8FF, #E9D5FF);
+            padding: 15px;
+            border-radius: 15px;
+            border: 3px dashed #A855F7;
+            transform: rotate(1deg);
+        }
+
+        .fun-decorations {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .star {
+            position: absolute;
+            color: #C084FC;
+            font-size: 20px;
+            animation: twinkle 2s ease-in-out infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1) rotate(0deg); }
+            50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
+        }
+
+        .star:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+        .star:nth-child(2) { top: 20%; right: 15%; animation-delay: 0.5s; }
+        .star:nth-child(3) { bottom: 25%; left: 12%; animation-delay: 1s; }
+        .star:nth-child(4) { bottom: 15%; right: 10%; animation-delay: 1.5s; }
+
+        .hearts {
+            position: absolute;
+            color: #F472B6;
+            font-size: 15px;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        .hearts:nth-child(5) { top: 30%; left: 5%; animation-delay: 0s; }
+        .hearts:nth-child(6) { top: 70%; right: 8%; animation-delay: 2s; }
+
+        .crayon-stroke {
+            position: absolute;
+            width: 60px;
+            height: 8px;
+            background: linear-gradient(45deg, #A855F7, #C084FC);
+            border-radius: 20px;
+            opacity: 0.6;
+            animation: draw 6s ease-in-out infinite;
+        }
+
+        @keyframes draw {
+            0%, 100% { transform: scaleX(0.5) rotate(0deg); opacity: 0.3; }
+            50% { transform: scaleX(1) rotate(2deg); opacity: 0.8; }
+        }
+
+        .crayon-stroke:nth-child(7) { 
+            top: 5%; 
+            left: 50%; 
+            transform-origin: left center;
+            animation-delay: 0s; 
+        }
+        .crayon-stroke:nth-child(8) { 
+            bottom: 8%; 
+            right: 40%; 
+            transform-origin: right center;
+            animation-delay: 3s; 
+        }
+    </style>
+</head>
+<body>
+    <div class="kids-frame-container">
+        <div class="wavy-purple-frame">
+            <div class="wavy-border"></div>
+            
+            <div class="frame-content">
+                <div class="fun-decorations">
+                    <div class="star">⭐</div>
+                    <div class="star">✨</div>
+                    <div class="star">🌟</div>
+                    <div class="star">⭐</div>
+                    <div class="hearts">💜</div>
+                    <div class="hearts">💖</div>
+                    <div class="crayon-stroke"></div>
+                    <div class="crayon-stroke"></div>
+                </div>
+                
+                <h1>My Fun Picture Frame!</h1>
+                <p>This is a super cool wavy purple picture frame that looks like it was made just for kids! The wiggly borders and fun colors make everything inside look extra special! ✨🎨</p>
+                <p style="font-size: 0.9em; transform: rotate(-1deg);">
+                    Put your favorite drawings, photos, or messages in here! 🖍️📸
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
