@@ -29,5 +29,24 @@ restartButton.addEventListener('click', () => {
 // Reset when song1 ends
 song1.addEventListener('ended', () => {
     song1.currentTime = 0;
-    console.log('Song1 finished and reset');
+    console.log('Song1 ended and reset to beginning');
+});
+
+// Add pressed effect functionality for better visual feedback
+function addPressedEffect(button) {
+    button.classList.add('pressed');
+    
+    // Remove pressed class after short delay
+    setTimeout(() => {
+        button.classList.remove('pressed');
+    }, 150);
+}
+
+// Add pressed effect to all buttons
+[playButton, pauseButton, restartButton].forEach(button => {
+    // Handle mouse events
+    button.addEventListener('mousedown', () => addPressedEffect(button));
+    
+    // Handle touch events for mobile devices
+    button.addEventListener('touchstart', () => addPressedEffect(button), { passive: true });
 });

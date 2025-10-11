@@ -222,18 +222,53 @@ body {
 
 .control-button:active {
     transform: scale(0.95);
+    box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .play-button:hover {
     background: #228B22;
 }
 
+.play-button:active {
+    background: #1F5F1F;
+    box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
 .pause-button:hover {
     background: #FFA500;
 }
 
+.pause-button:active {
+    background: #CC8400;
+    box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
 .restart-button:hover {
     background: #1E90FF;
+}
+
+.restart-button:active {
+    background: #1873CC;
+    box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Additional pressed class for JavaScript-triggered effects */
+.control-button.pressed {
+    transform: scale(0.90);
+    box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3);
+    transition: all 0.1s ease-out;
+}
+
+.play-button.pressed {
+    background: #1A5A1A;
+}
+
+.pause-button.pressed {
+    background: #B8770A;
+}
+
+.restart-button.pressed {
+    background: #146BB3;
 }
 
 .frame-content {
