@@ -23,10 +23,10 @@ class LyricsEngine {
                     words: [
                         { text: "How", duration: 0.69 },
                         { text: "I", duration: 0.46 },
-                        { text: "wonder", duration: 0.92 },
+                        { text: "wonder", duration: 1.32 },
                         { text: "what", duration: 0.69 },
                         { text: "you", duration: 0.46 },
-                        { text: "are", duration: 0.23 }
+                        { text: "are", duration: 2.0 }
                     ]
                 },
                 {

@@ -60,7 +60,7 @@
         <div class="media-controls">
           <button id="playBtn" class="control-button play-button" onclick="playAction()" title="Play">▶</button>
           <button id="pauseBtn" class="control-button pause-button" onclick="pauseAction()" title="Pause">⏸</button>
-          <button id="restartBtn" class="control-button restart-button" onclick="restartAction()" title="Restart">⏮</button>
+          <button id="restartBtn" class="control-button restart-button" onclick="restartAction()" title="Rewind 5 seconds (or press ← key)">⏪</button>
         </div>
       </div>
     </div>
@@ -130,6 +130,16 @@
       button.addEventListener('touchstart', () => addPressedEffect(button), { passive: true });
     });
 
+    // Add keyboard support for rewind functionality
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault(); // Prevent browser default behavior
+        rewindFiveSeconds();
+        addPressedEffect(document.getElementById('restartBtn')); // Visual feedback
+        console.log('Left arrow key pressed - rewinding 5 seconds');
+      }
+    });
+
     console.log('Audio controls initialized after DOM loaded');
   });
 
@@ -150,6 +160,31 @@
     lyricsEngine.stopAnimation();
   }
 
+  // Rewind function for 5-second back functionality
+  function rewindFiveSeconds() {
+    console.log('Rewinding 5 seconds');
+    
+    // Pause both songs first
+    song1.pause();
+    song2.pause();
+    pauseLyrics();
+    
+    // Calculate new time (minimum 0 seconds)
+    const newTime = Math.max(0, song1.currentTime - 5);
+    
+    // Set both audio tracks to new time
+    song1.currentTime = newTime;
+    song2.currentTime = newTime;
+    
+    // Brief pause before resuming (smoother transition)
+    setTimeout(() => {
+      // Resume playback
+      song1.play().catch(e => console.log('Song1 play error:', e));
+      song2.play().catch(e => console.log('Song2 play error:', e));
+      startLyrics();
+    }, 100); // 100ms pause for smooth transition
+  }
+
   // Global functions for onclick handlers
   function playAction() {
     console.log('Playing both songs simultaneously with lyrics');
@@ -168,12 +203,7 @@
   }
 
   function restartAction() {
-    console.log('Stopped and reset both songs and lyrics');
-    song1.pause();
-    song2.pause();
-    song1.currentTime = 0;
-    song2.currentTime = 0;
-    stopLyrics();
+    rewindFiveSeconds();
     addPressedEffect(document.getElementById('restartBtn'));
   }
 
