@@ -377,12 +377,12 @@
 
         // Check if spoken word matches the currently highlighted word
         function checkWordMatch(transcript) {
-            if (!isPlaying || currentSentenceIndex >= lyricsData.sentences.length) return;
+            if (!isPlaying || currentSentenceIndex >= lyricsEngine.getSentenceCount()) return;
             
             const currentTime = (audioPlayer.currentTime || (Date.now() - startTime) / 1000) - TIMING_OFFSET;
             if (currentTime < 0) return; // Don't process if still in offset period
             
-            const sentence = lyricsData.sentences[currentSentenceIndex];
+            const sentence = lyricsEngine.lyricsData.sentences[currentSentenceIndex];
             
             // Find currently highlighted word
             const currentWord = sentence.words.find(word => {
