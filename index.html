@@ -142,6 +142,10 @@
         skipForwardFiveSeconds();
         addPressedEffect(document.getElementById('playBtn')); // Visual feedback on play button
         console.log('Right arrow key pressed - skipping forward 5 seconds');
+      } else if (event.code === 'Space') {
+        event.preventDefault(); // Prevent page scroll
+        togglePlayPause();
+        console.log('Spacebar pressed - toggling play/pause');
       }
     });
 
@@ -231,6 +235,18 @@
     song2.pause();
     pauseLyrics();
     addPressedEffect(document.getElementById('pauseBtn'));
+  }
+
+  function togglePlayPause() {
+    // Check if songs are currently playing by checking paused state
+    // Both songs should be in sync, so checking song1 is sufficient
+    if (song1.paused) {
+      // Currently paused, so play
+      playAction();
+    } else {
+      // Currently playing, so pause
+      pauseAction();
+    }
   }
 
   function restartAction() {
