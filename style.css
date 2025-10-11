@@ -172,22 +172,23 @@ body {
 }
 
 .control-button {
-    width: 50pt;
-    height: 50pt;
+    width: 80pt;
+    height: 80pt;
     border-radius: 50%;
-    border: 3px solid #003366;
+    border: 8px solid #7ebfff;
     background: rgba(255, 255, 255, 0.9);
     color: white;
-    font-size: 18px;
+    font-size: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 12px #399cff;
     transition: all 0.2s ease;
 }
 
 .play-button {
+    padding-left: 10pt;
     background: #32CD32;
     color: white;
 }
