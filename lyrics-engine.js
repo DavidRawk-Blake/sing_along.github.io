@@ -11,7 +11,6 @@ class LyricsEngine {
             sentences: [
                 {
                     text: "Twinkle twinkle little star",
-                    startTime: 0,
                     words: [
                         { text: "Twinkle", duration: 1.4 },
                         { text: "twinkle", duration: 1.3 },
@@ -21,7 +20,6 @@ class LyricsEngine {
                 },
                 {
                     text: "How I wonder what you are",
-                    startTime: 4,
                     words: [
                         { text: "How", duration: 0.6 },
                         { text: "I", duration: 0.4 },
@@ -33,7 +31,6 @@ class LyricsEngine {
                 },
                 {
                     text: "Up above the world so high",
-                    startTime: 8,
                     words: [
                         { text: "Up", duration: 0.6 },
                         { text: "above", duration: 0.8 },
@@ -45,7 +42,6 @@ class LyricsEngine {
                 },
                 {
                     text: "Like a diamond in the sky",
-                    startTime: 12,
                     words: [
                         { text: "Like", duration: 0.6 },
                         { text: "a", duration: 0.2 },
@@ -93,10 +89,11 @@ class LyricsEngine {
         }
 
         const sentence = this.lyricsData.sentences[sentenceIndex];
-        const relativeTime = currentTime - sentence.startTime;
+        const sentenceStartTime = this.calculateSentenceStartTime(sentenceIndex);
+        const relativeTime = currentTime - sentenceStartTime;
         
         // Check if this is early preview (1 second before first sentence)
-        const isEarlyPreview = sentenceIndex === 0 && currentTime < sentence.startTime;
+        const isEarlyPreview = sentenceIndex === 0 && currentTime < sentenceStartTime;
 
         let html = '';
         let cumulativeTime = 0; // Track cumulative duration to calculate word start times
@@ -134,7 +131,7 @@ class LyricsEngine {
         if (!this.progressFill) return;
 
         const totalDuration = Math.max(
-            ...this.lyricsData.sentences.map(s => this.calculateSentenceEndTime(s)),
+            ...this.lyricsData.sentences.map((s, index) => this.calculateSentenceEndTime(index)),
             (this.audioPlayer && this.audioPlayer.duration) || 16
         );
         const progress = (currentTime / totalDuration) * 100;
@@ -148,14 +145,16 @@ class LyricsEngine {
      */
     findCurrentSentenceIndex(currentTime) {
         // Check if we should show the first sentence early (1 second before start)
-        const firstSentence = this.lyricsData.sentences[0];
-        if (currentTime >= firstSentence.startTime - 1 && currentTime < firstSentence.startTime) {
+        const firstSentenceStartTime = this.calculateSentenceStartTime(0);
+        if (currentTime >= firstSentenceStartTime - 1 && currentTime < firstSentenceStartTime) {
             return 0; // Show first sentence early
         }
         
-        return this.lyricsData.sentences.findIndex(sentence => 
-            currentTime >= sentence.startTime && currentTime < this.calculateSentenceEndTime(sentence)
-        );
+        return this.lyricsData.sentences.findIndex((sentence, index) => {
+            const sentenceStartTime = this.calculateSentenceStartTime(index);
+            const sentenceEndTime = this.calculateSentenceEndTime(index);
+            return currentTime >= sentenceStartTime && currentTime < sentenceEndTime;
+        });
     }
 
     /**
@@ -164,8 +163,8 @@ class LyricsEngine {
      * @returns {boolean} - Whether the song has finished
      */
     isSongFinished(currentTime) {
-        const lastSentence = this.lyricsData.sentences[this.lyricsData.sentences.length - 1];
-        return currentTime >= this.calculateSentenceEndTime(lastSentence);
+        const lastSentenceIndex = this.lyricsData.sentences.length - 1;
+        return currentTime >= this.calculateSentenceEndTime(lastSentenceIndex);
     }
 
     /**
@@ -190,13 +189,40 @@ class LyricsEngine {
     }
 
     /**
-     * Calculate the end time of a sentence based on word durations
-     * @param {Object} sentence - Sentence object with words array
-     * @returns {number} - Calculated end time (startTime + total word duration)
+     * Calculate the start time of a sentence based on cumulative duration of previous sentences
+     * @param {number} sentenceIndex - Index of the sentence
+     * @returns {number} - Calculated start time
      */
-    calculateSentenceEndTime(sentence) {
-        const totalDuration = sentence.words.reduce((sum, word) => sum + word.duration, 0);
-        return sentence.startTime + totalDuration;
+    calculateSentenceStartTime(sentenceIndex) {
+        if (sentenceIndex === 0) return 0;
+        
+        let cumulativeTime = 0;
+        for (let i = 0; i < sentenceIndex; i++) {
+            const sentence = this.lyricsData.sentences[i];
+            cumulativeTime += sentence.words.reduce((sum, word) => sum + word.duration, 0);
+        }
+        return cumulativeTime;
+    }
+
+    /**
+     * Calculate the duration of a sentence based on word durations
+     * @param {Object} sentence - Sentence object with words array
+     * @returns {number} - Total duration of the sentence
+     */
+    calculateSentenceDuration(sentence) {
+        return sentence.words.reduce((sum, word) => sum + word.duration, 0);
+    }
+
+    /**
+     * Calculate the end time of a sentence based on its index
+     * @param {number} sentenceIndex - Index of the sentence
+     * @returns {number} - Calculated end time (startTime + duration)
+     */
+    calculateSentenceEndTime(sentenceIndex) {
+        const startTime = this.calculateSentenceStartTime(sentenceIndex);
+        const sentence = this.lyricsData.sentences[sentenceIndex];
+        const duration = this.calculateSentenceDuration(sentence);
+        return startTime + duration;
     }
 
     /**
