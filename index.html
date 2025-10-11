@@ -24,11 +24,7 @@
     <div class="wavy-purple-frame">
       <div class="wavy-border"></div>
       <div class="grass-field">
-        <div class="media-controls">
-          <button id="playBtn" class="control-button play-button" onclick="playAction()">▶</button>
-          <button id="pauseBtn" class="control-button pause-button" onclick="pauseAction()">⏸</button>
-          <button id="restartBtn" class="control-button restart-button" onclick="restartAction()">⏮</button>
-        </div>
+        
       </div>
 
       <div class="frame-content">
@@ -47,6 +43,12 @@
         <p style="font-size: 0.9em; transform: rotate(-1deg);">
           Put your favorite drawings, photos, or messages in here! 🖍️📸🎶
         </p>
+
+        <div class="media-controls">
+          <button id="playBtn" class="control-button play-button" onclick="playAction()" title="Play">▶</button>
+          <button id="pauseBtn" class="control-button pause-button" onclick="pauseAction()" title="Pause">⏸</button>
+          <button id="restartBtn" class="control-button restart-button" onclick="restartAction()" title="Restart">⏮</button>
+        </div>
       </div>
     </div>
   </div>

@@ -288,6 +288,9 @@
             ]
         };
 
+        // Timing configuration
+        const TIMING_OFFSET = 3; // 3-second delay before lyrics start
+
         // Application state
         let isPlaying = false;
         let startTime = 0;
@@ -376,7 +379,9 @@
         function checkWordMatch(transcript) {
             if (!isPlaying || currentSentenceIndex >= lyricsData.sentences.length) return;
             
-            const currentTime = audioPlayer.currentTime || (Date.now() - startTime) / 1000;
+            const currentTime = (audioPlayer.currentTime || (Date.now() - startTime) / 1000) - TIMING_OFFSET;
+            if (currentTime < 0) return; // Don't process if still in offset period
+            
             const sentence = lyricsData.sentences[currentSentenceIndex];
             
             // Find currently highlighted word
@@ -444,7 +449,14 @@
         function animate() {
             if (!isPlaying) return;
 
-            const currentTime = audioPlayer.currentTime || (Date.now() - startTime) / 1000;
+            const currentTime = (audioPlayer.currentTime || (Date.now() - startTime) / 1000) - TIMING_OFFSET;
+            
+            // Don't show lyrics during offset period
+            if (currentTime < 0) {
+                sentenceDisplay.innerHTML = `Starting in ${Math.ceil(Math.abs(currentTime))}...`;
+                animationFrame = requestAnimationFrame(animate);
+                return;
+            }
             
             // Find current sentence
             let sentenceIndex = lyricsData.sentences.findIndex(sentence => 
