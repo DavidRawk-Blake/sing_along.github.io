@@ -231,62 +231,10 @@
 
     <audio id="audioPlayer" preload="auto"></audio>
 
+    <script src="lyrics-engine.js"></script>
     <script>
-        // Sample lyrics data with timestamps
-        const lyricsData = {
-            sentences: [
-                {
-                    text: "Twinkle twinkle little star",
-                    startTime: 0,
-                    endTime: 4,
-                    words: [
-                        { text: "Twinkle", startTime: 0, endTime: 0.8 },
-                        { text: "twinkle", startTime: 1, endTime: 1.8 },
-                        { text: "little", startTime: 2, endTime: 2.6 },
-                        { text: "star", startTime: 3, endTime: 4 }
-                    ]
-                },
-                {
-                    text: "How I wonder what you are",
-                    startTime: 4,
-                    endTime: 8,
-                    words: [
-                        { text: "How", startTime: 4, endTime: 4.6 },
-                        { text: "I", startTime: 4.8, endTime: 5.2 },
-                        { text: "wonder", startTime: 5.4, endTime: 6.2 },
-                        { text: "what", startTime: 6.4, endTime: 7 },
-                        { text: "you", startTime: 7.2, endTime: 7.6 },
-                        { text: "are", startTime: 7.8, endTime: 8 }
-                    ]
-                },
-                {
-                    text: "Up above the world so high",
-                    startTime: 8,
-                    endTime: 12,
-                    words: [
-                        { text: "Up", startTime: 8, endTime: 8.6 },
-                        { text: "above", startTime: 8.8, endTime: 9.6 },
-                        { text: "the", startTime: 9.8, endTime: 10.2 },
-                        { text: "world", startTime: 10.4, endTime: 11 },
-                        { text: "so", startTime: 11.2, endTime: 11.6 },
-                        { text: "high", startTime: 11.8, endTime: 12 }
-                    ]
-                },
-                {
-                    text: "Like a diamond in the sky",
-                    startTime: 12,
-                    endTime: 16,
-                    words: [
-                        { text: "Like", startTime: 12, endTime: 12.6 },
-                        { text: "a", startTime: 12.8, endTime: 13 },
-                        { text: "diamond", startTime: 13.2, endTime: 14 },
-                        { text: "in", startTime: 14.2, endTime: 14.6 },
-                        { text: "the", startTime: 14.8, endTime: 15.2 },
-                        { text: "sky", startTime: 15.4, endTime: 16 }
-                    ]
-                }
-            ]
-        };
+        // Initialize lyrics engine
+        const lyricsEngine = new LyricsEngine();
 
         // Timing configuration
         const TIMING_OFFSET = 3; // 3-second delay before lyrics start
@@ -310,6 +258,13 @@
         const progressFill = document.getElementById('progressFill');
         const speechIndicator = document.getElementById('speechIndicator');
         const audioFileInput = document.getElementById('audioFile');
+
+        // Initialize lyrics engine with DOM elements
+        lyricsEngine.initialize({
+            sentenceDisplay: sentenceDisplay,
+            progressFill: progressFill,
+            audioPlayer: audioPlayer
+        });
 
         // Initialize speech recognition
         function initSpeechRecognition() {
@@ -377,72 +332,22 @@
 
         // Check if spoken word matches the currently highlighted word
         function checkWordMatch(transcript) {
-            if (!isPlaying || currentSentenceIndex >= lyricsData.sentences.length) return;
+            if (!isPlaying || currentSentenceIndex >= lyricsEngine.getSentenceCount()) return;
             
             const currentTime = (audioPlayer.currentTime || (Date.now() - startTime) / 1000) - TIMING_OFFSET;
             if (currentTime < 0) return; // Don't process if still in offset period
             
-            const sentence = lyricsData.sentences[currentSentenceIndex];
-            
-            // Find currently highlighted word
-            const currentWord = sentence.words.find(word => {
-                const wordStart = word.startTime;
-                const wordEnd = word.endTime;
-                return currentTime >= wordStart && currentTime <= wordEnd;
-            });
-            
-            if (currentWord && transcript.includes(currentWord.text.toLowerCase())) {
-                console.log(`✓ Matched word: ${currentWord.text}`);
-                // Visual feedback for correct word
-                flashCorrectWord();
-            }
+            lyricsEngine.checkWordMatch(transcript, currentTime);
         }
 
-        // Flash effect for correct word recognition
-        function flashCorrectWord() {
-            const highlightedWord = document.querySelector('.word.highlighted');
-            if (highlightedWord) {
-                highlightedWord.style.background = 'rgba(46, 213, 115, 0.8)'; // Green flash
-                setTimeout(() => {
-                    highlightedWord.style.background = 'rgba(255, 255, 0, 0.8)'; // Back to yellow
-                }, 200);
-            }
-        }
-
-        // Display current sentence with word highlighting
+        // Display current sentence with word highlighting (delegated to lyrics engine)
         function displaySentence(sentenceIndex, currentTime) {
-            if (sentenceIndex >= lyricsData.sentences.length) {
-                sentenceDisplay.innerHTML = 'Song completed! 🎉';
-                return;
-            }
-
-            const sentence = lyricsData.sentences[sentenceIndex];
-            const relativeTime = currentTime - sentence.startTime;
-
-            let html = '';
-            sentence.words.forEach(word => {
-                const wordRelativeStart = word.startTime - sentence.startTime;
-                const wordRelativeEnd = word.endTime - sentence.startTime;
-                
-                let className = 'word';
-                if (relativeTime >= wordRelativeStart && relativeTime <= wordRelativeEnd) {
-                    className += ' highlighted';
-                }
-                
-                html += `<span class="${className}">${word.text}</span>`;
-            });
-
-            sentenceDisplay.innerHTML = html;
+            lyricsEngine.displaySentence(sentenceIndex, currentTime);
         }
 
-        // Update progress bar
+        // Update progress bar (delegated to lyrics engine) 
         function updateProgress(currentTime) {
-            const totalDuration = Math.max(
-                ...lyricsData.sentences.map(s => s.endTime),
-                audioPlayer.duration || 16
-            );
-            const progress = (currentTime / totalDuration) * 100;
-            progressFill.style.width = `${Math.min(progress, 100)}%`;
+            lyricsEngine.updateProgress(currentTime);
         }
 
         // Main animation loop
@@ -458,12 +363,10 @@
                 return;
             }
             
-            // Find current sentence
-            let sentenceIndex = lyricsData.sentences.findIndex(sentence => 
-                currentTime >= sentence.startTime && currentTime < sentence.endTime
-            );
+            // Find current sentence using lyrics engine
+            let sentenceIndex = lyricsEngine.findCurrentSentenceIndex(currentTime);
             
-            if (sentenceIndex === -1 && currentTime >= lyricsData.sentences[lyricsData.sentences.length - 1].endTime) {
+            if (sentenceIndex === -1 && lyricsEngine.isSongFinished(currentTime)) {
                 // Song finished
                 stop();
                 return;
@@ -485,6 +388,9 @@
             isPlaying = true;
             startTime = Date.now();
             currentSentenceIndex = 0;
+            
+            // Update lyrics engine state
+            lyricsEngine.updateState({ isPlaying: true, currentSentenceIndex: 0 });
             
             if (audioPlayer.src) {
                 audioPlayer.play().catch(e => console.error('Audio play error:', e));
@@ -522,11 +428,13 @@
             }
             
             currentSentenceIndex = 0;
+            
+            // Reset lyrics engine
+            lyricsEngine.updateState({ isPlaying: false, currentSentenceIndex: 0 });
+            lyricsEngine.reset();
+            
             startBtn.disabled = false;
             pauseBtn.disabled = true;
-            
-            sentenceDisplay.innerHTML = 'Click "Start" to begin your sing-along experience!';
-            progressFill.style.width = '0%';
             updateStatus('Ready to start');
         }
 
@@ -563,7 +471,7 @@
         updateStatus('Ready to start');
 
         // Display first sentence as preview
-        displaySentence(0, -1);
+        lyricsEngine.displaySentence(0, -1);
     </script>
 </body>
 </html>
