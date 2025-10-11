@@ -395,31 +395,3 @@ p {
 
 .hearts:nth-child(5) { top: 30%; left: 5%; animation-delay: 0s; }
 .hearts:nth-child(6) { top: 70%; right: 8%; animation-delay: 2s; }
-
-.crayon-stroke {
-    position: absolute;
-    width: 60px;
-    height: 8px;
-    background: linear-gradient(45deg, #A855F7, #C084FC);
-    border-radius: 20px;
-    opacity: 0.6;
-    animation: draw 6s ease-in-out infinite;
-}
-
-@keyframes draw {
-    0%, 100% { transform: scaleX(0.5) rotate(0deg); opacity: 0.3; }
-    50% { transform: scaleX(1) rotate(2deg); opacity: 0.8; }
-}
-
-.crayon-stroke:nth-child(7) { 
-    top: 5%; 
-    left: 50%; 
-    transform-origin: left center;
-    animation-delay: 0s; 
-}
-.crayon-stroke:nth-child(8) { 
-    bottom: 8%; 
-    right: 40%; 
-    transform-origin: right center;
-    animation-delay: 3s; 
-}
