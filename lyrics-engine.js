@@ -98,14 +98,21 @@ class LyricsEngine {
 
         const sentence = this.lyricsData.sentences[sentenceIndex];
         const relativeTime = currentTime - sentence.startTime;
+        
+        // Check if this is early preview (1 second before first sentence)
+        const isEarlyPreview = sentenceIndex === 0 && currentTime < sentence.startTime;
 
         let html = '';
         sentence.words.forEach(word => {
-            const wordRelativeStart = word.startTime - sentence.startTime;
-            const wordRelativeEnd = word.endTime - sentence.startTime;
+            // Apply 10% slowdown to word timing
+            const slowdownFactor = 1.1;
+            const wordRelativeStart = (word.startTime - sentence.startTime) * slowdownFactor;
+            const wordRelativeEnd = (word.endTime - sentence.startTime) * slowdownFactor;
             
             let className = 'word';
-            if (relativeTime >= wordRelativeStart && relativeTime <= wordRelativeEnd) {
+            
+            // Only highlight if not in early preview mode and timing is right
+            if (!isEarlyPreview && relativeTime >= wordRelativeStart && relativeTime <= wordRelativeEnd) {
                 className += ' highlighted';
             }
             
@@ -136,6 +143,12 @@ class LyricsEngine {
      * @returns {number} - Index of current sentence, or -1 if none found
      */
     findCurrentSentenceIndex(currentTime) {
+        // Check if we should show the first sentence early (1 second before start)
+        const firstSentence = this.lyricsData.sentences[0];
+        if (currentTime >= firstSentence.startTime - 1 && currentTime < firstSentence.startTime) {
+            return 0; // Show first sentence early
+        }
+        
         return this.lyricsData.sentences.findIndex(sentence => 
             currentTime >= sentence.startTime && currentTime < sentence.endTime
         );
