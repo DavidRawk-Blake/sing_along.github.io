@@ -20,31 +20,30 @@ class LyricsEngine {
     }
 
     /**
-     * Load lyrics data from JSON file
-     * @param {string} dataFile - Path to the JSON file (default: 'lyrics-data.json')
+     * Load lyrics data from the hardcoded lyrics-data.json file
      * @returns {Promise<boolean>} - True if loaded successfully, false otherwise
      */
-    async loadLyricsData(dataFile = 'lyrics-data.json') {
+    async loadLyricsData() {
         try {
-            const response = await fetch(dataFile);
+            const response = await fetch('lyrics-data.json');
             if (!response.ok) {
-                throw new Error(`Failed to load lyrics data: ${response.status} ${response.statusText}`);
+                throw new Error(`Failed to load lyrics-data.json: ${response.status} ${response.statusText}`);
             }
             
             const data = await response.json();
             
             // Validate data structure
             if (!this.validateLyricsData(data)) {
-                throw new Error('Invalid lyrics data structure');
+                throw new Error('Invalid lyrics data structure in lyrics-data.json');
             }
             
             this.lyricsData = data;
             this.isDataLoaded = true;
-            console.log('Lyrics data loaded successfully');
+            console.log('Lyrics data loaded successfully from lyrics-data.json');
             return true;
             
         } catch (error) {
-            console.error('Error loading lyrics data:', error);
+            console.error('Error loading lyrics-data.json:', error);
             
             // Fallback to minimal default data
             this.lyricsData = {
@@ -90,7 +89,7 @@ class LyricsEngine {
      */
     async verifyAudioSources() {
         if (!this.lyricsData) {
-            console.warn('No lyrics data available for audio verification');
+            console.warn('No lyrics data available from lyrics-data.json for audio verification');
             return false;
         }
         
