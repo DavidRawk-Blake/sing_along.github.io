@@ -25,12 +25,12 @@ class LyricsEngine {
                     startTime: 4,
                     endTime: 8,
                     words: [
-                        { text: "How", startTime: 4, endTime: 4.6 },
-                        { text: "I", startTime: 4.8, endTime: 5.2 },
-                        { text: "wonder", startTime: 5.4, endTime: 6.2 },
-                        { text: "what", startTime: 6.4, endTime: 7 },
-                        { text: "you", startTime: 7.2, endTime: 7.6 },
-                        { text: "are", startTime: 7.8, endTime: 8 }
+                        { text: "How", startTime: 0, endTime: 0.6 },
+                        { text: "I", startTime: 0.8, endTime: 1.2 },
+                        { text: "wonder", startTime: 1.4, endTime: 2.2 },
+                        { text: "what", startTime: 2.4, endTime: 3 },
+                        { text: "you", startTime: 3.2, endTime: 3.6 },
+                        { text: "are", startTime: 3.8, endTime: 4 }
                     ]
                 },
                 {
@@ -38,12 +38,12 @@ class LyricsEngine {
                     startTime: 8,
                     endTime: 12,
                     words: [
-                        { text: "Up", startTime: 8, endTime: 8.6 },
-                        { text: "above", startTime: 8.8, endTime: 9.6 },
-                        { text: "the", startTime: 9.8, endTime: 10.2 },
-                        { text: "world", startTime: 10.4, endTime: 11 },
-                        { text: "so", startTime: 11.2, endTime: 11.6 },
-                        { text: "high", startTime: 11.8, endTime: 12 }
+                        { text: "Up", startTime: 0, endTime: 0.6 },
+                        { text: "above", startTime: 0.8, endTime: 1.6 },
+                        { text: "the", startTime: 1.8, endTime: 2.2 },
+                        { text: "world", startTime: 2.4, endTime: 3 },
+                        { text: "so", startTime: 3.2, endTime: 3.6 },
+                        { text: "high", startTime: 3.8, endTime: 4 }
                     ]
                 },
                 {
@@ -51,12 +51,12 @@ class LyricsEngine {
                     startTime: 12,
                     endTime: 16,
                     words: [
-                        { text: "Like", startTime: 12, endTime: 12.6 },
-                        { text: "a", startTime: 12.8, endTime: 13 },
-                        { text: "diamond", startTime: 13.2, endTime: 14 },
-                        { text: "in", startTime: 14.2, endTime: 14.6 },
-                        { text: "the", startTime: 14.8, endTime: 15.2 },
-                        { text: "sky", startTime: 15.4, endTime: 16 }
+                        { text: "Like", startTime: 0, endTime: 0.6 },
+                        { text: "a", startTime: 0.8, endTime: 1 },
+                        { text: "diamond", startTime: 1.2, endTime: 2 },
+                        { text: "in", startTime: 2.2, endTime: 2.6 },
+                        { text: "the", startTime: 2.8, endTime: 3.2 },
+                        { text: "sky", startTime: 3.4, endTime: 4 }
                     ]
                 }
             ]
@@ -105,9 +105,10 @@ class LyricsEngine {
         let html = '';
         sentence.words.forEach(word => {
             // Apply 10% slowdown to word timing
+            // Words are now relative to sentence start (0), so use them directly
             const slowdownFactor = 1.1;
-            const wordRelativeStart = (word.startTime - sentence.startTime) * slowdownFactor;
-            const wordRelativeEnd = (word.endTime - sentence.startTime) * slowdownFactor;
+            const wordRelativeStart = word.startTime * slowdownFactor;
+            const wordRelativeEnd = word.endTime * slowdownFactor;
             
             let className = 'word';
             
