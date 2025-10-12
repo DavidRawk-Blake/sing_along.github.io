@@ -132,8 +132,8 @@
     lyricsEngine = new LyricsEngine();
     
     // Set audio sources directly from lyrics data (no loading needed)
-    if (lyricsEngine.lyricsData.song_1_source) {
-      song1.src = lyricsEngine.lyricsData.song_1_source;
+    if (lyricsEngine.lyricsData.song_source) {
+      song1.src = lyricsEngine.lyricsData.song_source;
       song1.type = AUDIO_MIME_TYPE;
       console.log(`Song 1 source set to: ${song1.src} (${AUDIO_MIME_TYPE})`);
     }
