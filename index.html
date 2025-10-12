@@ -1,386 +1,121 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sing Along</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sing Along Games</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            background: linear-gradient(45deg, #FFE4E6, #E0E7FF, #F3E8FF, #FEF3C7);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease-in-out infinite;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 60px 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(147, 51, 234, 0.3);
+            max-width: 600px;
+        }
+
+        h1 {
+            color: #7C3AED;
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .subtitle {
+            color: #6B46C1;
+            font-size: 1.3em;
+            margin-bottom: 40px;
+            font-weight: normal;
+        }
+
+        .game-link {
+            display: inline-block;
+            background: linear-gradient(45deg, #9333EA, #7C3AED);
+            color: white;
+            text-decoration: none;
+            padding: 20px 40px;
+            border-radius: 15px;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 20px;
+            box-shadow: 0 5px 15px rgba(147, 51, 234, 0.4);
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .game-link:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(147, 51, 234, 0.6);
+        }
+
+        .game-description {
+            color: #4C1D95;
+            margin-top: 30px;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        .musical-notes {
+            font-size: 2em;
+            margin: 20px 0;
+            opacity: 0.8;
+        }
+
+        .note {
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+            margin: 0 10px;
+        }
+
+        .note:nth-child(2) { animation-delay: 0.5s; }
+        .note:nth-child(3) { animation-delay: 1s; }
+        .note:nth-child(4) { animation-delay: 1.5s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
 </head>
-
 <body>
-  <!-- Timestamp Display for Debugging -->
-  <div id="timestampDisplay" class="timestamp-display">0.00s</div>
-  
-  <!-- Recognition Counter Display -->
-  <div id="recogniseCounter" class="recognise-counter">Recognize: 0 words</div>
-  
-  <div class="outside-notes">
-    <div class="floating-note">🎵</div>
-    <div class="floating-note">🎶</div>
-    <div class="floating-note">♪</div>
-    <div class="floating-note">♫</div>
-    <div class="floating-note">🎼</div>
-    <div class="floating-note">♬</div>
-    <div class="floating-note">🎤</div>
-    <div class="floating-note">🎧</div>
-  </div>
-
-  <div class="kids-frame-container">
-    <div class="wavy-purple-frame">
-      <div class="wavy-border"></div>
-      <div class="grass-field">
+    <div class="container">
+        <h1>🎵 Sing Along Games 🎵</h1>
+        <p class="subtitle">Choose your musical adventure!</p>
         
-      </div>
-
-      <div class="frame-content">
-        <h1>🎼 Lets Sing Along 🎼</h1>
-
-        <div class="fun-decorations">
-          <div class="musical-note">🎵</div>
-          <div class="musical-note">🎶</div>
-          <div class="musical-note">♪</div>
-          <div class="musical-note">♫</div>
-          <div class="hearts">💜</div>
-          <div class="hearts">💖</div>
-        </div>
-        <p style="font-size: 0.9em; transform: rotate(-1deg); height: 200pt;">This is where we could put some dancing animation. 🎨</p>
-        
-        <!-- Lyrics Display Area -->
-        <div class="lyrics-container">
-          <div id="sentenceDisplay" class="sentence-display">
-            Click "Play" to begin your sing-along experience! 🎤
-          </div>
-          <div class="progress-container">
-            <div id="progressFill" class="progress-fill"></div>
-          </div>
+        <div class="musical-notes">
+            <span class="note">🎤</span>
+            <span class="note">🎶</span>
+            <span class="note">🌟</span>
+            <span class="note">🎵</span>
         </div>
 
-        <div class="media-controls">
-          <button id="playBtn" class="control-button play-button" onclick="playAction()" title="Play">▶</button>
-          <button id="pauseBtn" class="control-button pause-button" onclick="pauseAction()" title="Pause">⏸</button>
-          <button id="restartBtn" class="control-button restart-button" onclick="restartAction()" title="Rewind 5 seconds (or press ← key)">⏪</button>
+        <a href="twinkletwinkle/index.html" class="game-link">
+            🌟 Twinkle Twinkle Little Star 🌟
+        </a>
+
+        <div class="game-description">
+            <p>Practice your singing with the classic children's song!</p>
+            <p>Features karaoke-style lyrics, timing, and recognition challenges.</p>
+            <p>Perfect for kids and anyone who loves to sing along! 🎤✨</p>
         </div>
-      </div>
     </div>
-  </div>
-
-  <!-- Audio elements with native controls (hidden) -->
-  <div class="audio-section" style="display: none;">
-    <h3>🎵 Audio Tracks</h3>
-    <div class="audio-player">
-      <label for="song1">Song 1:</label>
-      <audio id="song1" controls preload="auto">
-        Your browser does not support the audio element.
-      </audio>
-    </div>
-    <div class="audio-player">
-      <label for="song2">Song 2:</label>
-      <audio id="song2" controls preload="auto">
-        Your browser does not support the audio element.
-      </audio>
-    </div>
-  </div>
-
-
 </body>
-
-<!-- Lyrics Data Script -->
-<script>
-  // Global lyrics data - JSON payload format for better standardization
-  window.lyricsData = JSON.parse(`{
-    "offset": 17,
-    "outro": 3,
-    "song_1_source": "song1.mp3",
-    "song_2_source": "song2.mp3",
-    "sentences": [
-      {
-        "words": [
-          { "text": "Twinkle", "duration": 1.4, "recognise": false },
-          { "text": "twinkle", "duration": 1.4, "recognise": false },
-          { "text": "little", "duration": 1.3, "recognise": true },
-          { "text": "star", "duration": 2.0, "recognise": false }
-        ]
-      },
-      {
-        "words": [
-          { "text": "How", "duration": 0.49, "recognise": true },
-          { "text": "I", "duration": 0.46, "recognise": true },
-          { "text": "wonder", "duration": 1.32, "recognise": true },
-          { "text": "what", "duration": 0.69, "recognise": true },
-          { "text": "you", "duration": 0.46, "recognise": true },
-          { "text": "are", "duration": 2.0, "recognise": true }
-        ]
-      },
-      {
-        "words": [
-          { "text": "Up", "duration": 0.75, "recognise": true },
-          { "text": "above", "duration": 1.4, "recognise": true },
-          { "text": "the", "duration": 0.6, "recognise": true },
-          { "text": "world", "duration": 0.6, "recognise": true },
-          { "text": "so", "duration": 0.7, "recognise": true },
-          { "text": "high", "duration": 1.8, "recognise": false }
-        ]
-      },
-      {
-        "words": [
-          { "text": "Like", "duration": 0.6, "recognise": true },
-          { "text": "a", "duration": 0.7, "recognise": false },
-          { "text": "diamond", "duration": 1.3, "recognise": true },
-          { "text": "in", "duration": 0.4, "recognise": true },
-          { "text": "the", "duration": 0.8, "recognise": true },
-          { "text": "sky", "duration": 2.0, "recognise": true }
-        ]
-      },
-      {
-        "words": [
-          { "text": "Twinkle", "duration": 1.2, "recognise": false },
-          { "text": "twinkle", "duration": 1.1, "recognise": false },
-          { "text": "little", "duration": 1.5, "recognise": true },
-          { "text": "star", "duration": 2.0, "recognise": false }
-        ]
-      },
-      {
-        "words": [
-          { "text": "How", "duration": 0.49, "recognise": true },
-          { "text": "I", "duration": 0.46, "recognise": true },
-          { "text": "wonder", "duration": 1.32, "recognise": true },
-          { "text": "what", "duration": 0.69, "recognise": true },
-          { "text": "you", "duration": 0.46, "recognise": true },
-          { "text": "are", "duration": 3.0, "recognise": true }
-        ]
-      }
-    ]
-  }`);
-</script>
-
-<script src="lyrics-engine.js"></script>
-<script>
-  // Audio control functionality for the musical picture frame
-  // Global variables for audio elements and lyrics
-  let song1, song2;
-  let lyricsEngine;
-
-  // Audio MIME type constant (all songs are MP3)
-  const AUDIO_MIME_TYPE = 'audio/mpeg';
-
-  // Function to count and update recognition words display
-  function updateRecogniseCounter() {
-    let recogniseCount = 0;
-    
-    // Count all words with recognise: true in the lyrics data
-    if (window.lyricsData && window.lyricsData.sentences) {
-      window.lyricsData.sentences.forEach(sentence => {
-        sentence.words.forEach(word => {
-          if (word.recognise === true) {
-            recogniseCount++;
-          }
-        });
-      });
-    }
-    
-    // Update the counter display
-    const counterElement = document.getElementById('recogniseCounter');
-    if (counterElement) {
-      counterElement.textContent = `0/${recogniseCount}`;
-    }
-  }
-
-  // Initialize when DOM is loaded
-  document.addEventListener('DOMContentLoaded', function () {
-    // Get references to audio elements
-    song1 = document.getElementById('song1');
-    song2 = document.getElementById('song2');
-
-    // Initialize lyrics engine (data is now hardcoded, so this always succeeds)
-    lyricsEngine = new LyricsEngine();
-    
-    // Set audio sources directly from lyrics data (no loading needed)
-    if (lyricsEngine.lyricsData.song_1_source) {
-      song1.src = lyricsEngine.lyricsData.song_1_source;
-      song1.type = AUDIO_MIME_TYPE;
-      console.log(`Song 1 source set to: ${song1.src} (${AUDIO_MIME_TYPE})`);
-    }
-    
-    if (lyricsEngine.lyricsData.song_2_source) {
-      song2.src = lyricsEngine.lyricsData.song_2_source;
-      song2.type = AUDIO_MIME_TYPE;
-      console.log(`Song 2 source set to: ${song2.src} (${AUDIO_MIME_TYPE})`);
-    }
-    
-    // Initialize with DOM elements after data is loaded
-    lyricsEngine.initialize({
-      sentenceDisplay: document.getElementById('sentenceDisplay'),
-      progressFill: document.getElementById('progressFill'),
-      audioPlayer: song1, // Use song1 as primary for timing
-      timestampDisplay: document.getElementById('timestampDisplay')
-    });
-
-    // Update recognition counter display
-    updateRecogniseCounter();
-
-    // Reset when songs end
-    song1.addEventListener('ended', () => {
-      song1.currentTime = 0;
-      console.log('Song1 ended and reset to beginning');
-    });
-
-    song2.addEventListener('ended', () => {
-      song2.currentTime = 0;
-      console.log('Song2 ended and reset to beginning');
-    });
-
-    // Add audio loading state listeners for debugging
-    song1.addEventListener('loadstart', () => console.log('Loading song 1...'));
-    song1.addEventListener('canplay', () => console.log('Song 1 ready to play'));
-    song1.addEventListener('error', (e) => console.error('Error loading song 1:', e));
-    
-    song2.addEventListener('loadstart', () => console.log('Loading song 2...'));
-    song2.addEventListener('canplay', () => console.log('Song 2 ready to play'));
-    song2.addEventListener('error', (e) => console.error('Error loading song 2:', e));
-
-    // Add pressed effect to buttons on mouse/touch events
-    const buttons = [document.getElementById('playBtn'), document.getElementById('pauseBtn'), document.getElementById('restartBtn')];
-    buttons.forEach(button => {
-      // Handle mouse events
-      button.addEventListener('mousedown', () => addPressedEffect(button));
-      // Handle touch events for mobile devices
-      button.addEventListener('touchstart', () => addPressedEffect(button), { passive: true });
-    });
-
-    // Add keyboard support for rewind and skip functionality
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'ArrowLeft') {
-        event.preventDefault(); // Prevent browser default behavior
-        rewindFiveSeconds();
-        addPressedEffect(document.getElementById('restartBtn')); // Visual feedback
-        console.log('Left arrow key pressed - rewinding 5 seconds');
-      } else if (event.key === 'ArrowRight') {
-        event.preventDefault(); // Prevent browser default behavior
-        skipForwardFiveSeconds();
-        addPressedEffect(document.getElementById('playBtn')); // Visual feedback on play button
-        console.log('Right arrow key pressed - skipping forward 5 seconds');
-      } else if (event.code === 'Space') {
-        event.preventDefault(); // Prevent page scroll
-        togglePlayPause();
-        console.log('Spacebar pressed - toggling play/pause');
-      }
-    });
-
-    console.log('Audio controls initialized after DOM loaded');
-  });
-
-
-
-  // Start lyrics display
-  function startLyrics() {
-    lyricsEngine.startAnimation(() => stopLyrics());
-  }
-
-  // Pause lyrics display
-  function pauseLyrics() {
-    lyricsEngine.pauseAnimation();
-  }
-
-  // Stop and reset lyrics display
-  function stopLyrics() {
-    lyricsEngine.stopAnimation();
-  }
-
-  // Rewind function for 5-second back functionality
-  function rewindFiveSeconds() {
-    console.log('Rewinding 5 seconds');
-    
-    // Pause both songs first
-    song1.pause();
-    song2.pause();
-    pauseLyrics();
-    
-    // Calculate new time (minimum 0 seconds)
-    const newTime = Math.max(0, song1.currentTime - 5);
-    
-    // Set both audio tracks to new time
-    song1.currentTime = newTime;
-    song2.currentTime = newTime;
-    
-    // Brief pause before resuming (smoother transition)
-    setTimeout(() => {
-      // Resume playback
-      song1.play().catch(e => console.log('Song1 play error:', e));
-      song2.play().catch(e => console.log('Song2 play error:', e));
-      startLyrics();
-    }, 100); // 100ms pause for smooth transition
-  }
-
-  // Skip forward function for 5-second ahead functionality
-  function skipForwardFiveSeconds() {
-    console.log('Skipping forward 5 seconds');
-    
-    // Pause both songs first
-    song1.pause();
-    song2.pause();
-    pauseLyrics();
-    
-    // Calculate new time (with upper bounds checking)
-    const maxTime = Math.min(song1.duration || Infinity, song2.duration || Infinity);
-    const newTime = Math.min(maxTime, song1.currentTime + 5);
-    
-    // Set both audio tracks to new time
-    song1.currentTime = newTime;
-    song2.currentTime = newTime;
-    
-    // Brief pause before resuming (smoother transition)
-    setTimeout(() => {
-      // Resume playback
-      song1.play().catch(e => console.log('Song1 play error:', e));
-      song2.play().catch(e => console.log('Song2 play error:', e));
-      startLyrics();
-    }, 100); // 100ms pause for smooth transition
-  }
-
-  // Global functions for onclick handlers
-  function playAction() {
-    console.log('Playing both songs simultaneously with lyrics');
-    song1.play().catch(e => console.log('Song1 play error:', e));
-    song2.play().catch(e => console.log('Song2 play error:', e));
-    startLyrics();
-    addPressedEffect(document.getElementById('playBtn'));
-  }
-
-  function pauseAction() {
-    console.log('Paused both songs and lyrics');
-    song1.pause();
-    song2.pause();
-    pauseLyrics();
-    addPressedEffect(document.getElementById('pauseBtn'));
-  }
-
-  function togglePlayPause() {
-    // Check if songs are currently playing by checking paused state
-    // Both songs should be in sync, so checking song1 is sufficient
-    if (song1.paused) {
-      // Currently paused, so play
-      playAction();
-    } else {
-      // Currently playing, so pause
-      pauseAction();
-    }
-  }
-
-  function restartAction() {
-    rewindFiveSeconds();
-    addPressedEffect(document.getElementById('restartBtn'));
-  }
-
-  // Add pressed effect functionality for better visual feedback
-  function addPressedEffect(button) {
-    button.classList.add('pressed');
-
-    // Remove pressed class after short delay
-    setTimeout(() => {
-      button.classList.remove('pressed');
-    }, 150);
-  }
-</script>
-
 </html>
