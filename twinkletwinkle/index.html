@@ -74,14 +74,14 @@
   <div class="audio-section" style="display: none;">
     <h3>🎵 Audio Tracks</h3>
     <div class="audio-player">
-      <label for="song1">Song 1:</label>
-      <audio id="song1" controls preload="auto">
+      <label for="song">Song:</label>
+      <audio id="song" controls preload="auto">
         Your browser does not support the audio element.
       </audio>
     </div>
     <div class="audio-player">
-      <label for="song2">Song 2:</label>
-      <audio id="song2" controls preload="auto">
+      <label for="music">Music:</label>
+      <audio id="music" controls preload="auto">
         Your browser does not support the audio element.
       </audio>
     </div>
@@ -94,7 +94,7 @@
 <script>
   // Audio control functionality for the musical picture frame
   // Global variables for audio elements and lyrics
-  let song1, song2;
+  let song, music;
   let lyricsEngine;
 
   // Audio MIME type constant (all songs are MP3)
@@ -125,55 +125,56 @@
   // Initialize when DOM is loaded
   document.addEventListener('DOMContentLoaded', function () {
     // Get references to audio elements
-    song1 = document.getElementById('song1');
-    song2 = document.getElementById('song2');
+    song = document.getElementById('song');
+    music = document.getElementById('music');
 
     // Initialize lyrics engine (data is now hardcoded, so this always succeeds)
     lyricsEngine = new LyricsEngine();
     
     // Set audio sources directly from lyrics data (no loading needed)
     if (lyricsEngine.lyricsData.song_source) {
-      song1.src = lyricsEngine.lyricsData.song_source;
-      song1.type = AUDIO_MIME_TYPE;
-      console.log(`Song 1 source set to: ${song1.src} (${AUDIO_MIME_TYPE})`);
+      song.src = lyricsEngine.lyricsData.song_source;
+      song.type = AUDIO_MIME_TYPE;
+      console.log(`Song source set to: ${song.src} (${AUDIO_MIME_TYPE})`);
     }
     
     if (lyricsEngine.lyricsData.music_source) {
-      song2.src = lyricsEngine.lyricsData.music_source;
-      song2.type = AUDIO_MIME_TYPE;
-      console.log(`Song 2 source set to: ${song2.src} (${AUDIO_MIME_TYPE})`);
+      music.src = lyricsEngine.lyricsData.music_source;
+      music.type = AUDIO_MIME_TYPE;
+      console.log(`Music source set to: ${music.src} (${AUDIO_MIME_TYPE})`);
     }
     
     // Initialize with DOM elements after data is loaded
     lyricsEngine.initialize({
       sentenceDisplay: document.getElementById('sentenceDisplay'),
       progressFill: document.getElementById('progressFill'),
-      audioPlayer: song1, // Use song1 as primary for timing
-      timestampDisplay: document.getElementById('timestampDisplay')
+      audioPlayer: song, // Use song as primary for timing
+      timestampDisplay: document.getElementById('timestampDisplay'),
+      volumeDisplay: document.getElementById('volumeDisplay'),
+      songAudio: song,
+      musicAudio: music
     });
 
     // Update recognition counter display
     updateRecogniseCounter();
 
     // Reset when songs end
-    song1.addEventListener('ended', () => {
-      song1.currentTime = 0;
-      console.log('Song1 ended and reset to beginning');
+    song.addEventListener('ended', () => {
+      song.currentTime = 0;
+      console.log('Song ended and reset to beginning');
     });
-
-    song2.addEventListener('ended', () => {
-      song2.currentTime = 0;
-      console.log('Song2 ended and reset to beginning');
-    });
-
-    // Add audio loading state listeners for debugging
-    song1.addEventListener('loadstart', () => console.log('Loading song 1...'));
-    song1.addEventListener('canplay', () => console.log('Song 1 ready to play'));
-    song1.addEventListener('error', (e) => console.error('Error loading song 1:', e));
     
-    song2.addEventListener('loadstart', () => console.log('Loading song 2...'));
-    song2.addEventListener('canplay', () => console.log('Song 2 ready to play'));
-    song2.addEventListener('error', (e) => console.error('Error loading song 2:', e));
+    music.addEventListener('ended', () => {
+      music.currentTime = 0;
+      console.log('Music ended and reset to beginning');
+    });    // Add audio loading state listeners for debugging
+    song.addEventListener('loadstart', () => console.log('Loading song...'));
+    song.addEventListener('canplay', () => console.log('Song ready to play'));
+    song.addEventListener('error', (e) => console.error('Error loading song:', e));
+
+    music.addEventListener('loadstart', () => console.log('Loading music...'));
+    music.addEventListener('canplay', () => console.log('Music ready to play'));
+    music.addEventListener('error', (e) => console.error('Error loading music:', e));
 
     // Add pressed effect to buttons on mouse/touch events
     const buttons = [document.getElementById('playBtn'), document.getElementById('pauseBtn'), document.getElementById('restartBtn')];
@@ -228,22 +229,22 @@
     console.log('Rewinding 5 seconds');
     
     // Pause both songs first
-    song1.pause();
-    song2.pause();
+    song.pause();
+    music.pause();
     pauseLyrics();
     
     // Calculate new time (minimum 0 seconds)
-    const newTime = Math.max(0, song1.currentTime - 5);
+    const newTime = Math.max(0, song.currentTime - 5);
     
     // Set both audio tracks to new time
-    song1.currentTime = newTime;
-    song2.currentTime = newTime;
+    song.currentTime = newTime;
+    music.currentTime = newTime;
     
     // Brief pause before resuming (smoother transition)
     setTimeout(() => {
       // Resume playback
-      song1.play().catch(e => console.log('Song1 play error:', e));
-      song2.play().catch(e => console.log('Song2 play error:', e));
+      song.play().catch(e => console.log('Song play error:', e));
+      music.play().catch(e => console.log('Music play error:', e));
       startLyrics();
     }, 100); // 100ms pause for smooth transition
   }
@@ -253,23 +254,23 @@
     console.log('Skipping forward 5 seconds');
     
     // Pause both songs first
-    song1.pause();
-    song2.pause();
+    song.pause();
+    music.pause();
     pauseLyrics();
     
     // Calculate new time (with upper bounds checking)
-    const maxTime = Math.min(song1.duration || Infinity, song2.duration || Infinity);
-    const newTime = Math.min(maxTime, song1.currentTime + 5);
+    const maxTime = Math.min(song.duration || Infinity, music.duration || Infinity);
+    const newTime = Math.min(maxTime, song.currentTime + 5);
     
     // Set both audio tracks to new time
-    song1.currentTime = newTime;
-    song2.currentTime = newTime;
+    song.currentTime = newTime;
+    music.currentTime = newTime;
     
     // Brief pause before resuming (smoother transition)
     setTimeout(() => {
       // Resume playback
-      song1.play().catch(e => console.log('Song1 play error:', e));
-      song2.play().catch(e => console.log('Song2 play error:', e));
+      song.play().catch(e => console.log('Song play error:', e));
+      music.play().catch(e => console.log('Music play error:', e));
       startLyrics();
     }, 100); // 100ms pause for smooth transition
   }
@@ -277,24 +278,24 @@
   // Global functions for onclick handlers
   function playAction() {
     console.log('Playing both songs simultaneously with lyrics');
-    song1.play().catch(e => console.log('Song1 play error:', e));
-    song2.play().catch(e => console.log('Song2 play error:', e));
+    song.play().catch(e => console.log('Song play error:', e));
+    music.play().catch(e => console.log('Music play error:', e));
     startLyrics();
     addPressedEffect(document.getElementById('playBtn'));
   }
 
   function pauseAction() {
     console.log('Paused both songs and lyrics');
-    song1.pause();
-    song2.pause();
+    song.pause();
+    music.pause();
     pauseLyrics();
     addPressedEffect(document.getElementById('pauseBtn'));
   }
 
   function togglePlayPause() {
     // Check if songs are currently playing by checking paused state
-    // Both songs should be in sync, so checking song1 is sufficient
-    if (song1.paused) {
+    // Both songs should be in sync, so checking song is sufficient
+    if (song.paused) {
       // Currently paused, so play
       playAction();
     } else {

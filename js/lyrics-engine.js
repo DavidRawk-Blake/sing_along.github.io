@@ -31,6 +31,25 @@ class LyricsEngine {
         this.progressFill = elements.progressFill;
         this.audioPlayer = elements.audioPlayer;
         this.timestampDisplay = elements.timestampDisplay;
+        this.volumeDisplay = elements.volumeDisplay;
+        
+        // Initialize audio sources
+        this.songAudio = elements.songAudio;
+        this.musicAudio = elements.musicAudio;
+        
+        // Initialize volume settings
+        this.normalSongVolume = 1.0;  // 100% - default volume for song
+        this.recognitionSongVolume = 0.0;  // 0% - mute song during recognition
+        this.songVolume = this.normalSongVolume;
+        this.musicVolume = 1.0;  // Music always stays at 100%
+        
+        // Set initial volumes
+        if (this.songAudio) {
+            this.songAudio.volume = this.songVolume;
+        }
+        if (this.musicAudio) {
+            this.musicAudio.volume = this.musicVolume;
+        }
     }
 
     /**
@@ -234,7 +253,8 @@ class LyricsEngine {
         
         // Update timestamp display for debugging
         if (this.timestampDisplay) {
-            this.timestampDisplay.textContent = `${rawTime.toFixed(2)}s`;
+            const songVolumePercent = Math.round(this.songVolume * 100);
+            this.timestampDisplay.textContent = `${rawTime.toFixed(2)}s | Song: ${songVolumePercent}%`;
         }        // Handle intro period (offset duration)
         if (currentTime < 0) {
             const remainingTime = Math.ceil(Math.abs(currentTime));
@@ -266,7 +286,8 @@ class LyricsEngine {
             
             // Update timestamp display (no outro countdown shown)
             if (this.timestampDisplay) {
-                this.timestampDisplay.textContent = `${rawTime.toFixed(2)}s`;
+                const songVolumePercent = Math.round(this.songVolume * 100);
+                this.timestampDisplay.textContent = `${rawTime.toFixed(2)}s | Song: ${songVolumePercent}%`;
             }
             
             this.updateProgress(currentTime);
@@ -289,6 +310,10 @@ class LyricsEngine {
             this.currentSentenceIndex = sentenceIndex;
             this.displaySentence(sentenceIndex, currentTime);
         }
+        
+        // Check if any recognition word is currently highlighted
+        const isRecognitionActive = this.isRecognitionWordActive(currentTime);
+        this.updateVolume(isRecognitionActive);
         
         this.updateProgress(currentTime);
         this.animationFrame = requestAnimationFrame(() => this.animate());
@@ -331,6 +356,69 @@ class LyricsEngine {
             cancelAnimationFrame(this.animationFrame);
         }
         this.reset();
+    }
+
+    /**
+     * Check if any recognition word is currently being highlighted
+     * @param {number} currentTime - Current playback time
+     * @returns {boolean} - True if a recognition word is active
+     */
+    isRecognitionWordActive(currentTime) {
+        const sentenceIndex = this.findCurrentSentenceIndex(currentTime);
+        if (sentenceIndex === -1) return false;
+        
+        const sentence = this.lyricsData.sentences[sentenceIndex];
+        const sentenceStartTime = this.calculateSentenceStartTime(sentenceIndex);
+        const relativeTime = currentTime - sentenceStartTime;
+        
+        let cumulativeTime = 0;
+        
+        for (const word of sentence.words) {
+            if (!word.text || word.text.length === 0) {
+                cumulativeTime += word.duration;
+                continue;
+            }
+            
+            const slowdownFactor = 1.1;
+            const wordRelativeStart = cumulativeTime * slowdownFactor;
+            const wordRelativeEnd = (cumulativeTime + word.duration) * slowdownFactor;
+            
+            // Check if this word is currently highlighted and has recognise flag
+            if (relativeTime >= wordRelativeStart && relativeTime <= wordRelativeEnd && word.recognise) {
+                return true;
+            }
+            
+            cumulativeTime += word.duration;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Update volume based on recognition state
+     * @param {boolean} isRecognitionActive - Whether a recognition word is currently highlighted
+     */
+    updateVolume(isRecognitionActive) {
+        const targetSongVolume = isRecognitionActive ? this.recognitionSongVolume : this.normalSongVolume;
+        
+        // Only update song volume if it has changed
+        if (Math.abs(this.songVolume - targetSongVolume) > 0.01) {
+            this.songVolume = targetSongVolume;
+            
+            // Update song audio volume (song_source) if available
+            if (this.songAudio) {
+                this.songAudio.volume = this.songVolume;
+            }
+        }
+        
+        // Music volume always stays at 100% - no changes needed for musicAudio
+        
+        // Update volume display to show both values
+        if (this.volumeDisplay) {
+            const songPercent = Math.round(this.songVolume * 100);
+            const musicPercent = Math.round(this.musicVolume * 100);
+            this.volumeDisplay.textContent = `Song: ${songPercent}% | Music: ${musicPercent}%`;
+        }
     }
 
     /**
