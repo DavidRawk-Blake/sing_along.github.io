@@ -12,6 +12,9 @@
   <!-- Timestamp Display for Debugging -->
   <div id="timestampDisplay" class="timestamp-display">0.00s</div>
   
+  <!-- Recognition Counter Display -->
+  <div id="recogniseCounter" class="recognise-counter">Recognize: 0 words</div>
+  
   <div class="outside-notes">
     <div class="floating-note">🎵</div>
     <div class="floating-note">🎶</div>
@@ -161,6 +164,28 @@
   // Audio MIME type constant (all songs are MP3)
   const AUDIO_MIME_TYPE = 'audio/mpeg';
 
+  // Function to count and update recognition words display
+  function updateRecogniseCounter() {
+    let recogniseCount = 0;
+    
+    // Count all words with recognise: true in the lyrics data
+    if (window.lyricsData && window.lyricsData.sentences) {
+      window.lyricsData.sentences.forEach(sentence => {
+        sentence.words.forEach(word => {
+          if (word.recognise === true) {
+            recogniseCount++;
+          }
+        });
+      });
+    }
+    
+    // Update the counter display
+    const counterElement = document.getElementById('recogniseCounter');
+    if (counterElement) {
+      counterElement.textContent = `0/${recogniseCount}`;
+    }
+  }
+
   // Initialize when DOM is loaded
   document.addEventListener('DOMContentLoaded', function () {
     // Get references to audio elements
@@ -190,6 +215,9 @@
       audioPlayer: song1, // Use song1 as primary for timing
       timestampDisplay: document.getElementById('timestampDisplay')
     });
+
+    // Update recognition counter display
+    updateRecogniseCounter();
 
     // Reset when songs end
     song1.addEventListener('ended', () => {

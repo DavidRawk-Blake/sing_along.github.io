@@ -27,6 +27,23 @@ body {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Recognition Counter Display */
+.recognise-counter {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: rgba(147, 51, 234, 0.9);
+    color: white;
+    font-size: 12pt;
+    font-family: 'Courier New', monospace;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #9333ea;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(147, 51, 234, 0.3);
+    font-weight: bold;
+}
+
 @keyframes gradientShift {
     0%, 100% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
