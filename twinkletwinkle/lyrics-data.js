@@ -7,8 +7,8 @@
 window.lyricsData = {
     offset: 17,
     outro: 3,
-    song_source: "song1.mp3",
-    music_source: "music1.mp3",
+    song_source: "song.mp3",
+    music_source: "music.mp3",
     sentences: [
         {
             words: [
