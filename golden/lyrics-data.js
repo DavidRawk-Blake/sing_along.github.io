@@ -12,23 +12,26 @@ window.lyricsData = {
   sentences: [
     {
       words: [
+        { text: "I", duration: 0.4, recognise: false },
+        { text: "was", duration: 0.2, recognise: false },
+        { text: "a", duration: 0.15, recognise: false },
+        { text: "ghost,", duration: 0.42, recognise: true },
         { text: "I", duration: 0.2, recognise: false },
         { text: "was", duration: 0.2, recognise: false },
-        { text: "a", duration: 0.2, recognise: false },
-        { text: "ghost,", duration: 0.32, recognise: true },
-        { text: "I", duration: 0.2, recognise: false },
-        { text: "was", duration: 0.2, recognise: false },
-        { text: "alone", duration: 1.0, recognise: true },
+        { text: "alone", duration: 1.3, recognise: true },
       ],
     },
     {
       words: [
-        { text: "ha", duration: 1.3, recognise: true },
+        { text: "ha", duration: 0.3, recognise: false },
+        { text: "", duration: 1.5, recognise: false },
+        { text: "ha", duration: 0.3, recognise: false },
+        { text: "", duration: 2.3, recognise: false },
       ],
     },
     {
       words: [
-        { text: "Given", duration: 1.0, recognise: false },
+        { text: "Given", duration: 1.3, recognise: false },
         { text: "the", duration: 1.0, recognise: false },
         { text: "throne,", duration: 1.0, recognise: true },
         { text: "I", duration: 0.2, recognise: false },

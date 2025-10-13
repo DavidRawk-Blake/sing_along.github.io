@@ -31,25 +31,13 @@ class LyricsEngine {
         this.progressFill = elements.progressFill;
         this.audioPlayer = elements.audioPlayer;
         this.timestampDisplay = elements.timestampDisplay;
-        this.volumeDisplay = elements.volumeDisplay;
         
         // Initialize audio sources
-        this.songAudio = elements.songAudio;
-        this.musicAudio = elements.musicAudio;
+        this.songAudio = elements.songAudio;  // Voice/vocal track (can pause during recognition)
+        this.musicAudio = elements.musicAudio; // Background music (source of truth for timing)
         
-        // Initialize volume settings
-        this.normalSongVolume = 1.0;  // 100% - default volume for song
-        this.recognitionSongVolume = 0.0;  // 0% - mute song during recognition
-        this.songVolume = this.normalSongVolume;
-        this.musicVolume = 1.0;  // Music always stays at 100%
-        
-        // Set initial volumes
-        if (this.songAudio) {
-            this.songAudio.volume = this.songVolume;
-        }
-        if (this.musicAudio) {
-            this.musicAudio.volume = this.musicVolume;
-        }
+        // Track recognition state to detect changes
+        this.previousRecognitionState = false;
     }
 
     /**
@@ -122,7 +110,7 @@ class LyricsEngine {
 
         const totalDuration = Math.max(
             ...this.lyricsData.sentences.map((s, index) => this.calculateSentenceEndTime(index)),
-            (this.audioPlayer && this.audioPlayer.duration) || 16
+            (this.musicAudio && this.musicAudio.duration) || 16
         );
         const progress = (currentTime / totalDuration) * 100;
         this.progressFill.style.width = `${Math.min(progress, 100)}%`;
@@ -248,13 +236,12 @@ class LyricsEngine {
             return;
         }
         
-        const rawTime = this.audioPlayer.currentTime || (Date.now() - this.startTime) / 1000;
+        const rawTime = (this.musicAudio && this.musicAudio.currentTime) || (Date.now() - this.startTime) / 1000;
         const currentTime = rawTime - this.lyricsData.offset;
         
         // Update timestamp display for debugging
         if (this.timestampDisplay) {
-            const songVolumePercent = Math.round(this.songVolume * 100);
-            this.timestampDisplay.textContent = `${rawTime.toFixed(2)}s | Song: ${songVolumePercent}%`;
+            this.timestampDisplay.textContent = `${rawTime.toFixed(2)}s`;
         }        // Handle intro period (offset duration)
         if (currentTime < 0) {
             const remainingTime = Math.ceil(Math.abs(currentTime));
@@ -286,8 +273,7 @@ class LyricsEngine {
             
             // Update timestamp display (no outro countdown shown)
             if (this.timestampDisplay) {
-                const songVolumePercent = Math.round(this.songVolume * 100);
-                this.timestampDisplay.textContent = `${rawTime.toFixed(2)}s | Song: ${songVolumePercent}%`;
+                this.timestampDisplay.textContent = `${rawTime.toFixed(2)}s`;
             }
             
             this.updateProgress(currentTime);
@@ -313,7 +299,7 @@ class LyricsEngine {
         
         // Check if any recognition word is currently highlighted
         const isRecognitionActive = this.isRecognitionWordActive(currentTime);
-        this.updateVolume(isRecognitionActive);
+        this.pauseVoicePlayback(isRecognitionActive);
         
         this.updateProgress(currentTime);
         this.animationFrame = requestAnimationFrame(() => this.animate());
@@ -355,7 +341,100 @@ class LyricsEngine {
         if (this.animationFrame) {
             cancelAnimationFrame(this.animationFrame);
         }
+        // Reset audio sources to beginning
+        this.setCurrentTime(0);
         this.reset();
+    }
+
+    /**
+     * Set current time for both audio sources (song and music)
+     * @param {number} time - Time in seconds to set
+     */
+    setCurrentTime(time) {
+        if (this.songAudio) {
+            this.songAudio.currentTime = time;
+        }
+        if (this.musicAudio) {
+            this.musicAudio.currentTime = time;
+        }
+    }
+
+    /**
+     * Pause both audio sources and lyrics animation
+     */
+    pause() {
+        if (this.songAudio) {
+            this.songAudio.pause();
+        }
+        if (this.musicAudio) {
+            this.musicAudio.pause();
+        }
+        this.pauseAnimation();
+    }
+
+    /**
+     * Play both audio sources and start lyrics animation
+     * Synchronizes song with music before playing
+     */
+    play() {
+        // Synchronize song with music before playing
+        if (this.musicAudio && this.songAudio) {
+            this.setCurrentTime(this.musicAudio.currentTime);
+        }
+        
+        // Play both audio sources
+        if (this.songAudio) {
+            this.songAudio.play().catch(e => console.log('Song play error:', e));
+        }
+        if (this.musicAudio) {
+            this.musicAudio.play().catch(e => console.log('Music play error:', e));
+        }
+        
+        // Start lyrics animation
+        this.startAnimation();
+    }
+
+    /**
+     * Toggle between play and pause states
+     * Uses music audio paused state to determine current state (music is timing authority)
+     */
+    togglePlayback() {
+        // Check if currently paused by examining music audio state
+        // Music audio is the timing authority and source of truth
+        if (this.musicAudio && this.musicAudio.paused) {
+            // Currently paused, so play
+            this.play();
+        } else {
+            // Currently playing, so pause
+            this.pause();
+        }
+    }
+
+    /**
+     * Check if the music audio is currently paused
+     * @returns {boolean} - True if music is paused, false if playing or if no music audio
+     */
+    isPaused() {
+        // Music audio is the timing authority and source of truth for playback state
+        return this.musicAudio ? this.musicAudio.paused : true;
+    }
+
+    /**
+     * Get the current playback time from the music audio (timing authority)
+     * @returns {number} - Current time in seconds, or 0 if no music audio
+     */
+    getCurrentTime() {
+        // Music audio is the timing authority and source of truth for current time
+        return this.musicAudio ? this.musicAudio.currentTime : 0;
+    }
+
+    /**
+     * Get the duration of the music audio (timing authority)
+     * @returns {number} - Duration in seconds, or 0 if no music audio or not loaded
+     */
+    getDuration() {
+        // Music audio is the timing authority for duration
+        return this.musicAudio && this.musicAudio.duration ? this.musicAudio.duration : 0;
     }
 
     /**
@@ -395,29 +474,41 @@ class LyricsEngine {
     }
 
     /**
-     * Update volume based on recognition state
+     * Pause voice playback based on recognition state
      * @param {boolean} isRecognitionActive - Whether a recognition word is currently highlighted
      */
-    updateVolume(isRecognitionActive) {
-        const targetSongVolume = isRecognitionActive ? this.recognitionSongVolume : this.normalSongVolume;
-        
-        // Only update song volume if it has changed
-        if (Math.abs(this.songVolume - targetSongVolume) > 0.01) {
-            this.songVolume = targetSongVolume;
-            
-            // Update song audio volume (song_source) if available
+    pauseVoicePlayback(isRecognitionActive) {
+        // Only change playback state when recognition state actually changes
+        if (isRecognitionActive !== this.previousRecognitionState) {
             if (this.songAudio) {
-                this.songAudio.volume = this.songVolume;
+                if (isRecognitionActive) {
+                    // Pause song during recognition words
+                    if (!this.songAudio.paused) {
+                        this.songAudio.pause();
+                        console.log('Song paused for recognition word');
+                    }
+                } else {
+                    // Resume song when recognition word ends
+                    if (this.songAudio.paused && this.musicAudio && !this.musicAudio.paused) {
+                        try {
+                            // Synchronize song timestamp with music before resuming
+                            const musicTime = this.musicAudio.currentTime;
+                            this.setCurrentTime(musicTime); // Synchronize both audio sources
+                            // Only resume if music is still playing (main playback is active)
+                            this.songAudio.play().catch(e => console.log('Song resume error:', e));
+                            this.musicAudio.play().catch(e => console.log('Music resume error:', e));
+                            console.log(`Song resumed after recognition word, synchronized to music timestamp: ${musicTime.toFixed(2)}s`);
+                        } catch (e) {
+                            console.error('Error synchronizing song with music:', e);
+                            // Still try to resume even if sync fails
+                            this.songAudio.play().catch(e => console.log('Song resume error:', e));
+                        }
+                    }
+                }
             }
-        }
-        
-        // Music volume always stays at 100% - no changes needed for musicAudio
-        
-        // Update volume display to show both values
-        if (this.volumeDisplay) {
-            const songPercent = Math.round(this.songVolume * 100);
-            const musicPercent = Math.round(this.musicVolume * 100);
-            this.volumeDisplay.textContent = `Song: ${songPercent}% | Music: ${musicPercent}%`;
+            
+            // Update previous state
+            this.previousRecognitionState = isRecognitionActive;
         }
     }
 
@@ -427,6 +518,7 @@ class LyricsEngine {
     reset() {
         this.currentSentenceIndex = 0;
         this.isPlaying = false;
+        this.previousRecognitionState = false; // Reset recognition state
         if (this.sentenceDisplay) {
             this.sentenceDisplay.innerHTML = 'Click "Start" to begin your sing-along experience!';
         }

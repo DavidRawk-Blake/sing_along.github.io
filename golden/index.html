@@ -8,18 +8,20 @@
   <link rel="stylesheet" href="style.css">
   <script src="lyrics-data.js"></script>
   <script src="../js/lyrics-engine.js"></script>
+  <script src="../js/karaoke-controller.js"></script>
 </head>
 
 <body>
   <!-- Back Button -->
-  <button id="backBtn" class="control-button back-button" onclick="window.location.href='../index.html'" title="Back to Games">‹‹</button>
-  
+  <button id="backBtn" class="control-button back-button" onclick="window.location.href='../index.html'"
+    title="Back to Games">‹‹</button>
+
   <!-- Timestamp Display for Debugging -->
   <div id="timestampDisplay" class="timestamp-display">0.00s</div>
-  
+
   <!-- Recognition Counter Display -->
   <div id="recogniseCounter" class="recognise-counter">Recognize: 0 words</div>
-  
+
   <div class="outside-notes">
     <div class="floating-note">🎵</div>
     <div class="floating-note">🎶</div>
@@ -35,7 +37,7 @@
     <div class="wavy-purple-frame">
       <div class="wavy-border"></div>
       <div class="grass-field">
-        
+
       </div>
 
       <div class="frame-content">
@@ -49,8 +51,9 @@
           <div class="hearts">💜</div>
           <div class="hearts">💖</div>
         </div>
-        <p style="font-size: 0.9em; transform: rotate(-1deg); height: 200pt;">This is where we could put some dancing animation. 🎨</p>
-        
+        <p style="font-size: 0.9em; transform: rotate(-1deg); height: 200pt;">This is where we could put some dancing
+          animation. 🎨</p>
+
         <!-- Lyrics Display Area -->
         <div class="lyrics-container">
           <div id="sentenceDisplay" class="sentence-display">
@@ -64,259 +67,21 @@
         <div class="media-controls">
           <button id="playBtn" class="control-button play-button" onclick="playAction()" title="Play">▶</button>
           <button id="pauseBtn" class="control-button pause-button" onclick="pauseAction()" title="Pause">⏸</button>
-          <button id="restartBtn" class="control-button restart-button" onclick="restartAction()" title="Rewind 5 seconds (or press ← key)">⏪</button>
+          <button id="restartBtn" class="control-button restart-button" onclick="restartAction()"
+            title="Rewind 5 seconds (or press ← key)">⏪</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Audio elements with native controls (hidden) -->
-  <div class="audio-section" style="display: none;">
-    <h3>🎵 Audio Tracks</h3>
-    <div class="audio-player">
-      <label for="song">Song:</label>
-      <audio id="song" controls preload="auto">
-        Your browser does not support the audio element.
-      </audio>
-    </div>
-    <div class="audio-player">
-      <label for="music">Music:</label>
-      <audio id="music" controls preload="auto">
-        Your browser does not support the audio element.
-      </audio>
-    </div>
+  <!-- Audio elements (hidden) -->
+  <div style="display: none;">
+    <audio id="song" preload="auto">
+      Your browser does not support the audio element.
+    </audio>
+    <audio id="music" preload="auto">
+      Your browser does not support the audio element.
+    </audio>
   </div>
-
-
 </body>
-
-<!-- Load lyrics data first (eager loading) -->
-<script>
-  // Audio control functionality for the musical picture frame
-  // Global variables for audio elements and lyrics
-  let song, music;
-  let lyricsEngine;
-
-  // Audio MIME type constant (all songs are MP3)
-  const AUDIO_MIME_TYPE = 'audio/mpeg';
-
-  // Function to count and update recognition words display
-  function updateRecogniseCounter() {
-    let recogniseCount = 0;
-    
-    // Count all words with recognise: true in the lyrics data
-    if (window.lyricsData && window.lyricsData.sentences) {
-      window.lyricsData.sentences.forEach(sentence => {
-        sentence.words.forEach(word => {
-          if (word.recognise === true) {
-            recogniseCount++;
-          }
-        });
-      });
-    }
-    
-    // Update the counter display
-    const counterElement = document.getElementById('recogniseCounter');
-    if (counterElement) {
-      counterElement.textContent = `0/${recogniseCount}`;
-    }
-  }
-
-  // Initialize when DOM is loaded
-  document.addEventListener('DOMContentLoaded', function () {
-    // Get references to audio elements
-    song = document.getElementById('song');
-    music = document.getElementById('music');
-
-    // Initialize lyrics engine (data is now hardcoded, so this always succeeds)
-    lyricsEngine = new LyricsEngine();
-    
-    // Set audio sources directly from lyrics data (no loading needed)
-    if (lyricsEngine.lyricsData.song_source) {
-      song.src = lyricsEngine.lyricsData.song_source;
-      song.type = AUDIO_MIME_TYPE;
-      console.log(`Song source set to: ${song.src} (${AUDIO_MIME_TYPE})`);
-    }
-    
-    if (lyricsEngine.lyricsData.music_source) {
-      music.src = lyricsEngine.lyricsData.music_source;
-      music.type = AUDIO_MIME_TYPE;
-      console.log(`Music source set to: ${music.src} (${AUDIO_MIME_TYPE})`);
-    }
-    
-    // Initialize with DOM elements after data is loaded
-    lyricsEngine.initialize({
-      sentenceDisplay: document.getElementById('sentenceDisplay'),
-      progressFill: document.getElementById('progressFill'),
-      audioPlayer: song, // Use song as primary for timing
-      timestampDisplay: document.getElementById('timestampDisplay')
-    });
-
-    // Update recognition counter display
-    updateRecogniseCounter();
-
-    // Reset when songs end
-    song.addEventListener('ended', () => {
-      song.currentTime = 0;
-      console.log('Song ended and reset to beginning');
-    });
-
-    music.addEventListener('ended', () => {
-      music.currentTime = 0;
-      console.log('Music ended and reset to beginning');
-    });
-
-    // Add audio loading state listeners for debugging
-    song.addEventListener('loadstart', () => console.log('Loading song 1...'));
-    song.addEventListener('canplay', () => console.log('Song ready to play'));
-    song.addEventListener('error', (e) => console.error('Error loading song 1:', e));
-    
-    music.addEventListener('loadstart', () => console.log('Loading song 2...'));
-    music.addEventListener('canplay', () => console.log('Music ready to play'));
-    music.addEventListener('error', (e) => console.error('Error loading song 2:', e));
-
-    // Add pressed effect to buttons on mouse/touch events
-    const buttons = [document.getElementById('playBtn'), document.getElementById('pauseBtn'), document.getElementById('restartBtn')];
-    buttons.forEach(button => {
-      // Handle mouse events
-      button.addEventListener('mousedown', () => addPressedEffect(button));
-      // Handle touch events for mobile devices
-      button.addEventListener('touchstart', () => addPressedEffect(button), { passive: true });
-    });
-
-    // Add keyboard support for rewind and skip functionality
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'ArrowLeft') {
-        event.preventDefault(); // Prevent browser default behavior
-        rewindFiveSeconds();
-        addPressedEffect(document.getElementById('restartBtn')); // Visual feedback
-        console.log('Left arrow key pressed - rewinding 5 seconds');
-      } else if (event.key === 'ArrowRight') {
-        event.preventDefault(); // Prevent browser default behavior
-        skipForwardFiveSeconds();
-        addPressedEffect(document.getElementById('playBtn')); // Visual feedback on play button
-        console.log('Right arrow key pressed - skipping forward 5 seconds');
-      } else if (event.code === 'Space') {
-        event.preventDefault(); // Prevent page scroll
-        togglePlayPause();
-        console.log('Spacebar pressed - toggling play/pause');
-      }
-    });
-
-    console.log('Audio controls initialized after DOM loaded');
-  });
-
-
-
-  // Start lyrics display
-  function startLyrics() {
-    lyricsEngine.startAnimation(() => stopLyrics());
-  }
-
-  // Pause lyrics display
-  function pauseLyrics() {
-    lyricsEngine.pauseAnimation();
-  }
-
-  // Stop and reset lyrics display
-  function stopLyrics() {
-    lyricsEngine.stopAnimation();
-  }
-
-  // Rewind function for 5-second back functionality
-  function rewindFiveSeconds() {
-    console.log('Rewinding 5 seconds');
-    
-    // Pause both songs first
-    song.pause();
-    music.pause();
-    pauseLyrics();
-    
-    // Calculate new time (minimum 0 seconds)
-    const newTime = Math.max(0, song.currentTime - 5);
-    
-    // Set both audio tracks to new time
-    song.currentTime = newTime;
-    music.currentTime = newTime;
-    
-    // Brief pause before resuming (smoother transition)
-    setTimeout(() => {
-      // Resume playback
-      song.play().catch(e => console.log('Song play error:', e));
-      music.play().catch(e => console.log('Music play error:', e));
-      startLyrics();
-    }, 100); // 100ms pause for smooth transition
-  }
-
-  // Skip forward function for 5-second ahead functionality
-  function skipForwardFiveSeconds() {
-    console.log('Skipping forward 5 seconds');
-    
-    // Pause both songs first
-    song.pause();
-    music.pause();
-    pauseLyrics();
-    
-    // Calculate new time (with upper bounds checking)
-    const maxTime = Math.min(song.duration || Infinity, music.duration || Infinity);
-    const newTime = Math.min(maxTime, song.currentTime + 5);
-    
-    // Set both audio tracks to new time
-    song.currentTime = newTime;
-    music.currentTime = newTime;
-    
-    // Brief pause before resuming (smoother transition)
-    setTimeout(() => {
-      // Resume playback
-      song.play().catch(e => console.log('Song play error:', e));
-      music.play().catch(e => console.log('Music play error:', e));
-      startLyrics();
-    }, 100); // 100ms pause for smooth transition
-  }
-
-  // Global functions for onclick handlers
-  function playAction() {
-    console.log('Playing both songs simultaneously with lyrics');
-    song.play().catch(e => console.log('Song play error:', e));
-    music.play().catch(e => console.log('Music play error:', e));
-    startLyrics();
-    addPressedEffect(document.getElementById('playBtn'));
-  }
-
-  function pauseAction() {
-    console.log('Paused both songs and lyrics');
-    song.pause();
-    music.pause();
-    pauseLyrics();
-    addPressedEffect(document.getElementById('pauseBtn'));
-  }
-
-  function togglePlayPause() {
-    // Check if songs are currently playing by checking paused state
-    // Both songs should be in sync, so checking song is sufficient
-    if (song.paused) {
-      // Currently paused, so play
-      playAction();
-    } else {
-      // Currently playing, so pause
-      pauseAction();
-    }
-  }
-
-  function restartAction() {
-    rewindFiveSeconds();
-    addPressedEffect(document.getElementById('restartBtn'));
-  }
-
-  // Add pressed effect functionality for better visual feedback
-  function addPressedEffect(button) {
-    button.classList.add('pressed');
-
-    // Remove pressed class after short delay
-    setTimeout(() => {
-      button.classList.remove('pressed');
-    }, 150);
-  }
-</script>
-
 </html>
