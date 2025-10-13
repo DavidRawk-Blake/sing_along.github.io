@@ -23,14 +23,14 @@
   <div id="recogniseCounter" class="recognise-counter">Recognize: 0 words</div>
 
   <div class="outside-notes">
-    <div class="floating-note">🎵</div>
-    <div class="floating-note">🎶</div>
-    <div class="floating-note">♪</div>
-    <div class="floating-note">♫</div>
-    <div class="floating-note">🎼</div>
-    <div class="floating-note">♬</div>
-    <div class="floating-note">🎤</div>
-    <div class="floating-note">🎧</div>
+    <div class="floating-note">🎉</div>
+    <div class="floating-note">🎉</div>
+    <div class="floating-note">💃</div>
+    <div class="floating-note">🕺</div>
+    <div class="floating-note">🎉</div>
+    <div class="floating-note">💃</div>
+    <div class="floating-note">🎉</div>
+    <div class="floating-note">🕺</div>
   </div>
 
   <div class="kids-frame-container">
@@ -41,15 +41,15 @@
       </div>
 
       <div class="frame-content">
-        <h1>� Golden - Lets Sing Along �</h1>
+        <h1>🌟 Golden - Lets Sing Along 🌟</h1>
 
         <div class="fun-decorations">
-          <div class="musical-note">🎵</div>
-          <div class="musical-note">🎶</div>
-          <div class="musical-note">♪</div>
-          <div class="musical-note">♫</div>
-          <div class="hearts">💜</div>
-          <div class="hearts">💖</div>
+          <div class="musical-note">🎉</div>
+          <div class="musical-note">🎉</div>
+          <div class="musical-note">💃</div>
+          <div class="musical-note">🕺</div>
+          <div class="hearts">🎉🎉</div>
+          <div class="hearts">💃</div>
         </div>
         <p style="font-size: 0.9em; transform: rotate(-1deg); height: 200pt;">This is where we could put some dancing
           animation. 🎨</p>
@@ -59,29 +59,32 @@
           <div id="sentenceDisplay" class="sentence-display">
             Click "Play" to begin your sing-along experience! 🎤
           </div>
-          <div class="progress-container">
+          <div id="progressBar" class="progress-bar">
             <div id="progressFill" class="progress-fill"></div>
           </div>
         </div>
 
         <div class="media-controls">
-          <button id="playBtn" class="control-button play-button" onclick="playAction()" title="Play">▶</button>
-          <button id="pauseBtn" class="control-button pause-button" onclick="pauseAction()" title="Pause">⏸</button>
+          <button id="playBtn" class="control-button play-button" onclick="togglePlayPause()" title="Play/Pause">▶</button>
           <button id="restartBtn" class="control-button restart-button" onclick="restartAction()"
-            title="Rewind 5 seconds (or press ← key)">⏪</button>
+            title="Previous/Reset">◀</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Audio elements (hidden) -->
+  <!-- Audio elements (hidden but required for karaoke functionality) -->
   <div style="display: none;">
     <audio id="song" preload="auto">
+      <source src="song.mp3" type="audio/mpeg">
       Your browser does not support the audio element.
     </audio>
     <audio id="music" preload="auto">
+      <source src="music.mp3" type="audio/mpeg">
       Your browser does not support the audio element.
     </audio>
   </div>
+
 </body>
+
 </html>

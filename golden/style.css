@@ -170,7 +170,7 @@ body {
     left: 0;
     right: 0;
     height: 25%;
-    background: linear-gradient(to bottom, #32CD32 0%, #228B22 50%, #006400 100%);
+    background: linear-gradient(to bottom, #B0B0B0 0%, #808080 50%, #505050 100%);
     border-radius: 0 0 25px 25px;
     z-index: 0;
 }
@@ -181,11 +181,11 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    height: 30px;
-    background: linear-gradient(to bottom, #32CD32 0%, #228B22 100%);
+    height: 40px;
+    background: linear-gradient(to bottom, #D3D3D3 0%, #A9A9A9 50%, #696969 100%);
     clip-path: polygon(
-        0% 100%, 5% 85%, 12% 90%, 18% 75%, 25% 85%, 32% 70%, 38% 80%, 45% 65%, 
-        52% 75%, 58% 60%, 65% 70%, 72% 55%, 78% 65%, 85% 50%, 92% 60%, 100% 45%, 
+        0% 100%, 8% 60%, 15% 75%, 22% 45%, 30% 65%, 38% 35%, 45% 55%, 52% 25%, 
+        60% 50%, 67% 20%, 75% 45%, 82% 15%, 88% 40%, 94% 10%, 100% 35%, 
         100% 100%
     );
 }
@@ -193,18 +193,18 @@ body {
 .grass-field::after {
     content: '';
     position: absolute;
-    top: -10px;
+    top: -15px;
     left: 0;
     right: 0;
-    height: 20px;
-    background: linear-gradient(to right, #90EE90, #32CD32, #90EE90);
-    opacity: 0.7;
+    height: 35px;
+    background: linear-gradient(to bottom, #E5E5E5 0%, #C0C0C0 50%, #A0A0A0 100%);
     clip-path: polygon(
-        0% 100%, 8% 70%, 15% 85%, 22% 60%, 30% 75%, 38% 55%, 45% 70%, 52% 50%, 
-        60% 65%, 68% 45%, 75% 60%, 82% 40%, 90% 55%, 100% 35%, 
-        100% 100%
+        0% 100%, 12% 70%, 25% 80%, 35% 50%, 48% 75%, 60% 40%, 72% 65%, 85% 30%, 
+        95% 55%, 100% 25%, 100% 100%
     );
 }
+
+
 
 .media-controls {
     position: absolute;
@@ -238,9 +238,10 @@ body {
     color: white;
 }
 
-.pause-button {
+.play-button.playing {
     background: #FFD700;
     color: white;
+    padding-left: 0pt;
 }
 
 .restart-button {
@@ -267,11 +268,11 @@ body {
     box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
-.pause-button:hover {
+.play-button.playing:hover {
     background: #FFA500;
 }
 
-.pause-button:active {
+.play-button.playing:active {
     background: #CC8400;
     box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);
 }
@@ -316,7 +317,7 @@ body {
     background: #1A5A1A;
 }
 
-.pause-button.pressed {
+.play-button.playing.pressed {
     background: #B8770A;
 }
 

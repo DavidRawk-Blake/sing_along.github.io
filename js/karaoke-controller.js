@@ -115,6 +115,10 @@ function initializeKaraoke() {
         }
     });
 
+    // Initialize button appearances
+    updatePlayButtonAppearance();
+    updateRestartButtonAppearance();
+
     console.log('Audio controls initialized after DOM loaded');
 }
 
@@ -150,6 +154,8 @@ function rewindFiveSeconds() {
     setTimeout(() => {
         // Resume playback
         lyricsEngine.play();
+        updatePlayButtonAppearance();
+        updateRestartButtonAppearance();
     }, 100); // 100ms pause for smooth transition
 }
 
@@ -171,39 +177,61 @@ function skipForwardFiveSeconds() {
     setTimeout(() => {
         // Resume playback
         lyricsEngine.play();
+        updatePlayButtonAppearance();
+        updateRestartButtonAppearance();
     }, 100); // 100ms pause for smooth transition
 }
 
 // Global functions for onclick handlers
-function playAction() {
-    console.log('Playing both songs simultaneously with lyrics');
-    lyricsEngine.play();
-    addPressedEffect(document.getElementById('playBtn'));
-}
-
-function pauseAction() {
-    console.log('Paused both songs and lyrics');
-    lyricsEngine.pause();
-    addPressedEffect(document.getElementById('pauseBtn'));
-}
-
 function togglePlayPause() {
+    console.log('Toggling playback');
     // Use engine's built-in toggle functionality
     lyricsEngine.togglePlayback();
     
-    // Provide visual feedback on the appropriate button
-    // Use engine's isPaused() function as source of truth for playback state
+    // Update button appearances and provide visual feedback
+    updatePlayButtonAppearance();
+    updateRestartButtonAppearance();
+    addPressedEffect(document.getElementById('playBtn'));
+}
+
+function updatePlayButtonAppearance() {
+    const playBtn = document.getElementById('playBtn');
     if (lyricsEngine.isPaused()) {
-        // Just paused, so highlight pause button
-        addPressedEffect(document.getElementById('pauseBtn'));
+        // Show play state
+        playBtn.classList.remove('playing');
+        playBtn.innerHTML = '▶';
+        playBtn.title = 'Play';
     } else {
-        // Just started playing, so highlight play button
-        addPressedEffect(document.getElementById('playBtn'));
+        // Show playing/pause state
+        playBtn.classList.add('playing');
+        playBtn.innerHTML = '⏸';
+        playBtn.title = 'Pause';
+    }
+}
+
+function updateRestartButtonAppearance() {
+    const restartBtn = document.getElementById('restartBtn');
+    if (lyricsEngine.isPaused()) {
+        // Show reset functionality
+        restartBtn.title = 'Reset to Beginning';
+    } else {
+        // Show rewind functionality
+        restartBtn.title = 'Rewind 5 Seconds';
     }
 }
 
 function restartAction() {
-    rewindFiveSeconds();
+    if (lyricsEngine.isPaused()) {
+        // If paused, reset to beginning
+        console.log('Resetting to beginning');
+        lyricsEngine.setCurrentTime(0);
+    } else {
+        // If playing, rewind 5 seconds
+        console.log('Rewinding 5 seconds');
+        rewindFiveSeconds();
+    }
+    
+    updateRestartButtonAppearance();
     addPressedEffect(document.getElementById('restartBtn'));
 }
 

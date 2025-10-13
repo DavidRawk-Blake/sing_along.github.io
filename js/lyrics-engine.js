@@ -357,6 +357,18 @@ class LyricsEngine {
         if (this.musicAudio) {
             this.musicAudio.currentTime = time;
         }
+        // Update timestamp display when manually setting time
+        this.updateTimestampDisplay();
+    }
+
+    /**
+     * Manually update the timestamp display
+     */
+    updateTimestampDisplay() {
+        if (this.timestampDisplay && this.musicAudio) {
+            const currentTime = this.musicAudio.currentTime || 0;
+            this.timestampDisplay.textContent = `${currentTime.toFixed(2)}s`;
+        }
     }
 
     /**
