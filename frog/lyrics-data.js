@@ -5,7 +5,7 @@
 
 // Global lyrics data for the Frog Goes Ribbit karaoke game
 window.lyricsData = {
-  offset: 16.0,
+  offset: 1.0,
   outro: 3,
   song_source: "song.mp3",
   music_source: "music.mp3",

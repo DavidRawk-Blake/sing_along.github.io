@@ -96,19 +96,15 @@ function initializeKaraoke() {
         button.addEventListener('touchstart', () => addPressedEffect(button), { passive: true });
     });
 
-    // Add keyboard support for rewind and skip functionality
+    // Add keyboard support for spacebar only
     document.addEventListener('keydown', (event) => {
-        if (event.key === 'ArrowLeft') {
-            event.preventDefault(); // Prevent browser default behavior
-            rewindFiveSeconds();
-            addPressedEffect(document.getElementById('restartBtn')); // Visual feedback
-            console.log('Left arrow key pressed - rewinding 5 seconds');
-        } else if (event.key === 'ArrowRight') {
-            event.preventDefault(); // Prevent browser default behavior
-            skipForwardFiveSeconds();
-            addPressedEffect(document.getElementById('playBtn')); // Visual feedback on play button
-            console.log('Right arrow key pressed - skipping forward 5 seconds');
-        } else if (event.code === 'Space') {
+        // Make sure lyricsEngine is initialized before handling keyboard events
+        if (!lyricsEngine) {
+            console.warn('Keyboard shortcut ignored - LyricsEngine not initialized');
+            return;
+        }
+        
+        if (event.code === 'Space') {
             event.preventDefault(); // Prevent page scroll
             togglePlayPause();
             console.log('Spacebar pressed - toggling play/pause');
@@ -139,10 +135,15 @@ function stopLyrics() {
 
 // Rewind function for 5-second back functionality
 function rewindFiveSeconds() {
+    if (!lyricsEngine) {
+        console.error('LyricsEngine not initialized');
+        return;
+    }
+    
     console.log('Rewinding 5 seconds');
     
-    // Pause both songs first
-    lyricsEngine.pause();
+    // Remember if we were playing before seeking
+    const wasPlaying = !lyricsEngine.isPaused();
     
     // Calculate new time (minimum 0 seconds)
     const newTime = Math.max(0, lyricsEngine.getCurrentTime() - 5);
@@ -150,21 +151,31 @@ function rewindFiveSeconds() {
     // Set both audio tracks to new time
     lyricsEngine.setCurrentTime(newTime);
     
-    // Brief pause before resuming (smoother transition)
-    setTimeout(() => {
-        // Resume playback
-        lyricsEngine.play();
+    // Only resume playback if we were already playing
+    if (wasPlaying) {
+        setTimeout(() => {
+            lyricsEngine.play();
+            updatePlayButtonAppearance();
+            updateRestartButtonAppearance();
+        }, 100); // 100ms pause for smooth transition
+    } else {
+        // Just update button appearances for paused state
         updatePlayButtonAppearance();
         updateRestartButtonAppearance();
-    }, 100); // 100ms pause for smooth transition
+    }
 }
 
 // Skip forward function for 5-second ahead functionality
 function skipForwardFiveSeconds() {
+    if (!lyricsEngine) {
+        console.error('LyricsEngine not initialized');
+        return;
+    }
+    
     console.log('Skipping forward 5 seconds');
     
-    // Pause both songs first
-    lyricsEngine.pause();
+    // Remember if we were playing before seeking
+    const wasPlaying = !lyricsEngine.isPaused();
     
     // Calculate new time (with upper bounds checking)
     const maxTime = lyricsEngine.getDuration() || Infinity;
@@ -173,13 +184,18 @@ function skipForwardFiveSeconds() {
     // Set both audio tracks to new time
     lyricsEngine.setCurrentTime(newTime);
     
-    // Brief pause before resuming (smoother transition)
-    setTimeout(() => {
-        // Resume playback
-        lyricsEngine.play();
+    // Only resume playback if we were already playing
+    if (wasPlaying) {
+        setTimeout(() => {
+            lyricsEngine.play();
+            updatePlayButtonAppearance();
+            updateRestartButtonAppearance();
+        }, 100); // 100ms pause for smooth transition
+    } else {
+        // Just update button appearances for paused state
         updatePlayButtonAppearance();
         updateRestartButtonAppearance();
-    }, 100); // 100ms pause for smooth transition
+    }
 }
 
 // Global functions for onclick handlers

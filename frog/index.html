@@ -16,11 +16,13 @@
   <button id="backBtn" class="control-button back-button" onclick="window.location.href='../index.html'"
     title="Back to Games">‹‹</button>
 
-  <!-- Timestamp Display for Debugging -->
-  <div id="timestampDisplay" class="timestamp-display">0.00s</div>
-
-  <!-- Recognition Counter Display -->
-  <div id="recogniseCounter" class="recognise-counter">Recognize: 0 words</div>
+  <!-- Debug Controls Area -->
+  <div class="debug-controls">
+    <div id="timestampDisplay" class="timestamp-display">0.00s</div>
+    <button id="rewindBtn" class="debug-button" onclick="rewindFiveSeconds()" title="Rewind 5s">⏪</button>
+    <button id="skipBtn" class="debug-button" onclick="skipForwardFiveSeconds()" title="Skip 5s">⏩</button>
+    <div id="recogniseCounter" class="recognise-counter">Recognize: 0 words</div>
+  </div>
 
   <div class="outside-notes">
     <div class="floating-fly" style="transform: rotate(45deg);">🪰</div>
