@@ -32,6 +32,36 @@ function updateRecogniseCounter() {
     }
 }
 
+// Initialize sentence images in the image container
+function initializeSentenceImages() {
+    const imageContainer = document.getElementById('imageContainer');
+    if (!imageContainer || !window.lyricsData || !window.lyricsData.sentences) {
+        return;
+    }
+
+    // Clear existing images
+    imageContainer.innerHTML = '';
+
+    // Create an image element for each sentence that has an image
+    window.lyricsData.sentences.forEach((sentence, index) => {
+        if (sentence.image) {
+            const img = document.createElement('img');
+            img.src = sentence.image;
+            img.className = 'sentence-image';
+            img.id = `sentence-image-${index}`;
+            img.style.zIndex = index + 2; // Each image has higher z-index than the previous
+            img.alt = `Image for sentence ${index + 1}`;
+            
+            // Start with opacity 0
+            img.style.opacity = '0';
+            
+            imageContainer.appendChild(img);
+        }
+    });
+
+    console.log(`Initialized ${imageContainer.children.length} sentence images`);
+}
+
 // Initialize the karaoke system when DOM is loaded
 function initializeKaraoke() {
     // Get references to audio elements
@@ -61,21 +91,31 @@ function initializeKaraoke() {
         audioPlayer: music, // Use music as primary for timing (source of truth)
         timestampDisplay: document.getElementById('timestampDisplay'),
         songAudio: song,
-        musicAudio: music
+        musicAudio: music,
+        imageContainer: document.getElementById('imageContainer')
     });
+
+    // Initialize sentence images
+    initializeSentenceImages();
 
     // Update recognition counter display
     updateRecogniseCounter();
 
-    // Handle audio ending events
+    // Handle audio ending events - stop playback when either audio track ends
     song.addEventListener('ended', () => {
-        console.log('Song ended (no reset - music is timing authority)');
+        console.log('Song ended - stopping playback');
+        lyricsEngine.pause(); // Use engine's pause method to stop both audio sources
+        lyricsEngine.pauseAnimation(); // Stop animation but preserve current time position
+        updatePlayButtonAppearance();
+        updateRestartButtonAppearance();
     });
     
     music.addEventListener('ended', () => {
-        // Music is timing authority - reset entire system when it ends
-        lyricsEngine.stopAnimation(); // Reset lyrics engine state (handles all audio reset)
-        console.log('Music ended - resetting entire karaoke system');
+        console.log('Music ended - stopping playback');
+        lyricsEngine.pause(); // Use engine's pause method to stop both audio sources
+        lyricsEngine.pauseAnimation(); // Stop animation but preserve current time position
+        updatePlayButtonAppearance();
+        updateRestartButtonAppearance();
     });
 
     // Add audio loading state listeners for debugging
@@ -98,13 +138,7 @@ function initializeKaraoke() {
 
     // Add keyboard support for spacebar only
     document.addEventListener('keydown', (event) => {
-        // Make sure lyricsEngine is initialized before handling keyboard events
-        if (!lyricsEngine) {
-            console.warn('Keyboard shortcut ignored - LyricsEngine not initialized');
-            return;
-        }
-        
-        if (event.code === 'Space') {
+        if (lyricsEngine && event.code === 'Space') {
             event.preventDefault(); // Prevent page scroll
             togglePlayPause();
             console.log('Spacebar pressed - toggling play/pause');
@@ -142,27 +176,16 @@ function rewindFiveSeconds() {
     
     console.log('Rewinding 5 seconds');
     
-    // Remember if we were playing before seeking
     const wasPlaying = !lyricsEngine.isPaused();
-    
-    // Calculate new time (minimum 0 seconds)
     const newTime = Math.max(0, lyricsEngine.getCurrentTime() - 5);
     
-    // Set both audio tracks to new time
     lyricsEngine.setCurrentTime(newTime);
     
-    // Only resume playback if we were already playing
     if (wasPlaying) {
         setTimeout(() => {
             lyricsEngine.play();
-            updatePlayButtonAppearance();
-            updateRestartButtonAppearance();
         }, 100); // 100ms pause for smooth transition
-    } else {
-        // Just update button appearances for paused state
-        updatePlayButtonAppearance();
-        updateRestartButtonAppearance();
-    }
+    } 
 }
 
 // Skip forward function for 5-second ahead functionality
@@ -177,24 +200,14 @@ function skipForwardFiveSeconds() {
     // Remember if we were playing before seeking
     const wasPlaying = !lyricsEngine.isPaused();
     
-    // Calculate new time (with upper bounds checking)
     const maxTime = lyricsEngine.getDuration() || Infinity;
     const newTime = Math.min(maxTime, lyricsEngine.getCurrentTime() + 5);
     
-    // Set both audio tracks to new time
     lyricsEngine.setCurrentTime(newTime);
-    
-    // Only resume playback if we were already playing
     if (wasPlaying) {
         setTimeout(() => {
             lyricsEngine.play();
-            updatePlayButtonAppearance();
-            updateRestartButtonAppearance();
         }, 100); // 100ms pause for smooth transition
-    } else {
-        // Just update button appearances for paused state
-        updatePlayButtonAppearance();
-        updateRestartButtonAppearance();
     }
 }
 

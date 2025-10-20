@@ -358,6 +358,8 @@ h1 {
     width: 100%;
     box-sizing: border-box;
     max-width: 100%;
+    padding: 0 10px;
+    overflow: hidden;
 }
 
 /* Progress bar container */
@@ -538,4 +540,42 @@ h1 {
         height: 60px;
         font-size: 1.6rem;
     }
+}
+
+/* Image Container and Sentence Images */
+.image-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Allow clicks to pass through */
+    z-index: 1; /* Behind lyrics and controls */
+}
+
+.sentence-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.8s ease-in-out;
+    pointer-events: none;
+}
+
+.sentence-image.active {
+    opacity: 1;
+}
+
+/* Ensure lyrics container and media controls are above images */
+.lyrics-container {
+    position: relative;
+    z-index: 100; /* Above all images */
+}
+
+.media-controls {
+    position: relative;
+    z-index: 100; /* Above all images */
 }

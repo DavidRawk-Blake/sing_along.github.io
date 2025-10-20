@@ -8,9 +8,10 @@ window.lyricsData = {
     offset: 17,
     outro: 3,
     song_source: "song.mp3",
-    music_source: "music.mp3",
+    music_source: "song-instrumental.mp3",
     sentences: [
         {
+            image: null,
             words: [
                 { text: "Twinkle", duration: 1.4, recognise: false },
                 { text: "twinkle", duration: 1.4, recognise: false },
@@ -19,6 +20,7 @@ window.lyricsData = {
             ]
         },
         {
+            image: null,
             words: [
                 { text: "How", duration: 0.49, recognise: false },
                 { text: "I", duration: 0.46, recognise: false },
@@ -29,6 +31,7 @@ window.lyricsData = {
             ]
         },
         {
+            image: null,
             words: [
                 { text: "", duration: 0.5, recognise: false },
                 { text: "Up", duration: 0.75, recognise: false },
@@ -40,6 +43,7 @@ window.lyricsData = {
             ]
         },
         {
+            image: null,
             words: [
                 { text: "Like", duration: 0.6, recognise: false },
                 { text: "a", duration: 0.7, recognise: false },
@@ -50,6 +54,7 @@ window.lyricsData = {
             ]
         },
         {
+            image: null,
             words: [
                 { text: "Twinkle", duration: 1.2, recognise: false },
                 { text: "twinkle", duration: 1.1, recognise: false },
@@ -58,6 +63,7 @@ window.lyricsData = {
             ]
         },
         {
+            image: null,
             words: [
                 { text: "How", duration: 0.49, recognise: false },
                 { text: "I", duration: 0.46, recognise: false },

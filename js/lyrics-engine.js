@@ -31,6 +31,7 @@ class LyricsEngine {
         this.progressFill = elements.progressFill;
         this.audioPlayer = elements.audioPlayer;
         this.timestampDisplay = elements.timestampDisplay;
+        this.imageContainer = elements.imageContainer;
         
         // Initialize audio sources
         this.songAudio = elements.songAudio;  // Voice/vocal track (can pause during recognition)
@@ -38,6 +39,7 @@ class LyricsEngine {
         
         // Track recognition state to detect changes
         this.previousRecognitionState = false;
+        this.currentImageIndex = -1; // Track which image is currently active
     }
 
     /**
@@ -295,6 +297,7 @@ class LyricsEngine {
         if (sentenceIndex !== -1) {
             this.currentSentenceIndex = sentenceIndex;
             this.displaySentence(sentenceIndex, currentTime);
+            this.activateSentenceImage(sentenceIndex);
         }
         
         // Check if any recognition word is currently highlighted
@@ -531,12 +534,63 @@ class LyricsEngine {
         this.currentSentenceIndex = 0;
         this.isPlaying = false;
         this.previousRecognitionState = false; // Reset recognition state
+        this.currentImageIndex = -1; // Reset image state
         if (this.sentenceDisplay) {
             this.sentenceDisplay.innerHTML = 'Click "Start" to begin your sing-along experience!';
         }
         if (this.progressFill) {
             this.progressFill.style.width = '0%';
         }
+        // Hide all sentence images
+        this.hideAllSentenceImages();
+    }
+
+    /**
+     * Activate the image for the current sentence
+     * @param {number} sentenceIndex - Index of the sentence to activate image for
+     */
+    activateSentenceImage(sentenceIndex) {
+        if (!this.imageContainer || sentenceIndex === this.currentImageIndex) {
+            return; // No image container or same image already active
+        }
+
+        // Check if this sentence has an image
+        const sentence = this.lyricsData.sentences[sentenceIndex];
+        if (!sentence || !sentence.image) {
+            return; // No image for this sentence
+        }
+
+        // Hide current image if any
+        if (this.currentImageIndex >= 0) {
+            const currentImg = document.getElementById(`sentence-image-${this.currentImageIndex}`);
+            if (currentImg) {
+                currentImg.classList.remove('active');
+                currentImg.style.opacity = '0';
+            }
+        }
+
+        // Show new image with fade-in
+        const newImg = document.getElementById(`sentence-image-${sentenceIndex}`);
+        if (newImg) {
+            newImg.classList.add('active');
+            newImg.style.opacity = '1';
+            this.currentImageIndex = sentenceIndex;
+            console.log(`Activated image for sentence ${sentenceIndex}`);
+        }
+    }
+
+    /**
+     * Hide all sentence images
+     */
+    hideAllSentenceImages() {
+        if (!this.imageContainer) return;
+
+        const images = this.imageContainer.querySelectorAll('.sentence-image');
+        images.forEach(img => {
+            img.classList.remove('active');
+            img.style.opacity = '0';
+        });
+        this.currentImageIndex = -1;
     }
 }
 

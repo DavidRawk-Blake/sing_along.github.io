@@ -11,6 +11,7 @@ window.lyricsData = {
   music_source: "music.mp3",
   sentences: [
     {
+      image: null,
       words: [
         { text: "I'm", duration: 1.0, recognise: false },
         { text: "a", duration: 1.0, recognise: false },
@@ -25,6 +26,7 @@ window.lyricsData = {
       ],
     },
     {
+      image: null,
       words: [
         { text: "I'm", duration: 1.0, recognise: false },
         { text: "a", duration: 1.0, recognise: false },
@@ -40,6 +42,7 @@ window.lyricsData = {
       ],
     },
     {
+      image: null,
       words: [
         { text: "I'm", duration: 1.0, recognise: false },
         { text: "a", duration: 1.0, recognise: false },
@@ -55,6 +58,7 @@ window.lyricsData = {
       ],
     },
     {
+      image: null,
       words: [
         { text: "Ribbit", duration: 1.0, recognise: true },
         { text: "Ribbit", duration: 1.0, recognise: true },

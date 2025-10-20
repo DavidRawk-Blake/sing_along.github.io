@@ -8,9 +8,10 @@ window.lyricsData = {
   offset: 16.0,
   outro: 3,
   song_source: "song.mp3",
-  music_source: "music.mp3",
+  music_source: "music-instrumental.mp3",
   sentences: [
     {
+      image: null,
       words: [
         { text: "I", duration: 0.4, recognise: false },
         { text: "was", duration: 0.2, recognise: false },
@@ -22,6 +23,7 @@ window.lyricsData = {
       ],
     },
     {
+      image: null,
       words: [
         { text: "ha", duration: 0.3, recognise: false },
         { text: "", duration: 1.5, recognise: false },
@@ -30,6 +32,7 @@ window.lyricsData = {
       ],
     },
     {
+      image: null,
       words: [
         { text: "Given", duration: 1.3, recognise: false },
         { text: "the", duration: 1.0, recognise: false },
@@ -43,6 +46,7 @@ window.lyricsData = {
       ],
     },
     {
+      image: null,
       words: [
         { text: "I", duration: 0.2, recognise: false },
         { text: "was", duration: 0.2, recognise: false },
@@ -56,6 +60,7 @@ window.lyricsData = {
       ],
     },
     {
+      image: null,
       words: [
         { text: "I", duration: 0.2, recognise: false },
         { text: "lived", duration: 1.0, recognise: true },
@@ -69,6 +74,7 @@ window.lyricsData = {
       ],
     },
     {
+      image: null,
       words: [
         { text: "But", duration: 1.0, recognise: false },
         { text: "I", duration: 0.2, recognise: false },

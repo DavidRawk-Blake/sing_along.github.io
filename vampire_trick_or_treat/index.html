@@ -1,25 +1,10 @@
 <!doctype html>
-<html la  <div class="outside-note        <h1>🌟 Golden - Lets Sing Along 🌟</h1>
+<html lang="en">
 
-        <div class="fun-decorations">
-          <div class="musical-note">🎆</div>
-          <div class="musical-note">🎇</div>
-          <div class="musical-note">💃</div>
-          <div class="musical-note">🕺</div>
-          <div class="hearts">🎆</div>
-          <div class="hearts">💃</div>
-        </div>iv class="floating-note">🎆</div>
-    <div class="floating-note">🎇</div>
-    <div class="floating-note">💃</div>
-    <div class="floating-note">🕺</div>
-    <div class="floating-note">🎆</div>
-    <div class="floating-note">💃</div>
-    <div class="floating-note">🎇</div>
-    <div class="floating-note">🕺</div>
-  </div><head>
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Golden - Sing Along</title>
+  <title>Vampire Trick or Treat - Sing Along</title>
   <link rel="stylesheet" href="style.css">
   <script src="lyrics-data.js"></script>
   <script src="../js/lyrics-engine.js"></script>
@@ -31,20 +16,22 @@
   <button id="backBtn" class="control-button back-button" onclick="window.location.href='../index.html'"
     title="Back to Games">‹‹</button>
 
-  <!-- Timestamp Display for Debugging -->
-  <div id="timestampDisplay" class="timestamp-display">0.00s</div>
-
-  <!-- Recognition Counter Display -->
-  <div id="recogniseCounter" class="recognise-counter">Recognize: 0 words</div>
+  <!-- Debug Controls Area -->
+  <div class="debug-controls">
+    <div id="timestampDisplay" class="timestamp-display">0.00s</div>
+    <button id="rewindBtn" class="debug-button" onclick="rewindFiveSeconds()" title="Rewind 5s">⏪</button>
+    <button id="skipBtn" class="debug-button" onclick="skipForwardFiveSeconds()" title="Skip 5s">⏩</button>
+    <div id="recogniseCounter" class="recognise-counter">Recognize: 0 words</div>
+  </div>
 
   <div class="outside-notes">
-    <div class="floating-note">�</div>
-    <div class="floating-note">�</div>
+    <div class="floating-note">🎉</div>
+    <div class="floating-note">🎉</div>
     <div class="floating-note">💃</div>
     <div class="floating-note">🕺</div>
-    <div class="floating-note">�</div>
+    <div class="floating-note">🎉</div>
     <div class="floating-note">💃</div>
-    <div class="floating-note">�</div>
+    <div class="floating-note">🎉</div>
     <div class="floating-note">🕺</div>
   </div>
 
@@ -56,25 +43,27 @@
       </div>
 
       <div class="frame-content">
-        <h1>� Golden - Lets Sing Along �</h1>
+        <!-- Image Container for Sentence-based Images -->
+        <div id="imageContainer" class="image-container"></div>
+        
+        <h1>� Vampire Trick or Treat - Lets Sing Along 🦇</h1>
 
         <div class="fun-decorations">
+          <div class="musical-note">🦇</div>
           <div class="musical-note">�</div>
-          <div class="musical-note">�</div>
-          <div class="musical-note">💃</div>
-          <div class="musical-note">🕺</div>
-          <div class="hearts">🎆</div>
-          <div class="hearts">�</div>
+          <div class="musical-note">🦇</div>
+          <div class="musical-note">🎃</div>
+          <div class="hearts">🦇🦇</div>
+          <div class="hearts">🎃</div>
         </div>
-        <p style="font-size: 0.9em; transform: rotate(-1deg); height: 200pt;">This is where we could put some dancing
-          animation. 🎨</p>
+        <p style="font-size: 0.9em; transform: rotate(-1deg); height: 200pt;">Spooky Halloween karaoke time! �🦇</p>
 
         <!-- Lyrics Display Area -->
         <div class="lyrics-container">
           <div id="sentenceDisplay" class="sentence-display">
             Click "Play" to begin your sing-along experience! 🎤
           </div>
-          <div class="progress-container">
+          <div id="progressBar" class="progress-bar">
             <div id="progressFill" class="progress-fill"></div>
           </div>
         </div>
@@ -88,14 +77,18 @@
     </div>
   </div>
 
-  <!-- Audio elements (hidden) -->
+  <!-- Audio elements (hidden but required for karaoke functionality) -->
   <div style="display: none;">
     <audio id="song" preload="auto">
+      <source src="song.mp3" type="audio/mpeg">
       Your browser does not support the audio element.
     </audio>
     <audio id="music" preload="auto">
+      <source src="music.mp3" type="audio/mpeg">
       Your browser does not support the audio element.
     </audio>
   </div>
+
 </body>
+
 </html>
