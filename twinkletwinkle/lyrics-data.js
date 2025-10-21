@@ -13,64 +13,64 @@ window.lyricsData = {
         {
             image: null,
             words: [
-                { text: "Twinkle", duration: 1.4, recognise: false },
-                { text: "twinkle", duration: 1.4, recognise: false },
-                { text: "little", duration: 1.3, recognise: true },
-                { text: "star", duration: 2.0, recognise: false }
+                { text: "Twinkle", duration: 1.4, target_word: false },
+                { text: "twinkle", duration: 1.4, target_word: false },
+                { text: "little", duration: 1.3, target_word: true },
+                { text: "star", duration: 2.0, target_word: false }
             ]
         },
         {
             image: null,
             words: [
-                { text: "How", duration: 0.49, recognise: false },
-                { text: "I", duration: 0.46, recognise: false },
-                { text: "wonder", duration: 1.32, recognise: false },
-                { text: "what", duration: 0.69, recognise: false },
-                { text: "you", duration: 0.46, recognise: false },
-                { text: "are", duration: 1.5, recognise: true }
+                { text: "How", duration: 0.49, target_word: false },
+                { text: "I", duration: 0.46, target_word: false },
+                { text: "wonder", duration: 1.32, target_word: false },
+                { text: "what", duration: 0.69, target_word: false },
+                { text: "you", duration: 0.46, target_word: false },
+                { text: "are", duration: 1.5, target_word: true }
             ]
         },
         {
             image: null,
             words: [
-                { text: "", duration: 0.5, recognise: false },
-                { text: "Up", duration: 0.75, recognise: false },
-                { text: "above", duration: 1.2, recognise: false },
-                { text: "the", duration: 0.6, recognise: true },
-                { text: "world", duration: 0.6, recognise: false },
-                { text: "so", duration: 0.7, recognise: false },
-                { text: "high", duration: 1.8, recognise: false }
+                { text: "", duration: 0.5, target_word: false },
+                { text: "Up", duration: 0.75, target_word: false },
+                { text: "above", duration: 1.2, target_word: false },
+                { text: "the", duration: 0.6, target_word: true },
+                { text: "world", duration: 0.6, target_word: false },
+                { text: "so", duration: 0.7, target_word: false },
+                { text: "high", duration: 1.8, target_word: false }
             ]
         },
         {
             image: null,
             words: [
-                { text: "Like", duration: 0.6, recognise: false },
-                { text: "a", duration: 0.7, recognise: false },
-                { text: "diamond", duration: 1.3, recognise: true },
-                { text: "in", duration: 0.4, recognise: false },
-                { text: "the", duration: 0.8, recognise: true },
-                { text: "sky", duration: 2.0, recognise: false }
+                { text: "Like", duration: 0.6, target_word: false },
+                { text: "a", duration: 0.7, target_word: false },
+                { text: "diamond", duration: 1.3, target_word: true },
+                { text: "in", duration: 0.4, target_word: false },
+                { text: "the", duration: 0.8, target_word: true },
+                { text: "sky", duration: 2.0, target_word: false }
             ]
         },
         {
             image: null,
             words: [
-                { text: "Twinkle", duration: 1.2, recognise: false },
-                { text: "twinkle", duration: 1.1, recognise: false },
-                { text: "little", duration: 1.5, recognise: false },
-                { text: "star", duration: 2.0, recognise: false }
+                { text: "Twinkle", duration: 1.2, target_word: false },
+                { text: "twinkle", duration: 1.1, target_word: false },
+                { text: "little", duration: 1.5, target_word: false },
+                { text: "star", duration: 2.0, target_word: false }
             ]
         },
         {
             image: null,
             words: [
-                { text: "How", duration: 0.49, recognise: false },
-                { text: "I", duration: 0.46, recognise: false },
-                { text: "wonder", duration: 1.32, recognise: true },
-                { text: "what", duration: 0.69, recognise: false },
-                { text: "you", duration: 0.46, recognise: false },
-                { text: "are", duration: 3.0, recognise: false }
+                { text: "How", duration: 0.49, target_word: false },
+                { text: "I", duration: 0.46, target_word: false },
+                { text: "wonder", duration: 1.32, target_word: true },
+                { text: "what", duration: 0.69, target_word: false },
+                { text: "you", duration: 0.46, target_word: false },
+                { text: "are", duration: 3.0, target_word: false }
             ]
         }
     ]

@@ -61,7 +61,7 @@ body {
 }
 
 /* Recognition Counter Display */
-.recognise-counter {
+.target-word-counter {
     position: fixed;
     bottom: 20px;
     right: 20px;
@@ -240,12 +240,11 @@ body {
 }
 
 .media-controls {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
     display: flex;
     gap: 15px;
+    justify-content: center;
+    align-items: center;
+    margin-top: auto;
     z-index: 2;
 }
 
@@ -368,6 +367,7 @@ body {
     flex-direction: column;
     align-items: center;
     text-align: center;
+    justify-content: space-between;
 }
 
 h1 {
@@ -400,7 +400,7 @@ p {
     overflow: hidden;
 }
 
-.musical-note {
+.floater {
     position: absolute;
     color: #C084FC;
     font-size: 20px;
@@ -412,13 +412,13 @@ p {
     50% { opacity: 1; transform: scale(1.2) rotate(10deg) translateY(-5px); }
 }
 
-.musical-note:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
-.musical-note:nth-child(2) { top: 20%; right: 15%; animation-delay: 0.5s; }
-.musical-note:nth-child(3) { bottom: 25%; left: 12%; animation-delay: 1s; }
-.musical-note:nth-child(4) { bottom: 15%; right: 10%; animation-delay: 1.5s; }
+.floater:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+.floater:nth-child(2) { top: 20%; right: 15%; animation-delay: 0.5s; }
+.floater:nth-child(3) { bottom: 25%; left: 12%; animation-delay: 1s; }
+.floater:nth-child(4) { bottom: 15%; right: 10%; animation-delay: 1.5s; }
 
 /* Musical notes outside the frame */
-.outside-notes {
+.outside-floats {
     position: absolute;
     top: 0;
     left: 0;
@@ -428,7 +428,7 @@ p {
     z-index: -1;
 }
 
-.floating-note {
+.floater {
     position: absolute;
     font-size: 24px;
     animation: drift 8s ease-in-out infinite;
@@ -453,56 +453,56 @@ p {
     }
 }
 
-.floating-note:nth-child(1) { 
+.floater:nth-child(1) { 
     top: 10%; left: 5%; 
     color: #A855F7; 
     animation-delay: 0s; 
     animation-duration: 6s;
 }
-.floating-note:nth-child(2) { 
+.floater:nth-child(2) { 
     top: 25%; right: 8%; 
     color: #C084FC; 
     animation-delay: 1s; 
     animation-duration: 7s;
 }
-.floating-note:nth-child(3) { 
+.floater:nth-child(3) { 
     bottom: 20%; left: 3%; 
     color: #8B5CF6; 
     animation-delay: 2s; 
     animation-duration: 8s;
 }
-.floating-note:nth-child(4) { 
+.floater:nth-child(4) { 
     bottom: 35%; right: 5%; 
     color: #DDD6FE; 
     animation-delay: 3s; 
     animation-duration: 5s;
 }
-.floating-note:nth-child(5) { 
+.floater:nth-child(5) { 
     top: 50%; left: 2%; 
     color: #9333EA; 
     animation-delay: 1.5s; 
     animation-duration: 9s;
 }
-.floating-note:nth-child(6) { 
+.floater:nth-child(6) { 
     top: 70%; right: 3%; 
     color: #A855F7; 
     animation-delay: 4s; 
     animation-duration: 6s;
 }
-.floating-note:nth-child(7) { 
+.floater:nth-child(7) { 
     top: 15%; left: 50%; 
     color: #C084FC; 
     animation-delay: 2.5s; 
     animation-duration: 7s;
 }
-.floating-note:nth-child(8) { 
+.floater:nth-child(8) { 
     bottom: 10%; left: 45%; 
     color: #7C3AED; 
     animation-delay: 5s; 
     animation-duration: 8s;
 }
 
-.hearts {
+.floater {
     position: absolute;
     color: #F472B6;
     font-size: 15px;
@@ -514,8 +514,8 @@ p {
     50% { transform: translateY(-10px) rotate(5deg); }
 }
 
-.hearts:nth-child(5) { top: 30%; left: 5%; animation-delay: 0s; }
-.hearts:nth-child(6) { top: 70%; right: 8%; animation-delay: 2s; }
+.floater:nth-child(5) { top: 30%; left: 5%; animation-delay: 0s; }
+.floater:nth-child(6) { top: 70%; right: 8%; animation-delay: 2s; }
 
 /* Audio section styling */
 .audio-section {
@@ -676,4 +676,139 @@ p {
 .media-controls {
     position: relative;
     z-index: 100; /* Above all images */
+}
+
+/* Modal Styles - Twinkle Theme */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.twinkle-modal {
+    background: linear-gradient(135deg, #9333EA, #7C3AED, #6D28D9);
+    border: 3px solid #5B21B6;
+    border-radius: 20px;
+    box-shadow: 0 0 30px rgba(147, 51, 234, 0.8), inset 0 0 20px rgba(255, 255, 255, 0.2);
+    max-width: 500px;
+    width: 90%;
+    color: #1F0B33;
+}
+
+.modal-header {
+    text-align: center;
+    padding: 20px;
+    border-bottom: 2px solid #5B21B6;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.8em;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    color: #1F0B33;
+}
+
+.modal-body {
+    padding: 30px;
+    text-align: center;
+    line-height: 1.6;
+}
+
+.modal-body p {
+    margin: 15px 0;
+    font-size: 1.1em;
+    color: #1F0B33;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    justify-content: center;
+    border-top: 2px solid #5B21B6;
+}
+
+.modal-button {
+    padding: 15px 30px;
+    border: 2px solid #5B21B6;
+    border-radius: 10px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 140px;
+    font-weight: bold;
+}
+
+.modal-button-yes {
+    background: linear-gradient(45deg, #A855F7, #9333EA);
+    color: #1F0B33;
+    box-shadow: 0 4px 15px rgba(147, 51, 234, 0.4);
+}
+
+.modal-button-yes:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(147, 51, 234, 0.6);
+}
+
+.modal-button-no {
+    background: linear-gradient(45deg, #7C3AED, #8B5CF6);
+    color: #1F0B33;
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+}
+
+.modal-button-no:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(45deg, #8B5CF6, #A78BFA);
+}
+
+/* Volume Monitor Styles */
+.volume-container {
+    margin: 20px 0;
+}
+
+.volume-label {
+    font-size: 1.2em;
+    margin-bottom: 15px;
+    color: #1F0B33;
+    font-weight: bold;
+}
+
+.volume-bar-container {
+    background: #4C1D95;
+    border: 2px solid #5B21B6;
+    border-radius: 15px;
+    height: 30px;
+    margin: 15px 0;
+    overflow: hidden;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.volume-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #9333EA, #A855F7, #C084FC);
+    width: 0%;
+    transition: width 0.1s ease;
+    box-shadow: 0 0 10px rgba(147, 51, 234, 0.6);
+}
+
+.volume-stats {
+    margin-top: 15px;
+    font-size: 1.1em;
+    color: #1F0B33;
+}
+
+.volume-stats span {
+    display: inline-block;
+    padding: 5px 15px;
+    background: rgba(147, 51, 234, 0.3);
+    border-radius: 10px;
+    border: 1px solid #5B21B6;
+    font-weight: bold;
 }

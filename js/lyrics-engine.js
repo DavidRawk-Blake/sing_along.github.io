@@ -88,8 +88,8 @@ class LyricsEngine {
             if (!isEarlyPreview && relativeTime >= wordRelativeStart && relativeTime <= wordRelativeEnd) {
                 className += ' highlighted';
                 
-                // Double font size if recognise is true
-                if (word.recognise) {
+                // Double font size if target_word is true
+                if (word.target_word) {
                     fontSize = 'font-size: 2em; ';
                 }
             }
@@ -477,8 +477,8 @@ class LyricsEngine {
             const wordRelativeStart = cumulativeTime * slowdownFactor;
             const wordRelativeEnd = (cumulativeTime + word.duration) * slowdownFactor;
             
-            // Check if this word is currently highlighted and has recognise flag
-            if (relativeTime >= wordRelativeStart && relativeTime <= wordRelativeEnd && word.recognise) {
+            // Check if this word is currently highlighted and has target_word flag
+            if (relativeTime >= wordRelativeStart && relativeTime <= wordRelativeEnd && word.target_word) {
                 return true;
             }
             

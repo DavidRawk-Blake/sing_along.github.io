@@ -10,25 +10,25 @@ let lyricsEngine;
 // Audio MIME type constant (all songs are MP3)
 const AUDIO_MIME_TYPE = 'audio/mpeg';
 
-// Function to count and update recognition words display
-function updateRecogniseCounter() {
-    let recogniseCount = 0;
+// Function to count and update target words display
+function updateTargetWordCounter() {
+    let targetWordCount = 0;
     
-    // Count all words with recognise: true in the lyrics data
+    // Count all words with target_word: true in the lyrics data
     if (window.lyricsData && window.lyricsData.sentences) {
         window.lyricsData.sentences.forEach(sentence => {
             sentence.words.forEach(word => {
-                if (word.recognise === true) {
-                    recogniseCount++;
+                if (word.target_word === true) {
+                    targetWordCount++;
                 }
             });
         });
     }
     
     // Update the counter display
-    const counterElement = document.getElementById('recogniseCounter');
+    const counterElement = document.getElementById('targetWordCounter');
     if (counterElement) {
-        counterElement.textContent = `0/${recogniseCount}`;
+        counterElement.textContent = `0/${targetWordCount}`;
     }
 }
 
@@ -99,7 +99,7 @@ function initializeKaraoke() {
     initializeSentenceImages();
 
     // Update recognition counter display
-    updateRecogniseCounter();
+    updateTargetWordCounter();
 
     // Handle audio ending events - stop playback when either audio track ends
     song.addEventListener('ended', () => {
@@ -128,12 +128,14 @@ function initializeKaraoke() {
     music.addEventListener('error', (e) => console.error('Error loading music:', e));
 
     // Add pressed effect to buttons on mouse/touch events
-    const buttons = [document.getElementById('playBtn'), document.getElementById('pauseBtn'), document.getElementById('restartBtn')];
+    const buttons = [document.getElementById('playBtn'), document.getElementById('restartBtn')];
     buttons.forEach(button => {
-        // Handle mouse events
-        button.addEventListener('mousedown', () => addPressedEffect(button));
-        // Handle touch events for mobile devices
-        button.addEventListener('touchstart', () => addPressedEffect(button), { passive: true });
+        if (button) { // Check if button exists before adding event listeners
+            // Handle mouse events
+            button.addEventListener('mousedown', () => addPressedEffect(button));
+            // Handle touch events for mobile devices
+            button.addEventListener('touchstart', () => addPressedEffect(button), { passive: true });
+        }
     });
 
     // Add keyboard support for spacebar only
@@ -225,6 +227,8 @@ function togglePlayPause() {
 
 function updatePlayButtonAppearance() {
     const playBtn = document.getElementById('playBtn');
+    if (!playBtn) return; // Guard against missing button
+    
     if (lyricsEngine.isPaused()) {
         // Show play state
         playBtn.classList.remove('playing');
@@ -240,6 +244,8 @@ function updatePlayButtonAppearance() {
 
 function updateRestartButtonAppearance() {
     const restartBtn = document.getElementById('restartBtn');
+    if (!restartBtn) return; // Guard against missing button
+    
     if (lyricsEngine.isPaused()) {
         // Show reset functionality
         restartBtn.title = 'Reset to Beginning';
@@ -266,13 +272,169 @@ function restartAction() {
 
 // Add pressed effect functionality for better visual feedback
 function addPressedEffect(button) {
+    if (!button) return; // Guard against null buttons
+    
     button.classList.add('pressed');
 
     // Remove pressed class after short delay
     setTimeout(() => {
-        button.classList.remove('pressed');
+        if (button) { // Additional check in case button is removed from DOM
+            button.classList.remove('pressed');
+        }
     }, 150);
 }
 
+// Microphone functionality
+let audioContext;
+let mediaStream;
+let analyser;
+let microphone;
+let dataArray;
+let peakVolume = 0;
+
+function initializeMicrophoneModal() {
+    const permissionModal = document.getElementById('micPermissionModal');
+    const volumeModal = document.getElementById('micVolumeModal');
+    const enableBtn = document.getElementById('enableMicBtn');
+    const skipBtn = document.getElementById('skipMicBtn');
+    const closeBtn = document.getElementById('closeMicModalBtn');
+    const cancelBtn = document.getElementById('cancelMicBtn');
+
+    if (!permissionModal) return; // Not all pages have microphone functionality
+
+    // Show permission modal on page load
+    permissionModal.style.display = 'flex';
+
+    // Enable microphone button - "Yes, Enable!"
+    enableBtn?.addEventListener('click', async () => {
+        try {
+            await requestMicrophonePermission();
+            // Hide the permission modal
+            permissionModal.style.display = 'none';
+            // Show the volume monitoring modal
+            volumeModal.style.display = 'flex';
+            startVolumeMonitoring();
+        } catch (error) {
+            console.error('Microphone access denied:', error);
+            alert('Microphone access was denied. You can still enjoy karaoke without microphone feedback!');
+            // Hide the permission modal even if access denied
+            permissionModal.style.display = 'none';
+        }
+    });
+
+    // Skip microphone button - "Skip for now"
+    skipBtn?.addEventListener('click', () => {
+        // Hide the permission modal
+        permissionModal.style.display = 'none';
+        // Do NOT show the volume modal (user skipped microphone setup)
+        console.log('User skipped microphone setup');
+    });
+
+    // Close volume modal button
+    closeBtn?.addEventListener('click', () => {
+        volumeModal.style.display = 'none';
+    });
+
+    // Cancel microphone button - turns off microphone and hides modal
+    cancelBtn?.addEventListener('click', () => {
+        stopMicrophone();
+        volumeModal.style.display = 'none';
+        console.log('User cancelled microphone monitoring');
+    });
+
+    // Initially disable the start singing button until volume threshold is met
+    if (closeBtn) {
+        closeBtn.disabled = true;
+        closeBtn.style.opacity = '0.5';
+        closeBtn.style.cursor = 'not-allowed';
+    }
+}
+
+async function requestMicrophonePermission() {
+    try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        microphone = audioContext.createMediaStreamSource(mediaStream);
+        
+        analyser.fftSize = 256;
+        const bufferLength = analyser.frequencyBinCount;
+        dataArray = new Uint8Array(bufferLength);
+        
+        microphone.connect(analyser);
+        
+        console.log('Microphone access granted');
+        return true;
+    } catch (error) {
+        console.error('Error accessing microphone:', error);
+        throw error;
+    }
+}
+
+function startVolumeMonitoring() {
+    const volumeBar = document.getElementById('volumeBar');
+    const closeBtn = document.getElementById('closeMicModalBtn');
+    
+    if (!volumeBar || !analyser) return;
+
+    function updateVolume() {
+        analyser.getByteFrequencyData(dataArray);
+        
+        // Calculate average volume
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+            sum += dataArray[i];
+        }
+        const averageVolume = sum / dataArray.length;
+        const volumePercentage = Math.round((averageVolume / 255) * 100);
+        
+        // Update volume bar
+        volumeBar.style.width = volumePercentage + '%';
+        
+        // Enable start singing button when volume reaches 10%
+        if (closeBtn && volumePercentage >= 10) {
+            closeBtn.disabled = false;
+            closeBtn.style.opacity = '1';
+            closeBtn.style.cursor = 'pointer';
+        }
+        
+        // Continue monitoring
+        requestAnimationFrame(updateVolume);
+    }
+    
+    updateVolume();
+}
+
+function stopMicrophone() {
+    try {
+        // Stop all media stream tracks
+        if (mediaStream) {
+            mediaStream.getTracks().forEach(track => {
+                track.stop();
+            });
+            mediaStream = null;
+        }
+        
+        // Close audio context
+        if (audioContext && audioContext.state !== 'closed') {
+            audioContext.close();
+            audioContext = null;
+        }
+        
+        // Clear references
+        analyser = null;
+        microphone = null;
+        dataArray = null;
+        peakVolume = 0;
+        
+        console.log('Microphone stopped and resources cleaned up');
+    } catch (error) {
+        console.error('Error stopping microphone:', error);
+    }
+}
+
 // Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', initializeKaraoke);
+document.addEventListener('DOMContentLoaded', () => {
+    initializeKaraoke();
+    initializeMicrophoneModal();
+});
