@@ -126,6 +126,33 @@ function initializeSpeechRecognition() {
         // Handle recognition errors
         speechRecognition.addEventListener('error', (event) => {
             console.error('Speech recognition error:', event.error);
+            
+            // Handle specific error types
+            switch(event.error) {
+                case 'not-allowed':
+                    console.error('Microphone permission denied');
+                    updateMicrophoneStatus('error', 'Microphone permission denied');
+                    break;
+                case 'network':
+                    console.error('Network error during speech recognition');
+                    updateMicrophoneStatus('error', 'Network error');
+                    break;
+                case 'audio-capture':
+                    console.error('Audio capture failed - check microphone');
+                    updateMicrophoneStatus('error', 'Audio capture failed');
+                    break;
+                case 'no-speech':
+                    console.warn('No speech detected - this is usually normal');
+                    // Don't show error for no-speech, it's common and normal
+                    break;
+                case 'aborted':
+                    console.warn('Speech recognition aborted - usually due to restart');
+                    // Don't show error for aborted, happens during restarts
+                    break;
+                default:
+                    console.error(`Unknown speech recognition error: ${event.error}`);
+                    updateMicrophoneStatus('error', `Error: ${event.error}`);
+            }
         });
 
         // Handle recognition end
