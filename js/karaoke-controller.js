@@ -14,31 +14,7 @@ const AUDIO_MIME_TYPE = 'audio/mpeg';
 let isSpeechRecognitionEnabled = false;
 let isMicrophoneActive = false;
 
-// Function to update target words display (now handled by lyrics engine)
-function updateTargetWordCounter() {
-    // The lyrics engine now handles the counter update with matched words
-    if (lyricsEngine && typeof lyricsEngine.updateTargetWordCounter === 'function') {
-        lyricsEngine.updateTargetWordCounter();
-    } else {
-        // Fallback to old behavior if lyrics engine not available
-        let targetWordCount = 0;
-        
-        if (window.lyricsData && window.lyricsData.sentences) {
-            window.lyricsData.sentences.forEach(sentence => {
-                sentence.words.forEach(word => {
-                    if (word.target_word === true) {
-                        targetWordCount++;
-                    }
-                });
-            });
-        }
-        
-        const counterElement = document.getElementById('targetWordCounter');
-        if (counterElement) {
-            counterElement.textContent = `0/${targetWordCount}`;
-        }
-    }
-}
+
 
 // Initialize sentence images in the image container
 function initializeSentenceImages() {
@@ -113,9 +89,6 @@ function initializeKaraoke() {
 
     // Initialize debug table
     initializeDebugTable();
-
-    // Update recognition counter display
-    updateTargetWordCounter();
 
     // Handle audio ending events - stop playback when either audio track ends
     song.addEventListener('ended', () => {
@@ -473,10 +446,6 @@ function enableSpeechRecognition() {
     }
     
     isSpeechRecognitionEnabled = true;
-    console.log('🎤 Speech recognition enabled for continuous listening');
-    
-    // Set up event listener for target word detection
-    document.addEventListener('targetWordDetected', handleTargetWordDetected);
     
     // Start continuous recognition immediately
     window.SpeechRecognitionModule.startContinuousRecognition();
@@ -493,41 +462,15 @@ function disableSpeechRecognition() {
     }
     
     isSpeechRecognitionEnabled = false;
-    document.removeEventListener('targetWordDetected', handleTargetWordDetected);
-    console.log('Speech recognition disabled');
 }
 
-/**
- * Handle target word detection from speech recognition
- * @param {CustomEvent} event - Event containing detection details
- */
-function handleTargetWordDetected(event) {
-    const { targetWord, spokenWord, scores } = event.detail;
-    
-    console.log(`🎤 Target word detected in karaoke:`, {
-        target: targetWord,
-        spoken: spokenWord,
-        trigramSimilarity: scores.trigramSimilarity.toFixed(3),
-        jaroScore: scores.jaroScore.toFixed(3),
-        confidence: scores.confidence?.toFixed(3) || 'N/A'
-    });
-    
-    // Mark the target word as matched in the lyrics engine
-    if (lyricsEngine && typeof lyricsEngine.markWordAsMatched === 'function') {
-        lyricsEngine.markWordAsMatched(targetWord);
-    }
-    
-    // Trigger any custom callbacks for word detection
-    if (window.onKaraokeWordDetected && typeof window.onKaraokeWordDetected === 'function') {
-        window.onKaraokeWordDetected(targetWord, spokenWord, scores);
-    }
-}
 
-// Target word timing management - supports multiple overlapping windows
+
+// Target word timing management - supports multiple overlapping listening-windows
 let activeTargetWords = new Map(); // Map of word -> {state, startTime}
 
 /**
- * Set target word listening with timing state (supports overlapping windows)
+ * Set target word listening with timing state (supports overlapping listening-windows)
  * @param {string} targetWord - The word to detect
  * @param {string} state - The listening state ('pre-listening', 'active', 'post-listening')
  */
@@ -545,22 +488,11 @@ function setTargetWordListening(targetWord, state) {
             startTime: Date.now()
         });
         
-        if (state === 'pre-listening') {
-            console.log(`🎯 Listening for target word: "${targetWord}" (starting in 2 seconds)`);
-        } else if (state === 'active') {
-            console.log(`🎯 TARGET WORD ACTIVE: "${targetWord}" - comparing all speech now`);
-        } else if (state === 'post-listening') {
-            console.log(`🎯 Post-listening for: "${targetWord}" (5 seconds remaining)`);
-        }
+
         
         // Update speech recognition module with all active target words
         const allActiveWords = Array.from(activeTargetWords.keys());
         window.SpeechRecognitionModule.setMultipleTargetWords(allActiveWords);
-        
-        // Log current active state for debugging
-        const activeCount = Array.from(activeTargetWords.values()).filter(state => state.state === 'active').length;
-        const allCount = activeTargetWords.size;
-        console.log(`📊 Active words: ${activeCount}/${allCount} total tracked words`);
     }
     
     return true;
@@ -572,7 +504,6 @@ function setTargetWordListening(targetWord, state) {
  */
 function clearTargetWordListening(targetWord) {
     if (activeTargetWords.has(targetWord)) {
-        console.log(`🎯 Stopped listening for: "${targetWord}"`);
         activeTargetWords.delete(targetWord);
         
         // Update speech recognition module with remaining active target words
@@ -580,11 +511,6 @@ function clearTargetWordListening(targetWord) {
         if (window.SpeechRecognitionModule) {
             window.SpeechRecognitionModule.setMultipleTargetWords(allActiveWords);
         }
-        
-        // Log current active state for debugging
-        const activeCount = Array.from(activeTargetWords.values()).filter(state => state.state === 'active').length;
-        const allCount = activeTargetWords.size;
-        console.log(`📊 Active words after removal: ${activeCount}/${allCount} total tracked words`);
     }
 }
 
@@ -623,35 +549,31 @@ function initializeDebugTable() {
         row.id = `debug-row-${index}`;
         row.innerHTML = `
             <td>${targetWord.word} (${targetWord.id})</td>
-            <td class="matched" id="match-${index}">-</td>
         `;
         tableBody.appendChild(row);
     });
 }
 
 /**
- * Update the debug table to reflect matched status and active words
+ * Update the debug table to reflect active words based on listening-windows
  */
 function updateDebugTable() {
     if (!lyricsEngine || !lyricsEngine.targetWords) {
         return;
     }
 
-    // Get active target words
-    const activeWords = window.getActiveTargetWords ? window.getActiveTargetWords() : new Map();
+    // Get current time from lyrics engine
+    const currentTime = lyricsEngine.getCurrentTime();
+    const adjustedTime = currentTime - (lyricsEngine.lyricsData ? lyricsEngine.lyricsData.offset : 0);
 
     lyricsEngine.targetWords.forEach((targetWord, index) => {
         const row = document.getElementById(`debug-row-${index}`);
-        const matchCell = document.getElementById(`match-${index}`);
-        
-        if (matchCell) {
-            matchCell.textContent = targetWord.matched === true ? '✓' : '-';
-        }
 
         if (row) {
-            // Check if this target word is currently active
-            const targetState = activeWords.get(targetWord.word);
-            if (targetState && targetState.state === 'active') {
+            // Check if current time is within this target word's listening-window
+            const isInWindow = adjustedTime >= targetWord.startTime && adjustedTime <= targetWord.endTime;
+            
+            if (isInWindow) {
                 row.classList.add('active-word');
             } else {
                 row.classList.remove('active-word');

@@ -41,144 +41,23 @@ class LyricsEngine {
                         
                         this.targetWords.push({
                             word: word.text,
-                            matched: null,
                             sentenceIndex: sentenceIndex,
                             wordIndex: wordIndex,
                             startTime: wordTiming.start,
-                            endTime: wordTiming.end,
+                            endTime: wordTiming.end + 3.0, // Extend listening-window by 3 seconds
                             id: `${sentenceIndex}-${wordIndex}` // Unique identifier
                         });
                     }
                 });
             });
         }
-        
-        console.log(`Initialized ${this.targetWords.length} target word occurrences for tracking`);
-        // Also log some examples for debugging
-        if (this.targetWords.length > 0) {
-            console.log('First few target words:', this.targetWords.slice(0, 3).map(tw => 
-                `"${tw.word}" at ${tw.startTime.toFixed(1)}s (${tw.id})`
-            ));
-        }
     }
 
-    /**
-     * Mark a target word as matched
-     * @param {string} word - The word that was matched
-     */
-    markWordAsMatched(word) {
-        const currentTime = this.getCurrentTime();
-        
-        // Get active target words from karaoke controller
-        const activeWords = window.getActiveTargetWords ? window.getActiveTargetWords() : new Map();
-        
-        // Find all unmatched occurrences of this word
-        const unmatchedOccurrences = this.targetWords.filter(tw => 
-            tw.word.toLowerCase() === word.toLowerCase() && tw.matched !== true
-        );
-        
-        if (unmatchedOccurrences.length === 0) {
-            console.log(`No unmatched occurrences found for word "${word}"`);
-            return;
-        }
-        
-        // First, try to find an active occurrence (one that's currently in its timing window)
-        const activeOccurrences = unmatchedOccurrences.filter(tw => {
-            const targetState = activeWords.get(tw.word);
-            return targetState && targetState.state === 'active';
-        });
-        
-        let targetEntry;
-        
-        if (activeOccurrences.length > 0) {
-            // If there are active occurrences, choose the one that best matches current timing
-            targetEntry = activeOccurrences[0];
-            let bestScore = -1;
-            
-            for (let entry of activeOccurrences) {
-                // Calculate a composite score based on timing proximity and whether word is currently playing
-                const distance = Math.abs(currentTime - entry.startTime);
-                const isCurrentlyPlaying = currentTime >= entry.startTime && currentTime <= entry.endTime;
-                
-                // Score: prioritize currently playing words, then closest by time
-                let score = isCurrentlyPlaying ? 100 : 0;
-                score -= distance; // Closer words get higher scores
-                
-                if (score > bestScore) {
-                    targetEntry = entry;
-                    bestScore = score;
-                }
-            }
-            
-            const timingInfo = currentTime >= targetEntry.startTime && currentTime <= targetEntry.endTime ? " [CURRENTLY PLAYING]" : "";
-            console.log(`✅ Matched ACTIVE target word "${word}" (occurrence ${targetEntry.id}) at time ${currentTime.toFixed(2)}s${timingInfo}`);
-            console.log(`📍 Target word timing: ${targetEntry.startTime.toFixed(2)}s - ${targetEntry.endTime.toFixed(2)}s`);
-        } else {
-            // Fallback: If no active occurrences, find the closest one (original logic)
-            targetEntry = unmatchedOccurrences[0];
-            let closestDistance = Math.abs(currentTime - targetEntry.startTime);
-            
-            for (let entry of unmatchedOccurrences) {
-                const distance = Math.abs(currentTime - entry.startTime);
-                // Prefer words that are currently playing or just about to play
-                if (distance < closestDistance || 
-                    (entry.startTime >= currentTime && targetEntry.startTime < currentTime)) {
-                    targetEntry = entry;
-                    closestDistance = distance;
-                }
-            }
-            
-            console.log(`✅ Matched closest target word "${word}" (occurrence ${targetEntry.id}) at time ${currentTime.toFixed(2)}s - no active words`);
-            console.log(`⚠️ Warning: No active words found for "${word}" - this may indicate a timing issue`);
-        }
-        
-        targetEntry.matched = true;
-        this.updateTargetWordCounter();
-        
-        // Update debug table if available
-        if (window.updateDebugTable) {
-            window.updateDebugTable();
-        }
-    }
 
-    /**
-     * Get count of matched target words
-     * @returns {number} Number of matched target words
-     */
-    getMatchedWordCount() {
-        return this.targetWords.filter(tw => tw.matched === true).length;
-    }
 
-    /**
-     * Update the target word counter display
-     */
-    updateTargetWordCounter() {
-        const counterElement = document.getElementById('targetWordCounter');
-        if (counterElement) {
-            const matchedCount = this.getMatchedWordCount();
-            const totalCount = this.targetWords.length;
-            counterElement.textContent = `${matchedCount}/${totalCount}`;
-            console.log(`Target word counter updated: ${matchedCount}/${totalCount}`);
-        }
-    }
 
-    /**
-     * Reset all target words to unmatched state
-     */
-    resetTargetWords() {
-        if (this.targetWords) {
-            this.targetWords.forEach(tw => {
-                tw.matched = null;
-            });
-            console.log(`Reset all ${this.targetWords.length} target words to unmatched state`);
-            this.updateTargetWordCounter();
-            
-            // Update debug table if available
-            if (window.updateDebugTable) {
-                window.updateDebugTable();
-            }
-        }
-    }
+
+
 
     /**
      * Initialize the lyrics engine with DOM elements
@@ -321,7 +200,7 @@ class LyricsEngine {
                     // Up to 5 seconds after target word - post listening
                     window.setTargetWordListening(word.text, 'post-listening');
                 } else if (relativeTime > postListenTime) {
-                    // Clear listening if we're past the window
+                    // Clear listening if we're past the listening-window
                     window.clearTargetWordListening(word.text);
                 }
             }
@@ -817,9 +696,6 @@ class LyricsEngine {
         
         // Reset audio time to beginning
         this.setCurrentTime(0);
-        
-        // Reset all target words to unmatched state
-        this.resetTargetWords();
         
         if (this.sentenceDisplay) {
             this.sentenceDisplay.innerHTML = 'Click "Start" to begin your sing-along experience!';

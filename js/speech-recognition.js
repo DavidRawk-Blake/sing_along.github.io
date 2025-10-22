@@ -175,25 +175,20 @@ function handleSpeechResult(event) {
         // For final results, parse individual words and compare each against currently active target words only
         const spokenWords = spokenText.split(/\s+/).filter(word => word.length > 0);
         
-        // Filter to only active target words (those in their timing window)
+        // Filter to only active target words (those in their listening-window)
         const activeTargetWords = currentTargetWords.filter(targetWord => {
             const targetState = activeWords.get(targetWord);
             return targetState && targetState.state === 'active';
         });
         
         if (activeTargetWords.length === 0) {
-            // No active target words in current window, log but skip comparison
-            console.log(`🔍 No active target words found (${currentTargetWords.length} total words tracked)`);
+            // No active target words in current listening-window, skip comparison
             return;
         }
-        
-        console.log(`🎯 Checking "${spokenText}" against ${activeTargetWords.length} active target words: [${activeTargetWords.join(', ')}]`);
         
         spokenWords.forEach(spokenWord => {
             activeTargetWords.forEach(targetWord => {
                 const targetLower = targetWord.toLowerCase();
-                const targetState = activeWords.get(targetWord);
-                const stateInfo = targetState ? ` [${targetState.state}]` : '';
 
                 // Calculate similarity scores for individual word comparison
                 const trigramSimilarity = calculateTrigramSimilarity(spokenWord, targetLower);
@@ -203,30 +198,19 @@ function handleSpeechResult(event) {
                 const isMatch = trigramSimilarity > 0.3 || jaroScore > 0.7;
                 
                 if (isMatch) {
-                    console.log(`✅ FINAL MATCH! "${spokenWord}" ≈ "${targetLower}"${stateInfo} (trigram: ${trigramSimilarity.toFixed(3)}, jaro: ${jaroScore.toFixed(3)})`);
-                    
                     // Trigger word detection event for matched word
                     triggerWordDetection(targetWord, spokenWord, {
                         trigramSimilarity,
                         jaroScore,
                         confidence
                     });
-                } else {
-                    // Log non-matches for debugging overlapping windows
-                    console.log(`❌ No match: "${spokenWord}" vs "${targetLower}"${stateInfo} (trigram: ${trigramSimilarity.toFixed(3)}, jaro: ${jaroScore.toFixed(3)})`);
                 }
             });
         });
     } else {
         // For interim results, still compare the full phrase (for real-time feedback)
-        if (currentTargetWords.length > 0) {
-            console.log(`🔍 Interim comparing "${spokenText}" against target words: [${currentTargetWords.join(', ')}]`);
-        }
-        
         currentTargetWords.forEach(targetWord => {
             const targetLower = targetWord.toLowerCase();
-            const targetState = activeWords.get(targetWord);
-            const stateInfo = targetState ? ` [${targetState.state}]` : '';
 
             // Calculate similarity scores for target word comparison
             const trigramSimilarity = calculateTrigramSimilarity(spokenText, targetLower);
@@ -234,10 +218,6 @@ function handleSpeechResult(event) {
 
             // Check if word matches (using thresholds from original code)
             const isMatch = trigramSimilarity > 0.3 || jaroScore > 0.7;
-            
-            if (isMatch) {
-                console.log(`✅ interim MATCH! "${spokenText}" ≈ "${targetLower}"${stateInfo} (trigram: ${trigramSimilarity.toFixed(3)}, jaro: ${jaroScore.toFixed(3)})`);
-            }
         });
     }
 }
@@ -341,16 +321,11 @@ function startContinuousRecognition() {
 }
 
 /**
- * Set multiple target words for overlapping listening windows
+ * Set multiple target words for overlapping listening-windows
  * @param {Array<string>} targetWords - Array of words to detect
  */
 function setMultipleTargetWords(targetWords) {
     currentTargetWords = targetWords || [];
-    if (targetWords && targetWords.length > 0) {
-        console.log(`🎯 Active target words: [${targetWords.join(', ')}]`);
-    } else {
-        console.log(`🎯 No active target words`);
-    }
 }
 
 /**
@@ -360,10 +335,8 @@ function setMultipleTargetWords(targetWords) {
 function setTargetWord(targetWord) {
     if (targetWord) {
         currentTargetWords = [targetWord];
-        console.log(`🎯 Target word set to: "${targetWord}"`);
     } else {
         currentTargetWords = [];
-        console.log(`🎯 Target word cleared`);
     }
 }
 
