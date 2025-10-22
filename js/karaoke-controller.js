@@ -559,6 +559,13 @@ function initializeDebugTable() {
         `;
         tableBody.appendChild(row);
     });
+
+    // Initialize the debug summary counter with total target words count
+    const debugSummary = document.getElementById('debugSummary');
+    if (debugSummary) {
+        const totalCount = lyricsEngine.targetWords.length;
+        debugSummary.textContent = `0 : ${totalCount}`;
+    }
 }
 
 /**
@@ -650,7 +657,7 @@ function updateDebugTable() {
     // Update debug summary with match count
     const debugSummary = document.getElementById('debugSummary');
     if (debugSummary) {
-        debugSummary.textContent = `(${matchedCount}/${totalCount})`;
+        debugSummary.textContent = `${matchedCount} : ${totalCount}`;
     }
 }
 

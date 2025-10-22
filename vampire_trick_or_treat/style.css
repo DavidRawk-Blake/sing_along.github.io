@@ -78,7 +78,7 @@ body {
 
 .wavy-border {
     position: absolute;
-    top: -72px;
+    top: -40px;
     left: -72px;
     right: -72px;
     bottom: -72px;
@@ -90,7 +90,7 @@ body {
 .wavy-border::before {
     content: '';
     position: absolute;
-    top: -30px;
+    top: -20px;
     left: -30px;
     right: -30px;
     bottom: -30px;
@@ -154,7 +154,7 @@ body {
 .kids-frame-container::before {
     content: '';
     position: absolute;
-    top: -90px;
+    top: -50px;
     left: -90px;
     right: -90px;
     bottom: -90px;
