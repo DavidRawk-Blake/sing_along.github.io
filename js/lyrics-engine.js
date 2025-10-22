@@ -7,7 +7,7 @@ class LyricsEngine {
     constructor(lyricsData) {
         // Accept lyrics data from external source
         this.lyricsData = lyricsData || window.lyricsData || null;
-        
+
         if (!this.lyricsData) {
             throw new Error('LyricsEngine: No lyrics data provided. Please load lyrics data before initializing.');
         }
@@ -15,12 +15,12 @@ class LyricsEngine {
         // State management
         this.currentSentenceIndex = 0;
         this.isPlaying = false;
-        
+
         // Animation and timing state
         this.startTime = 0;
         this.animationFrame = null;
         this.onStop = null; // Callback for when animation should stop
-        
+
         // Target word tracking
         this.targetWords = [];
         this.initializeTargetWords();
@@ -35,7 +35,7 @@ class LyricsEngine {
         if (this.lyricsData.offset !== undefined) {
             return this.lyricsData.offset;
         }
-        
+
         // Calculate offset from first sentence start time
         if (this.lyricsData.sentences && this.lyricsData.sentences.length > 0) {
             const firstSentence = this.lyricsData.sentences[0];
@@ -47,7 +47,7 @@ class LyricsEngine {
                 }
             }
         }
-        
+
         return 0; // Default fallback
     }
 
@@ -56,30 +56,27 @@ class LyricsEngine {
      */
     initializeTargetWords() {
         this.targetWords = [];
-        
+
         if (this.lyricsData && this.lyricsData.sentences) {
             this.lyricsData.sentences.forEach((sentence, sentenceIndex) => {
                 sentence.words.forEach((word, wordIndex) => {
                     if (word.target_word === true) {
-                        // Calculate the start time using the same logic as the lyrics engine
-                        const wordTiming = this.calculateWordTiming(sentenceIndex, wordIndex);
-                        
+                        // Get word timing from absolute timestamps
+                        const wordStartTime = word.start_time || 0;
+                        const wordEndTime = word.end_time || 0;
+
                         // Calculate sentence boundaries to constrain listening window
                         const sentenceStartTime = this.calculateSentenceStartTime(sentenceIndex);
                         const sentenceEndTime = this.calculateSentenceEndTime(sentenceIndex);
-                        
-                        // Constrain listening window to not extend beyond sentence boundaries
-                        const earliestStart = Math.max(0, sentenceStartTime); // Can't start before sentence
-                        const latestEnd = sentenceEndTime; // Can't extend beyond sentence end
-                        
-                        // Calculate desired listening window with 3-second buffer
-                        const desiredStartTime = Math.max(0, wordTiming.start - 3.0);
-                        const desiredEndTime = wordTiming.end + 3.0;
-                        
-                        // Apply sentence boundary constraints
-                        const constrainedStartTime = Math.max(earliestStart, desiredStartTime);
-                        const constrainedEndTime = Math.min(latestEnd, desiredEndTime);
-                        
+
+                        // Calculate listening window: 5 seconds before and 2 seconds after the word
+                        const desiredStartTime = wordStartTime - 5.0;
+                        const desiredEndTime = wordEndTime + 2.0;
+
+                        // Constrain to sentence boundaries
+                        const constrainedStartTime = Math.max(sentenceStartTime, desiredStartTime);
+                        const constrainedEndTime = Math.min(sentenceEndTime, desiredEndTime);
+
                         this.targetWords.push({
                             word: word.text,
                             sentenceIndex: sentenceIndex,
@@ -194,14 +191,26 @@ class LyricsEngine {
     recordSpokenWords(spokenText, currentTime) {
         if (!spokenText || spokenText.trim().length === 0) return;
         
-        const adjustedTime = currentTime - (this.lyricsData ? this.getOffset() : 0);
-        
         // Find all target words whose listening-windows are currently active
+        // Use the same dynamic calculation as checkTargetWordTiming
         this.targetWords.forEach(targetWord => {
-            if (adjustedTime >= targetWord.startTime && adjustedTime <= targetWord.endTime) {
+            const wordStartTime = this.lyricsData.sentences[targetWord.sentenceIndex].words[targetWord.wordIndex].start_time || 0;
+            const wordEndTime = this.lyricsData.sentences[targetWord.sentenceIndex].words[targetWord.wordIndex].end_time || 0;
+            
+            // Calculate sentence boundaries for this target word
+            const sentenceStartTime = this.calculateSentenceStartTime(targetWord.sentenceIndex);
+            const sentenceEndTime = this.calculateSentenceEndTime(targetWord.sentenceIndex);
+            
+            // Calculate listening window: 5 seconds before and 2 seconds after word, constrained by sentence
+            const windowStart = Math.max(sentenceStartTime, wordStartTime - 5.0);
+            const windowEnd = Math.min(sentenceEndTime, wordEndTime + 2.0);
+            
+            if (currentTime >= windowStart && currentTime <= windowEnd) {
                 // Parse individual words and calculate similarity scores
                 const individualWords = spokenText.toLowerCase().split(/\s+/).filter(word => word.length > 0);
                 const targetLower = targetWord.word.toLowerCase();
+                
+                console.log(`📝 Recording spoken words for "${targetWord.word}": [${individualWords.join(', ')}] at ${currentTime.toFixed(2)}s`);
                 
                 individualWords.forEach(spokenWord => {
                     // Always append new spoken words (even duplicates from multiple utterances)
@@ -324,66 +333,122 @@ class LyricsEngine {
     }
 
     /**
-     * Check for upcoming and active target words to manage speech recognition timing
+     * Check for target words and manage listening windows with table highlighting
      * @param {number} sentenceIndex - Current sentence index
      * @param {number} currentTime - Current playback time
      */
     checkTargetWordTiming(sentenceIndex, currentTime) {
         if (!window.setTargetWordListening || !window.clearTargetWordListening) return;
 
-        const currentSentence = this.lyricsData.sentences[sentenceIndex];
-        if (!currentSentence) return;
-
-        // Check current sentence for target words
-        currentSentence.words.forEach(word => {
-            if (!word.text || word.text.length === 0) {
-                return;
-            }
+        // Check all target words across all sentences for their listening windows
+        this.targetWords.forEach(targetWord => {
+            const wordStartTime = this.lyricsData.sentences[targetWord.sentenceIndex].words[targetWord.wordIndex].start_time || 0;
+            const wordEndTime = this.lyricsData.sentences[targetWord.sentenceIndex].words[targetWord.wordIndex].end_time || 0;
             
-            if (word.target_word) {
-                const wordAbsoluteStart = word.start_time || 0;
-                const wordAbsoluteEnd = word.end_time || 0;
+            // Calculate sentence boundaries for this target word
+            const sentenceStartTime = this.calculateSentenceStartTime(targetWord.sentenceIndex);
+            const sentenceEndTime = this.calculateSentenceEndTime(targetWord.sentenceIndex);
+            
+            // Calculate listening window: 5 seconds before and 2 seconds after word, constrained by sentence
+            const windowStart = Math.max(sentenceStartTime, wordStartTime - 5.0);
+            const windowEnd = Math.min(sentenceEndTime, wordEndTime + 2.0);
+            
+            if (currentTime >= windowStart && currentTime <= windowEnd) {
+                // Within listening window - determine state based on word timing
+                if (currentTime < wordStartTime) {
+                    // Before the word starts
+                    window.setTargetWordListening(targetWord.word, 'pre-listening');
+                    
+                    // Log target window start (only log once when entering pre-listening)
+                    if (!targetWord.loggedWindowStart) {
+                        console.log(`🎯 TARGET WINDOW STARTED for "${targetWord.word}" (sentence ${targetWord.sentenceIndex + 1}, word ${targetWord.wordIndex + 1})`);
+                        console.log(`   Current time: ${currentTime.toFixed(2)}s`);
+                        console.log(`   Window: ${windowStart.toFixed(2)}s - ${windowEnd.toFixed(2)}s (duration: ${(windowEnd - windowStart).toFixed(2)}s)`);
+                        console.log(`   Word timing: ${wordStartTime.toFixed(2)}s - ${wordEndTime.toFixed(2)}s`);
+                        console.log(`   Sentence bounds: ${sentenceStartTime.toFixed(2)}s - ${sentenceEndTime.toFixed(2)}s`);
+                        console.log(`   State: PRE-LISTENING (${(wordStartTime - currentTime).toFixed(2)}s until word starts)`);
+                        targetWord.loggedWindowStart = true;
+                    }
+                } else if (currentTime >= wordStartTime && currentTime <= wordEndTime) {
+                    // Word is currently being sung
+                    window.setTargetWordListening(targetWord.word, 'active');
+                    
+                    // Log when word becomes active (only once)
+                    if (!targetWord.loggedActive) {
+                        console.log(`🎤 TARGET WORD ACTIVE: "${targetWord.word}" is now being sung!`);
+                        console.log(`   Current time: ${currentTime.toFixed(2)}s, Word ends at: ${wordEndTime.toFixed(2)}s`);
+                        targetWord.loggedActive = true;
+                    }
+                } else {
+                    // After the word ends but still in listening window
+                    window.setTargetWordListening(targetWord.word, 'post-listening');
+                    
+                    // Log when entering post-listening (only once)
+                    if (!targetWord.loggedPostListening) {
+                        console.log(`⏰ POST-LISTENING for "${targetWord.word}" - window ends at ${windowEnd.toFixed(2)}s`);
+                        console.log(`   Current time: ${currentTime.toFixed(2)}s, ${(windowEnd - currentTime).toFixed(2)}s remaining`);
+                        targetWord.loggedPostListening = true;
+                    }
+                }
                 
-                // Check if we're 2 seconds before the target word (using absolute time)
-                const preListenTime = wordAbsoluteStart - 2.0;
-                const postListenTime = wordAbsoluteEnd + 5.0;
+                // Highlight in debug table if available
+                if (window.highlightTargetWordInTable) {
+                    window.highlightTargetWordInTable(targetWord.id, true);
+                }
+            } else {
+                // Outside listening window
+                window.clearTargetWordListening(targetWord.word);
                 
-                if (currentTime >= preListenTime && currentTime < wordAbsoluteStart) {
-                    // 2 seconds before target word - start listening
-                    window.setTargetWordListening(word.text, 'pre-listening');
-                } else if (currentTime >= wordAbsoluteStart && currentTime <= wordAbsoluteEnd) {
-                    // Target word is active - active listening
-                    window.setTargetWordListening(word.text, 'active');
-                } else if (currentTime > wordAbsoluteEnd && currentTime <= postListenTime) {
-                    // Up to 5 seconds after target word - post listening
-                    window.setTargetWordListening(word.text, 'post-listening');
-                } else if (currentTime > postListenTime) {
-                    // Clear listening if we're past the listening-window
-                    window.clearTargetWordListening(word.text);
+                // Log when window ends (only once)
+                if (targetWord.loggedWindowStart && !targetWord.loggedWindowEnd) {
+                    console.log(`🔚 TARGET WINDOW ENDED for "${targetWord.word}" at ${currentTime.toFixed(2)}s`);
+                    targetWord.loggedWindowEnd = true;
+                }
+                
+                // Remove highlight from debug table if available
+                if (window.highlightTargetWordInTable) {
+                    window.highlightTargetWordInTable(targetWord.id, false);
+                }
+                
+                // Reset logging flags when completely outside window for potential future replays
+                if (currentTime < windowStart - 1.0 || currentTime > windowEnd + 1.0) {
+                    targetWord.loggedWindowStart = false;
+                    targetWord.loggedActive = false;
+                    targetWord.loggedPostListening = false;
+                    targetWord.loggedWindowEnd = false;
                 }
             }
         });
-        
-        // Also check next sentence for upcoming target words
-        if (sentenceIndex + 1 < this.lyricsData.sentences.length) {
-            const nextSentence = this.lyricsData.sentences[sentenceIndex + 1];
-            
-            nextSentence.words.forEach(word => {
-                if (!word.text || word.text.length === 0) {
-                    return;
-                }
-                
-                if (word.target_word) {
-                    const wordAbsoluteStart = word.start_time || 0;
-                    const preListenTime = wordAbsoluteStart - 2.0;
-                    
-                    // Check if we're approaching a target word in the next sentence
-                    if (currentTime >= preListenTime && currentTime < wordAbsoluteStart) {
-                        window.setTargetWordListening(word.text, 'pre-listening');
-                    }
-                }
-            });
+    }
+
+    /**
+     * Calculate the start time of a sentence
+     * @param {number} sentenceIndex - Index of the sentence
+     * @returns {number} Start time of the sentence
+     */
+    calculateSentenceStartTime(sentenceIndex) {
+        const sentence = this.lyricsData.sentences[sentenceIndex];
+        if (!sentence || !sentence.words || sentence.words.length === 0) {
+            return 0;
         }
+        
+        // First word's start time is the sentence start time
+        return sentence.words[0].start_time || 0;
+    }
+
+    /**
+     * Calculate the end time of a sentence
+     * @param {number} sentenceIndex - Index of the sentence
+     * @returns {number} End time of the sentence
+     */
+    calculateSentenceEndTime(sentenceIndex) {
+        const sentence = this.lyricsData.sentences[sentenceIndex];
+        if (!sentence || !sentence.words || sentence.words.length === 0) {
+            return 0;
+        }
+        
+        // Last word's end time is the sentence end time
+        return sentence.words[sentence.words.length - 1].end_time || 0;
     }
 
     /**
@@ -393,11 +458,11 @@ class LyricsEngine {
     updateProgress(currentTime) {
         if (!this.progressFill) return;
 
-        const totalDuration = Math.max(
+        const totalEndTime = Math.max(
             ...this.lyricsData.sentences.map((s, index) => this.calculateSentenceEndTime(index)),
             (this.musicAudio && this.musicAudio.duration) || 16
         );
-        const progress = (currentTime / totalDuration) * 100;
+        const progress = (currentTime / totalEndTime) * 100;
         this.progressFill.style.width = `${Math.min(progress, 100)}%`;
     }
 
@@ -407,12 +472,7 @@ class LyricsEngine {
      * @returns {number} - Index of current sentence, or -1 if none found
      */
     findCurrentSentenceIndex(currentTime) {
-        // Check if we should show the first sentence early (1 second before start)
-        const firstSentenceStartTime = this.calculateSentenceStartTime(0);
-        if (currentTime >= firstSentenceStartTime - 1 && currentTime < firstSentenceStartTime) {
-            return 0; // Show first sentence early
-        }
-        
+        // Find sentence based on exact timing - no early showing
         return this.lyricsData.sentences.findIndex((sentence, index) => {
             const sentenceStartTime = this.calculateSentenceStartTime(index);
             const sentenceEndTime = this.calculateSentenceEndTime(index);
@@ -493,45 +553,27 @@ class LyricsEngine {
         return 0; // Fallback if no timing data found
     }
 
+
     /**
-     * Calculate the duration of a sentence based on start and end times
-     * @param {Object} sentence - Sentence object with words array
-     * @returns {number} - Total duration of the sentence
+     * Calculate the end time of a sentence based on the last word's end_time
+     * @param {number} sentenceIndex - Index of the sentence
+     * @returns {number} - End time of the sentence
      */
-    calculateSentenceDuration(sentence) {
+    calculateSentenceEndTime(sentenceIndex) {
+        const sentence = this.lyricsData.sentences[sentenceIndex];
         if (!sentence || !sentence.words || sentence.words.length === 0) {
             return 0;
         }
         
-        let firstStartTime = null;
-        let lastEndTime = null;
-        
-        for (const word of sentence.words) {
-            if (word.start_time !== undefined && word.end_time !== undefined) {
-                if (firstStartTime === null) {
-                    firstStartTime = word.start_time;
-                }
-                lastEndTime = word.end_time;
+        // Find the last word with timing data and return its end time
+        for (let i = sentence.words.length - 1; i >= 0; i--) {
+            const word = sentence.words[i];
+            if (word.end_time !== undefined) {
+                return word.end_time;
             }
         }
         
-        if (firstStartTime !== null && lastEndTime !== null) {
-            return lastEndTime - firstStartTime;
-        }
-        
         return 0; // Fallback if no timing data found
-    }
-
-    /**
-     * Calculate the end time of a sentence based on its index
-     * @param {number} sentenceIndex - Index of the sentence
-     * @returns {number} - Calculated end time (startTime + duration)
-     */
-    calculateSentenceEndTime(sentenceIndex) {
-        const startTime = this.calculateSentenceStartTime(sentenceIndex);
-        const sentence = this.lyricsData.sentences[sentenceIndex];
-        const duration = this.calculateSentenceDuration(sentence);
-        return startTime + duration;
     }
 
     /**
@@ -568,14 +610,17 @@ class LyricsEngine {
         }
         
         const rawTime = (this.musicAudio && this.musicAudio.currentTime) || (Date.now() - this.startTime) / 1000;
-        const currentTime = rawTime - this.getOffset();
+        const offset = this.getOffset();
+        const currentTime = rawTime - offset;
         
         // Update timestamp display for debugging
         if (this.timestampDisplay) {
             this.timestampDisplay.textContent = `${rawTime.toFixed(2)}s`;
-        }        // Handle intro period (offset duration)
-        if (currentTime < 0) {
-            const remainingTime = Math.ceil(Math.abs(currentTime));
+        }
+        
+        // Handle intro period (countdown using offset, but don't show lyrics until first word time)
+        if (rawTime < offset) {
+            const remainingTime = Math.ceil(offset - rawTime);
             
             if (remainingTime > 10) {
                 this.sentenceDisplay.innerHTML = `🎵 Get ready to sing along! 🎵<br>Starting in ${remainingTime}...`;
@@ -584,7 +629,7 @@ class LyricsEngine {
             } else if (remainingTime > 2) {
                 this.sentenceDisplay.innerHTML = `✨ Get ready! ✨<br>Starting in ${remainingTime}...`;
             } else if (remainingTime > 1) {
-                this.sentenceDisplay.innerHTML = `� Ready? �<br>Starting in ${remainingTime}...`;
+                this.sentenceDisplay.innerHTML = `🎤 Ready? 🎤<br>Starting in ${remainingTime}...`;
             } else {
                 this.sentenceDisplay.innerHTML = `🌟 Here we go! 🌟<br>Starting in ${remainingTime}...`;
             }
@@ -594,28 +639,28 @@ class LyricsEngine {
         }
         
         // Check if in outro period (lyrics finished but outro still playing)
-        if (this.isInOutroPeriod(currentTime)) {
+        if (this.isInOutroPeriod(rawTime)) {
             const lastSentenceIndex = this.lyricsData.sentences.length - 1;
             const songEndTime = this.calculateSentenceEndTime(lastSentenceIndex);
-            const outroRemaining = Math.ceil((songEndTime + this.lyricsData.outro) - currentTime);
+            const outroRemaining = Math.ceil((songEndTime + this.lyricsData.outro) - rawTime);
             
             // Keep the last sentence visible during outro instead of showing completion message
-            this.displaySentence(lastSentenceIndex, currentTime);
+            this.displaySentence(lastSentenceIndex, rawTime);
             
             // Update timestamp display (no outro countdown shown)
             if (this.timestampDisplay) {
                 this.timestampDisplay.textContent = `${rawTime.toFixed(2)}s`;
             }
             
-            this.updateProgress(currentTime);
+            this.updateProgress(rawTime);
             this.animationFrame = requestAnimationFrame(() => this.animate());
             return;
         }
         
-        // Find current sentence using lyrics engine (after delay)
-        let sentenceIndex = this.findCurrentSentenceIndex(currentTime);
+        // Find current sentence using raw time (no offset adjustment for sentence detection)
+        let sentenceIndex = this.findCurrentSentenceIndex(rawTime);
         
-        if (sentenceIndex === -1 && this.isSongFinished(currentTime)) {
+        if (sentenceIndex === -1 && this.isSongFinished(rawTime)) {
             // Song and outro finished - call stop callback if provided
             if (this.onStop) {
                 this.onStop();
@@ -625,15 +670,15 @@ class LyricsEngine {
 
         if (sentenceIndex !== -1) {
             this.currentSentenceIndex = sentenceIndex;
-            this.displaySentence(sentenceIndex, currentTime);
+            this.displaySentence(sentenceIndex, rawTime);
             this.activateSentenceImage(sentenceIndex);
         }
         
         // Check if any recognition word is currently highlighted
-        const isRecognitionActive = this.isRecognitionWordActive(currentTime);
+        const isRecognitionActive = this.isRecognitionWordActive(rawTime);
         this.pauseVoicePlayback(isRecognitionActive);
         
-        this.updateProgress(currentTime);
+        this.updateProgress(rawTime);
         this.animationFrame = requestAnimationFrame(() => this.animate());
     }
 
@@ -773,12 +818,19 @@ class LyricsEngine {
     }
 
     /**
-     * Get the duration of the music audio (timing authority)
-     * @returns {number} - Duration in seconds, or 0 if no music audio or not loaded
+     * Get the total end time including outro (timing authority)
+     * @returns {number} - Total end time in seconds, or 0 if no music audio or not loaded
      */
-    getDuration() {
-        // Music audio is the timing authority for duration
-        return this.musicAudio && this.musicAudio.duration ? this.musicAudio.duration : 0;
+    getTotalEndTime() {
+        // Calculate the last sentence end time plus outro
+        const lastSentenceIndex = this.lyricsData.sentences.length - 1;
+        const lastSentenceEndTime = this.calculateSentenceEndTime(lastSentenceIndex);
+        const outro = this.lyricsData.outro || 3;
+        
+        return Math.max(
+            lastSentenceEndTime + outro,
+            (this.musicAudio && this.musicAudio.duration) || 0
+        );
     }
 
     /**

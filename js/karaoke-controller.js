@@ -14,8 +14,6 @@ const AUDIO_MIME_TYPE = 'audio/mpeg';
 let isSpeechRecognitionEnabled = false;
 let isMicrophoneActive = false;
 
-
-
 // Initialize sentence images in the image container
 function initializeSentenceImages() {
     const imageContainer = document.getElementById('imageContainer');
@@ -194,7 +192,7 @@ function skipForwardFiveSeconds() {
     // Remember if we were playing before seeking
     const wasPlaying = !lyricsEngine.isPaused();
     
-    const maxTime = lyricsEngine.getDuration() || Infinity;
+    const maxTime = lyricsEngine.getTotalEndTime() || Infinity;
     const newTime = Math.min(maxTime, lyricsEngine.getCurrentTime() + 5);
     
     lyricsEngine.setCurrentTime(newTime);
@@ -323,6 +321,8 @@ function initializeMicrophoneModal() {
         permissionModal.style.display = 'none';
         // Do NOT show the volume modal (user skipped microphone setup)
         console.log('User skipped microphone setup');
+        // Start playing music since mic setup is fully done
+        startMusicAfterMicSetup();
     });
 
     // Cancel microphone button - turns off microphone and hides modal
@@ -330,6 +330,8 @@ function initializeMicrophoneModal() {
         stopMicrophone();
         volumeModal.style.display = 'none';
         console.log('User cancelled microphone monitoring');
+        // Start playing music since mic setup is fully done
+        startMusicAfterMicSetup();
     });
 }
 
@@ -388,6 +390,8 @@ function startVolumeMonitoring() {
                 volumeModal.style.display = 'none';
                 volumeModal.style.opacity = '1'; // Reset for next time
                 volumeModal.style.transition = ''; // Reset transition
+                // Start playing music since mic setup is fully done
+                startMusicAfterMicSetup();
             }, 3000);
             
             return; // Stop monitoring since fade out has started
@@ -398,6 +402,17 @@ function startVolumeMonitoring() {
     }
     
     updateVolume();
+}
+
+function startMusicAfterMicSetup() {
+    console.log('Starting music after microphone setup completion');
+    if (lyricsEngine) {
+        // Small delay to ensure UI is fully updated
+        setTimeout(() => {
+            lyricsEngine.play();
+            updatePlayButtonAppearance();
+        }, 100);
+    }
 }
 
 function stopMicrophone() {
@@ -467,8 +482,6 @@ function disableSpeechRecognition() {
     isSpeechRecognitionEnabled = false;
 }
 
-
-
 // Target word timing management - supports multiple overlapping listening-windows
 let activeTargetWords = new Map(); // Map of word -> {state, startTime}
 
@@ -486,15 +499,15 @@ function setTargetWordListening(targetWord, state) {
     
     // Only log when state changes for this specific word
     if (!currentState || currentState.state !== state) {
+        console.log(`🎯 Target word listening: "${targetWord}" -> ${state}`);
         activeTargetWords.set(targetWord, {
             state: state,
             startTime: Date.now()
         });
-        
 
-        
         // Update speech recognition module with all active target words
         const allActiveWords = Array.from(activeTargetWords.keys());
+        console.log(`📋 Active target words: [${allActiveWords.join(', ')}]`);
         window.SpeechRecognitionModule.setMultipleTargetWords(allActiveWords);
     }
     
@@ -591,8 +604,21 @@ function updateDebugTable() {
         const trigramCell = document.getElementById(`trigram-${index}`);
 
         if (row) {
-            // Check if current time is within this target word's listening-window
-            const isInWindow = adjustedTime >= targetWord.startTime && adjustedTime <= targetWord.endTime;
+            // Use the same dynamic window calculation as lyrics engine
+            const wordStartTime = lyricsEngine.lyricsData.sentences[targetWord.sentenceIndex].words[targetWord.wordIndex].start_time || 0;
+            const wordEndTime = lyricsEngine.lyricsData.sentences[targetWord.sentenceIndex].words[targetWord.wordIndex].end_time || 0;
+            
+            // Calculate sentence boundaries
+            const sentence = lyricsEngine.lyricsData.sentences[targetWord.sentenceIndex];
+            const sentenceStartTime = sentence.words[0].start_time || 0;
+            const sentenceEndTime = sentence.words[sentence.words.length - 1].end_time || 0;
+            
+            // Calculate listening window: 5 seconds before and 2 seconds after word, constrained by sentence
+            const windowStart = Math.max(sentenceStartTime, wordStartTime - 5.0);
+            const windowEnd = Math.min(sentenceEndTime, wordEndTime + 2.0);
+            
+            // Check if current time (without offset adjustment) is within this target word's listening-window
+            const isInWindow = currentTime >= windowStart && currentTime <= windowEnd;
             
             if (isInWindow) {
                 row.classList.add('active-word');
@@ -661,11 +687,37 @@ function updateDebugTable() {
     }
 }
 
+function highlightTargetWordInTable(targetWordId, highlight) {
+    // targetWordId format is "sentenceIndex-wordIndex"
+    const [sentenceIndex, wordIndex] = targetWordId.split('-').map(Number);
+    
+    // Find the target word index in the targetWords array
+    if (!lyricsEngine || !lyricsEngine.targetWords) return;
+    
+    const targetWordIndex = lyricsEngine.targetWords.findIndex(tw => 
+        tw.sentenceIndex === sentenceIndex && tw.wordIndex === wordIndex
+    );
+    
+    if (targetWordIndex === -1) return;
+    
+    const row = document.getElementById(`debug-row-${targetWordIndex}`);
+    if (row) {
+        if (highlight) {
+            row.classList.add('listening-active');
+            console.log(`🎨 Highlighting row for target word: ${lyricsEngine.targetWords[targetWordIndex].word}`);
+        } else {
+            row.classList.remove('listening-active');
+            console.log(`🎨 Removing highlight from row for target word: ${lyricsEngine.targetWords[targetWordIndex].word}`);
+        }
+    }
+}
+
 // Make functions available globally for lyrics engine integration
 window.setTargetWordListening = setTargetWordListening;
 window.clearTargetWordListening = clearTargetWordListening;
 window.getActiveTargetWords = getActiveTargetWords;
 window.updateDebugTable = updateDebugTable;
+window.highlightTargetWordInTable = highlightTargetWordInTable;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {

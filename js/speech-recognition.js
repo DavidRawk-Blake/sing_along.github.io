@@ -199,10 +199,14 @@ function handleSpeechResult(event) {
     const activeWords = window.getActiveTargetWords ? window.getActiveTargetWords() : new Map();
 
     if (isFinal) {
+        console.log(`🎤 Speech recognition detected: "${spokenText}" (confidence: ${confidence.toFixed(2)})`);
+        
         // Record all final spoken words for active listening-windows
         if (window.lyricsEngine && typeof window.lyricsEngine.recordSpokenWords === 'function') {
             const currentTime = window.lyricsEngine.getCurrentTime();
             window.lyricsEngine.recordSpokenWords(spokenText, currentTime);
+        } else {
+            console.warn('⚠️ Could not record spoken words - lyricsEngine not available');
         }
         
         // For final results, parse individual words and compare each against currently active target words only
