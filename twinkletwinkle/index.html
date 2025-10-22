@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="style.css">
   <script src="lyrics-data.js"></script>
   <script src="../js/lyrics-engine.js"></script>
+  <script src="../js/speech-recognition.js"></script>
   <script src="../js/karaoke-controller.js"></script>
 </head>
 
@@ -16,13 +17,29 @@
   <button id="backBtn" class="control-button back-button" onclick="window.location.href='../index.html'"
     title="Back to Games">‹‹</button>
 
-  <!-- Debug Controls Area -->
-  <div class="debug-controls">
-    <div id="timestampDisplay" class="timestamp-display">0.00s</div>
-    <button id="rewindBtn" class="debug-button" onclick="rewindFiveSeconds()" title="Rewind 5s">⏪</button>
-    <button id="skipBtn" class="debug-button" onclick="skipForwardFiveSeconds()" title="Skip 5s">⏩</button>
-    <div id="targetWordCounter" class="target-word-counter">Targets: 0 words</div>
-  </div>
+  <!-- Debug Details Panel -->
+  <details id="debugDetails" class="debug-details">
+    <summary class="debug-summary">Debug</summary>
+    <div class="debug-content">
+      <div id="timestampDisplay" class="timestamp-display">0.00s</div>
+      <div class="debug-controls">
+        <button id="rewindBtn" class="debug-button" onclick="rewindFiveSeconds()" title="Rewind 5s">⏪</button>
+        <button id="skipBtn" class="debug-button" onclick="skipForwardFiveSeconds()" title="Skip 5s">⏩</button>
+        <div id="targetWordCounter" class="target-word-counter">Targets: 0 words</div>
+      </div>
+      <table id="targetWordsTable" class="target-words-table">
+        <thead>
+          <tr>
+            <th>Target Word</th>
+            <th>Matched</th>
+          </tr>
+        </thead>
+        <tbody id="targetWordsTableBody">
+          <!-- Target words will be populated here -->
+        </tbody>
+      </table>
+    </div>
+  </details>
 
   <div class="outside-floats">
     <div class="floater">🎵</div>
@@ -111,8 +128,7 @@
         </div>
       </div>
       <div class="modal-buttons">
-        <button id="closeMicModalBtn" class="modal-button modal-button-yes">Start Singing! ⭐</button>
-        <button id="cancelMicBtn" class="modal-button modal-button-no">Cancel ⛔</button>
+        <button id="cancelMicBtn" class="modal-button modal-button-no">Cancel 🚫</button>
       </div>
     </div>
   </div>

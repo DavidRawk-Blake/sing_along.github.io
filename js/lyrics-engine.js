@@ -20,6 +20,164 @@ class LyricsEngine {
         this.startTime = 0;
         this.animationFrame = null;
         this.onStop = null; // Callback for when animation should stop
+        
+        // Target word tracking
+        this.targetWords = [];
+        this.initializeTargetWords();
+    }
+
+    /**
+     * Initialize target words array from lyrics data
+     */
+    initializeTargetWords() {
+        this.targetWords = [];
+        
+        if (this.lyricsData && this.lyricsData.sentences) {
+            this.lyricsData.sentences.forEach((sentence, sentenceIndex) => {
+                sentence.words.forEach((word, wordIndex) => {
+                    if (word.target_word === true) {
+                        // Calculate the start time using the same logic as the lyrics engine
+                        const wordTiming = this.calculateWordTiming(sentenceIndex, wordIndex);
+                        
+                        this.targetWords.push({
+                            word: word.text,
+                            matched: null,
+                            sentenceIndex: sentenceIndex,
+                            wordIndex: wordIndex,
+                            startTime: wordTiming.start,
+                            endTime: wordTiming.end,
+                            id: `${sentenceIndex}-${wordIndex}` // Unique identifier
+                        });
+                    }
+                });
+            });
+        }
+        
+        console.log(`Initialized ${this.targetWords.length} target word occurrences for tracking`);
+        // Also log some examples for debugging
+        if (this.targetWords.length > 0) {
+            console.log('First few target words:', this.targetWords.slice(0, 3).map(tw => 
+                `"${tw.word}" at ${tw.startTime.toFixed(1)}s (${tw.id})`
+            ));
+        }
+    }
+
+    /**
+     * Mark a target word as matched
+     * @param {string} word - The word that was matched
+     */
+    markWordAsMatched(word) {
+        const currentTime = this.getCurrentTime();
+        
+        // Get active target words from karaoke controller
+        const activeWords = window.getActiveTargetWords ? window.getActiveTargetWords() : new Map();
+        
+        // Find all unmatched occurrences of this word
+        const unmatchedOccurrences = this.targetWords.filter(tw => 
+            tw.word.toLowerCase() === word.toLowerCase() && tw.matched !== true
+        );
+        
+        if (unmatchedOccurrences.length === 0) {
+            console.log(`No unmatched occurrences found for word "${word}"`);
+            return;
+        }
+        
+        // First, try to find an active occurrence (one that's currently in its timing window)
+        const activeOccurrences = unmatchedOccurrences.filter(tw => {
+            const targetState = activeWords.get(tw.word);
+            return targetState && targetState.state === 'active';
+        });
+        
+        let targetEntry;
+        
+        if (activeOccurrences.length > 0) {
+            // If there are active occurrences, choose the one that best matches current timing
+            targetEntry = activeOccurrences[0];
+            let bestScore = -1;
+            
+            for (let entry of activeOccurrences) {
+                // Calculate a composite score based on timing proximity and whether word is currently playing
+                const distance = Math.abs(currentTime - entry.startTime);
+                const isCurrentlyPlaying = currentTime >= entry.startTime && currentTime <= entry.endTime;
+                
+                // Score: prioritize currently playing words, then closest by time
+                let score = isCurrentlyPlaying ? 100 : 0;
+                score -= distance; // Closer words get higher scores
+                
+                if (score > bestScore) {
+                    targetEntry = entry;
+                    bestScore = score;
+                }
+            }
+            
+            const timingInfo = currentTime >= targetEntry.startTime && currentTime <= targetEntry.endTime ? " [CURRENTLY PLAYING]" : "";
+            console.log(`✅ Matched ACTIVE target word "${word}" (occurrence ${targetEntry.id}) at time ${currentTime.toFixed(2)}s${timingInfo}`);
+            console.log(`📍 Target word timing: ${targetEntry.startTime.toFixed(2)}s - ${targetEntry.endTime.toFixed(2)}s`);
+        } else {
+            // Fallback: If no active occurrences, find the closest one (original logic)
+            targetEntry = unmatchedOccurrences[0];
+            let closestDistance = Math.abs(currentTime - targetEntry.startTime);
+            
+            for (let entry of unmatchedOccurrences) {
+                const distance = Math.abs(currentTime - entry.startTime);
+                // Prefer words that are currently playing or just about to play
+                if (distance < closestDistance || 
+                    (entry.startTime >= currentTime && targetEntry.startTime < currentTime)) {
+                    targetEntry = entry;
+                    closestDistance = distance;
+                }
+            }
+            
+            console.log(`✅ Matched closest target word "${word}" (occurrence ${targetEntry.id}) at time ${currentTime.toFixed(2)}s - no active words`);
+            console.log(`⚠️ Warning: No active words found for "${word}" - this may indicate a timing issue`);
+        }
+        
+        targetEntry.matched = true;
+        this.updateTargetWordCounter();
+        
+        // Update debug table if available
+        if (window.updateDebugTable) {
+            window.updateDebugTable();
+        }
+    }
+
+    /**
+     * Get count of matched target words
+     * @returns {number} Number of matched target words
+     */
+    getMatchedWordCount() {
+        return this.targetWords.filter(tw => tw.matched === true).length;
+    }
+
+    /**
+     * Update the target word counter display
+     */
+    updateTargetWordCounter() {
+        const counterElement = document.getElementById('targetWordCounter');
+        if (counterElement) {
+            const matchedCount = this.getMatchedWordCount();
+            const totalCount = this.targetWords.length;
+            counterElement.textContent = `${matchedCount}/${totalCount}`;
+            console.log(`Target word counter updated: ${matchedCount}/${totalCount}`);
+        }
+    }
+
+    /**
+     * Reset all target words to unmatched state
+     */
+    resetTargetWords() {
+        if (this.targetWords) {
+            this.targetWords.forEach(tw => {
+                tw.matched = null;
+            });
+            console.log(`Reset all ${this.targetWords.length} target words to unmatched state`);
+            this.updateTargetWordCounter();
+            
+            // Update debug table if available
+            if (window.updateDebugTable) {
+                window.updateDebugTable();
+            }
+        }
     }
 
     /**
@@ -84,13 +242,23 @@ class LyricsEngine {
             let className = 'word';
             let fontSize = '';
             
+            // Add target-word class if this is a target word
+            if (word.target_word) {
+                className += ' target-word';
+            }
+            
             // Only highlight if not in early preview mode and timing is right
             if (!isEarlyPreview && relativeTime >= wordRelativeStart && relativeTime <= wordRelativeEnd) {
                 className += ' highlighted';
                 
-                // Double font size if target_word is true
+                // Increase font size moderately if target_word is true
                 if (word.target_word) {
-                    fontSize = 'font-size: 2em; ';
+                    fontSize = 'font-size: 1.5em; ';
+                    
+                    // Set this as the current target word for speech recognition
+                    if (window.setCurrentTargetWord) {
+                        window.setCurrentTargetWord(word.text);
+                    }
                 }
             }
             
@@ -101,6 +269,93 @@ class LyricsEngine {
         });
 
         this.sentenceDisplay.innerHTML = html;
+        
+        // Check for target word timing (prediction and active periods)
+        this.checkTargetWordTiming(sentenceIndex, currentTime);
+        
+        // Update debug table to reflect active words
+        if (window.updateDebugTable) {
+            window.updateDebugTable();
+        }
+    }
+
+    /**
+     * Check for upcoming and active target words to manage speech recognition timing
+     * @param {number} sentenceIndex - Current sentence index
+     * @param {number} currentTime - Current playback time
+     */
+    checkTargetWordTiming(sentenceIndex, currentTime) {
+        if (!window.setTargetWordListening || !window.clearTargetWordListening) return;
+
+        const currentSentence = this.lyricsData.sentences[sentenceIndex];
+        if (!currentSentence) return;
+
+        const sentenceStartTime = this.calculateSentenceStartTime(sentenceIndex);
+        const relativeTime = currentTime - sentenceStartTime;
+        
+        let cumulativeTime = 0;
+        const slowdownFactor = 1.1;
+        
+        // Check current sentence for target words
+        currentSentence.words.forEach(word => {
+            if (!word.text || word.text.length === 0) {
+                cumulativeTime += word.duration;
+                return;
+            }
+            
+            if (word.target_word) {
+                const wordRelativeStart = cumulativeTime * slowdownFactor;
+                const wordRelativeEnd = (cumulativeTime + word.duration) * slowdownFactor;
+                
+                // Check if we're 2 seconds before the target word
+                const preListenTime = wordRelativeStart - 2.0;
+                const postListenTime = wordRelativeEnd + 5.0;
+                
+                if (relativeTime >= preListenTime && relativeTime < wordRelativeStart) {
+                    // 2 seconds before target word - start listening
+                    window.setTargetWordListening(word.text, 'pre-listening');
+                } else if (relativeTime >= wordRelativeStart && relativeTime <= wordRelativeEnd) {
+                    // Target word is active - active listening
+                    window.setTargetWordListening(word.text, 'active');
+                } else if (relativeTime > wordRelativeEnd && relativeTime <= postListenTime) {
+                    // Up to 5 seconds after target word - post listening
+                    window.setTargetWordListening(word.text, 'post-listening');
+                } else if (relativeTime > postListenTime) {
+                    // Clear listening if we're past the window
+                    window.clearTargetWordListening(word.text);
+                }
+            }
+            
+            cumulativeTime += word.duration;
+        });
+        
+        // Also check next sentence for upcoming target words
+        if (sentenceIndex + 1 < this.lyricsData.sentences.length) {
+            const nextSentence = this.lyricsData.sentences[sentenceIndex + 1];
+            const nextSentenceStartTime = this.calculateSentenceStartTime(sentenceIndex + 1);
+            const nextRelativeTime = currentTime - nextSentenceStartTime;
+            
+            let nextCumulativeTime = 0;
+            
+            nextSentence.words.forEach(word => {
+                if (!word.text || word.text.length === 0) {
+                    nextCumulativeTime += word.duration;
+                    return;
+                }
+                
+                if (word.target_word) {
+                    const wordRelativeStart = nextCumulativeTime * slowdownFactor;
+                    const preListenTime = wordRelativeStart - 2.0;
+                    
+                    // Check if we're approaching a target word in the next sentence
+                    if (nextRelativeTime >= preListenTime && nextRelativeTime < wordRelativeStart) {
+                        window.setTargetWordListening(word.text, 'pre-listening');
+                    }
+                }
+                
+                nextCumulativeTime += word.duration;
+            });
+        }
     }
 
     /**
@@ -224,6 +479,30 @@ class LyricsEngine {
         const sentence = this.lyricsData.sentences[sentenceIndex];
         const duration = this.calculateSentenceDuration(sentence);
         return startTime + duration;
+    }
+
+    /**
+     * Calculate the start and end time of a specific word
+     * @param {number} sentenceIndex - Index of the sentence
+     * @param {number} wordIndex - Index of the word within the sentence
+     * @returns {Object} - Object with start and end times
+     */
+    calculateWordTiming(sentenceIndex, wordIndex) {
+        const sentenceStartTime = this.calculateSentenceStartTime(sentenceIndex);
+        const sentence = this.lyricsData.sentences[sentenceIndex];
+        
+        // Calculate word start time by adding durations of previous words in this sentence
+        let wordStartTime = sentenceStartTime;
+        for (let i = 0; i < wordIndex; i++) {
+            wordStartTime += sentence.words[i].duration || 0;
+        }
+        
+        const wordDuration = sentence.words[wordIndex].duration || 0;
+        
+        return {
+            start: wordStartTime,
+            end: wordStartTime + wordDuration
+        };
     }
 
     /**
@@ -535,6 +814,13 @@ class LyricsEngine {
         this.isPlaying = false;
         this.previousRecognitionState = false; // Reset recognition state
         this.currentImageIndex = -1; // Reset image state
+        
+        // Reset audio time to beginning
+        this.setCurrentTime(0);
+        
+        // Reset all target words to unmatched state
+        this.resetTargetWords();
+        
         if (this.sentenceDisplay) {
             this.sentenceDisplay.innerHTML = 'Click "Start" to begin your sing-along experience!';
         }
@@ -543,6 +829,11 @@ class LyricsEngine {
         }
         // Hide all sentence images
         this.hideAllSentenceImages();
+        
+        // Update debug table to reflect reset state
+        if (window.updateDebugTable) {
+            window.updateDebugTable();
+        }
     }
 
     /**

@@ -11,16 +11,84 @@ body {
     justify-content: center;
 }
 
-/* Debug Controls Area */
-.debug-controls {
+/* Debug Details Panel */
+.debug-details {
     position: fixed;
     top: 20px;
     right: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    align-items: flex-end;
     z-index: 1000;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 8px;
+    border: 2px solid #FF8C00;
+    min-width: 250px;
+}
+
+.debug-details[open] {
+    opacity: 0.7;
+}
+
+.debug-details[open]:hover {
+    opacity: 1.0;
+}
+
+.debug-summary {
+    background: rgba(255, 140, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 6px;
+    opacity: 1 !important;
+}
+
+.debug-summary:hover {
+    background: rgba(255, 140, 0, 1);
+}
+
+.debug-content {
+    padding: 12px;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+.target-words-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 12px;
+    font-family: Arial, sans-serif;
+}
+
+.target-words-table th,
+.target-words-table td {
+    padding: 4px 8px;
+    border: 1px solid #FF8C00;
+    text-align: left;
+}
+
+.target-words-table th {
+    background: rgba(255, 140, 0, 0.3);
+    font-weight: bold;
+}
+
+.target-words-table .matched {
+    text-align: center;
+    font-size: 16px;
+}
+
+.target-words-table .active-word {
+    background-color: rgba(255, 140, 0, 0.3);
+    font-weight: bold;
+}
+
+/* Debug Controls Area */
+.debug-controls {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    align-items: center;
+    margin: 10px 0;
+    flex-wrap: wrap;
 }
 
 /* Timestamp Display for Debugging */
@@ -598,6 +666,14 @@ p {
     color: #1D4ED8;
     transform: scale(1.1);
     box-shadow: 0 2px 8px rgba(255, 215, 0, 0.5);
+}
+
+.word.target-word {
+    text-shadow: 2px 2px 4px #FFD700, 
+                 -2px -2px 4px #FFD700, 
+                 2px -2px 4px #FFD700, 
+                 -2px 2px 4px #FFD700,
+                 0 0 6px #FFD700;
 }
 
 .progress-container {

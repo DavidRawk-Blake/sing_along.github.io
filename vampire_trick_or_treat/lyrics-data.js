@@ -5,7 +5,7 @@
 
 // Global lyrics data for the Vampire Trick or Treat karaoke game
 window.lyricsData = {
-  offset: 7.0,
+  offset: 6.5,
   outro: 3,
   song_source: "vlad.mp3",
   music_source: "vlad-instrumental.mp3",
