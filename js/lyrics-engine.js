@@ -39,12 +39,28 @@ class LyricsEngine {
                         // Calculate the start time using the same logic as the lyrics engine
                         const wordTiming = this.calculateWordTiming(sentenceIndex, wordIndex);
                         
+                        // Calculate sentence boundaries to constrain listening window
+                        const sentenceStartTime = this.calculateSentenceStartTime(sentenceIndex);
+                        const sentenceEndTime = this.calculateSentenceEndTime(sentenceIndex);
+                        
+                        // Constrain listening window to not extend beyond sentence boundaries
+                        const earliestStart = Math.max(0, sentenceStartTime); // Can't start before sentence
+                        const latestEnd = sentenceEndTime; // Can't extend beyond sentence end
+                        
+                        // Calculate desired listening window with 3-second buffer
+                        const desiredStartTime = Math.max(0, wordTiming.start - 3.0);
+                        const desiredEndTime = wordTiming.end + 3.0;
+                        
+                        // Apply sentence boundary constraints
+                        const constrainedStartTime = Math.max(earliestStart, desiredStartTime);
+                        const constrainedEndTime = Math.min(latestEnd, desiredEndTime);
+                        
                         this.targetWords.push({
                             word: word.text,
                             sentenceIndex: sentenceIndex,
                             wordIndex: wordIndex,
-                            startTime: Math.max(0, wordTiming.start - 3.0), // Start listening-window 3 seconds earlier
-                            endTime: wordTiming.end + 3.0, // End listening-window 3 seconds later
+                            startTime: constrainedStartTime,
+                            endTime: constrainedEndTime,
                             id: `${sentenceIndex}-${wordIndex}`, // Unique identifier
                             spokenWords: [], // Store all final words spoken during this listening-window
                             jaroScores: [], // Store Jaro distances for each spoken word
@@ -163,17 +179,16 @@ class LyricsEngine {
                 const targetLower = targetWord.word.toLowerCase();
                 
                 individualWords.forEach(spokenWord => {
-                    // Avoid duplicates
-                    if (!targetWord.spokenWords.includes(spokenWord)) {
-                        // Calculate similarity scores
-                        const jaroScore = this.calculateJaroDistance(spokenWord, targetLower);
-                        const trigramScore = this.calculateTrigramSimilarity(spokenWord, targetLower);
-                        
-                        // Store word and scores
-                        targetWord.spokenWords.push(spokenWord);
-                        targetWord.jaroScores.push(jaroScore);
-                        targetWord.trigramScores.push(trigramScore);
-                    }
+                    // Always append new spoken words (even duplicates from multiple utterances)
+                    targetWord.spokenWords.push(spokenWord);
+                    
+                    // Calculate similarity scores for this utterance
+                    const jaroScore = this.calculateJaroDistance(spokenWord, targetLower);
+                    const trigramScore = this.calculateTrigramSimilarity(spokenWord, targetLower);
+                    
+                    // Append scores for this utterance
+                    targetWord.jaroScores.push(jaroScore);
+                    targetWord.trigramScores.push(trigramScore);
                 });
             }
         });
@@ -789,7 +804,6 @@ class LyricsEngine {
                     // Pause song during recognition words
                     if (!this.songAudio.paused) {
                         this.songAudio.pause();
-                        console.log('Song paused for recognition word');
                     }
                 } else {
                     // Resume song when recognition word ends
@@ -801,7 +815,6 @@ class LyricsEngine {
                             // Only resume if music is still playing (main playback is active)
                             this.songAudio.play().catch(e => console.log('Song resume error:', e));
                             this.musicAudio.play().catch(e => console.log('Music resume error:', e));
-                            console.log(`Song resumed after recognition word, synchronized to music timestamp: ${musicTime.toFixed(2)}s`);
                         } catch (e) {
                             console.error('Error synchronizing song with music:', e);
                             // Still try to resume even if sync fails

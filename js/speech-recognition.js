@@ -130,7 +130,7 @@ function initializeSpeechRecognition() {
 
         // Handle recognition end
         speechRecognition.addEventListener('end', () => {
-            if (isRecognitionActive && currentTargetWord) {
+            if (isRecognitionActive && currentTargetWords.length > 0) {
                 // Restart recognition if it's supposed to be active
                 setTimeout(() => {
                     if (isRecognitionActive) {
@@ -264,7 +264,7 @@ function startTargetWordRecognition(targetWord) {
 function stopTargetWordRecognition() {
     if (speechRecognition && isRecognitionActive) {
         isRecognitionActive = false;
-        currentTargetWord = null;
+        currentTargetWords = [];
         speechRecognition.stop();
         console.log('Stopped speech recognition');
     }
@@ -275,7 +275,7 @@ function stopTargetWordRecognition() {
  * @returns {boolean} True if recognition is active
  */
 function isRecognitionRunning() {
-    return isRecognitionActive && currentTargetWord !== null;
+    return isRecognitionActive && currentTargetWords.length > 0;
 }
 
 /**
