@@ -12,37 +12,12 @@ body {
 }
 
 /* Debug Details Panel */
-.debug-details {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1000;
-    background: rgba(0, 0, 0, 0.8);
-    border-radius: 8px;
-    border: 2px solid #FF8C00;
-    min-width: 250px;
-}
+/* Debug Details Panel - Game-specific styling */
 
-.debug-details[open] {
-    opacity: 0.7;
-}
-
-.debug-details[open]:hover {
-    opacity: 1.0;
-}
-
+/* Debug Summary - Game-specific styling */
 .debug-summary {
-    background: rgba(255, 140, 0, 0.9);
-    color: white;
-    padding: 8px 12px;
-    cursor: pointer;
-    font-weight: bold;
-    border-radius: 6px;
-    opacity: 1 !important;
-}
-
-.debug-summary:hover {
-    background: rgba(255, 140, 0, 1);
+    color: #1D4ED8;
+    font-family: 'Fredoka One', cursive;
 }
 
 .debug-content {
@@ -76,10 +51,12 @@ body {
     font-size: 16px;
 }
 
+/* Target Words Table - Game-specific styling */
 .target-words-table .active-word {
-    background-color: rgba(255, 140, 0, 0.3);
-    font-weight: bold;
+    background-color: rgba(255, 215, 0, 0.3);
 }
+
+/* Media Controls - Let flex positioning handle this naturally */
 
 /* Debug Controls Area */
 .debug-controls {
@@ -307,14 +284,7 @@ body {
 
 
 
-.media-controls {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    align-items: center;
-    margin-top: auto;
-    z-index: 2;
-}
+
 
 .control-button {
     width: 80pt;
@@ -643,7 +613,7 @@ p {
     color: #1E3A8A;
     margin-bottom: 15px;
     word-wrap: break-word;
-    word-break: break-word;
+    word-break: keep-all;
     overflow-wrap: break-word;
     white-space: normal;
     flex-wrap: wrap;
@@ -749,10 +719,7 @@ p {
     z-index: 100; /* Above all images */
 }
 
-.media-controls {
-    position: relative;
-    z-index: 100; /* Above all images */
-}
+
 
 /* Modal Styles - Golden Theme */
 .modal-overlay {

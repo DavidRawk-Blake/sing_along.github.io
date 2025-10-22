@@ -55,6 +55,9 @@ function initializeKaraoke() {
     // Initialize lyrics engine (data is now hardcoded, so this always succeeds)
     lyricsEngine = new LyricsEngine();
     
+    // Make lyrics engine globally accessible for speech recognition
+    window.lyricsEngine = lyricsEngine;
+    
     // Set audio sources directly from lyrics data (no loading needed)
     if (lyricsEngine.lyricsData.song_source) {
         song.src = lyricsEngine.lyricsData.song_source;
@@ -548,7 +551,11 @@ function initializeDebugTable() {
         const row = document.createElement('tr');
         row.id = `debug-row-${index}`;
         row.innerHTML = `
+            <td id="match-${index}" class="match-status"></td>
             <td>${targetWord.word} (${targetWord.id})</td>
+            <td id="spoken-${index}" class="spoken-words"></td>
+            <td id="jaro-${index}" class="jaro-scores"></td>
+            <td id="trigram-${index}" class="trigram-scores"></td>
         `;
         tableBody.appendChild(row);
     });
@@ -565,9 +572,16 @@ function updateDebugTable() {
     // Get current time from lyrics engine
     const currentTime = lyricsEngine.getCurrentTime();
     const adjustedTime = currentTime - (lyricsEngine.lyricsData ? lyricsEngine.lyricsData.offset : 0);
+    
+    let matchedCount = 0;
+    const totalCount = lyricsEngine.targetWords.length;
 
     lyricsEngine.targetWords.forEach((targetWord, index) => {
         const row = document.getElementById(`debug-row-${index}`);
+        const matchCell = document.getElementById(`match-${index}`);
+        const spokenCell = document.getElementById(`spoken-${index}`);
+        const jaroCell = document.getElementById(`jaro-${index}`);
+        const trigramCell = document.getElementById(`trigram-${index}`);
 
         if (row) {
             // Check if current time is within this target word's listening-window
@@ -579,7 +593,65 @@ function updateDebugTable() {
                 row.classList.remove('active-word');
             }
         }
+
+        // Update match status display
+        if (matchCell) {
+            let matchStatus = '';
+            
+            // Check if any Jaro score is over 0.7 (note: user said 0.3 but typical threshold is 0.7)
+            const hasJaroMatch = targetWord.jaroScores.some(score => score > 0.7);
+            if (hasJaroMatch) {
+                matchStatus += '✓';
+            }
+            
+            // Check if any Trigram score is over 0.3 (note: user said 0.7 but typical threshold is 0.3)  
+            const hasTrigramMatch = targetWord.trigramScores.some(score => score > 0.3);
+            if (hasTrigramMatch) {
+                matchStatus += '✓';
+            }
+            
+            matchCell.textContent = matchStatus || '-';
+            
+            // Apply green background if there's a match
+            const hasMatch = hasJaroMatch || hasTrigramMatch;
+            if (hasMatch) {
+                row.classList.add('match-found');
+                matchedCount++;
+            } else {
+                row.classList.remove('match-found');
+            }
+        }
+
+        // Update spoken words display
+        if (spokenCell) {
+            const spokenWordsText = targetWord.spokenWords.length > 0 
+                ? targetWord.spokenWords.join(', ') 
+                : '-';
+            spokenCell.textContent = spokenWordsText;
+        }
+
+        // Update Jaro scores display
+        if (jaroCell) {
+            const jaroScoresText = targetWord.jaroScores.length > 0 
+                ? targetWord.jaroScores.map(score => score.toFixed(3)).join(', ')
+                : '-';
+            jaroCell.textContent = jaroScoresText;
+        }
+
+        // Update Trigram scores display
+        if (trigramCell) {
+            const trigramScoresText = targetWord.trigramScores.length > 0 
+                ? targetWord.trigramScores.map(score => score.toFixed(3)).join(', ')
+                : '-';
+            trigramCell.textContent = trigramScoresText;
+        }
     });
+    
+    // Update debug summary with match count
+    const debugSummary = document.getElementById('debugSummary');
+    if (debugSummary) {
+        debugSummary.textContent = `(${matchedCount}/${totalCount})`;
+    }
 }
 
 // Make functions available globally for lyrics engine integration

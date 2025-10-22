@@ -172,6 +172,12 @@ function handleSpeechResult(event) {
     const activeWords = window.getActiveTargetWords ? window.getActiveTargetWords() : new Map();
 
     if (isFinal) {
+        // Record all final spoken words for active listening-windows
+        if (window.lyricsEngine && typeof window.lyricsEngine.recordSpokenWords === 'function') {
+            const currentTime = window.lyricsEngine.getCurrentTime();
+            window.lyricsEngine.recordSpokenWords(spokenText, currentTime);
+        }
+        
         // For final results, parse individual words and compare each against currently active target words only
         const spokenWords = spokenText.split(/\s+/).filter(word => word.length > 0);
         

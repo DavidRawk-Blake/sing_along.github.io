@@ -43,13 +43,144 @@ class LyricsEngine {
                             word: word.text,
                             sentenceIndex: sentenceIndex,
                             wordIndex: wordIndex,
-                            startTime: wordTiming.start,
-                            endTime: wordTiming.end + 3.0, // Extend listening-window by 3 seconds
-                            id: `${sentenceIndex}-${wordIndex}` // Unique identifier
+                            startTime: Math.max(0, wordTiming.start - 3.0), // Start listening-window 3 seconds earlier
+                            endTime: wordTiming.end + 3.0, // End listening-window 3 seconds later
+                            id: `${sentenceIndex}-${wordIndex}`, // Unique identifier
+                            spokenWords: [], // Store all final words spoken during this listening-window
+                            jaroScores: [], // Store Jaro distances for each spoken word
+                            trigramScores: [] // Store trigram similarity scores for each spoken word
                         });
                     }
                 });
             });
+        }
+    }
+
+    /**
+     * Calculate the Jaro distance between two strings
+     * @param {string} s1 - First string
+     * @param {string} s2 - Second string
+     * @returns {number} Jaro distance (0-1, where 1 is identical)
+     */
+    calculateJaroDistance(s1, s2) {
+        if (s1 === s2) return 1.0;
+
+        const len1 = s1.length;
+        const len2 = s2.length;
+
+        if (len1 === 0 || len2 === 0) return 0.0;
+
+        const maxDist = Math.floor(Math.max(len1, len2) / 2) - 1;
+        let matches = 0;
+        let transpositions = 0;
+
+        const m1 = new Array(len1).fill(false);
+        const m2 = new Array(len2).fill(false);
+
+        for (let i = 0; i < len1; i++) {
+            for (let j = Math.max(0, i - maxDist); j < Math.min(len2, i + maxDist + 1); j++) {
+                if (!m1[i] && !m2[j] && s1[i] === s2[j]) {
+                    matches++;
+                    m1[i] = true;
+                    m2[j] = true;
+                    break;
+                }
+            }
+        }
+
+        if (matches === 0) return 0.0;
+
+        let k = 0;
+        for (let i = 0; i < len1; i++) {
+            if (m1[i]) {
+                while (!m2[k]) k++;
+                if (s1[i] !== s2[k]) {
+                    transpositions++;
+                }
+                k++;
+            }
+        }
+
+        const jaro = (matches / len1 + matches / len2 + (matches - transpositions / 2) / matches) / 3;
+        return jaro;
+    }
+
+    /**
+     * Generate trigrams from a string
+     * @param {string} str - Input string
+     * @returns {Set} Set of trigrams
+     */
+    generateTrigrams(str) {
+        const trigrams = new Set();
+        const paddedStr = " " + str + " ";
+        for (let i = 0; i < paddedStr.length - 2; i++) {
+            trigrams.add(paddedStr.substring(i, i + 3));
+        }
+        return trigrams;
+    }
+
+    /**
+     * Calculate trigram similarity between two strings
+     * @param {string} str1 - First string
+     * @param {string} str2 - Second string
+     * @returns {number} Trigram similarity (0-1, where 1 is identical)
+     */
+    calculateTrigramSimilarity(str1, str2) {
+        if (str1 === str2) return 1.0;
+
+        const trigrams1 = this.generateTrigrams(str1);
+        const trigrams2 = this.generateTrigrams(str2);
+
+        let commonTrigramsCount = 0;
+        for (const trigram of trigrams1) {
+            if (trigrams2.has(trigram)) {
+                commonTrigramsCount++;
+            }
+        }
+
+        const totalUniqueTrigrams = trigrams1.size + trigrams2.size - commonTrigramsCount;
+
+        if (totalUniqueTrigrams === 0) return 0.0;
+
+        return commonTrigramsCount / totalUniqueTrigrams;
+    }
+
+    /**
+     * Record spoken words during listening-windows with similarity scores
+     * @param {string} spokenText - The final spoken text to record
+     * @param {number} currentTime - Current playback time when spoken
+     */
+    recordSpokenWords(spokenText, currentTime) {
+        if (!spokenText || spokenText.trim().length === 0) return;
+        
+        const adjustedTime = currentTime - (this.lyricsData ? this.lyricsData.offset : 0);
+        
+        // Find all target words whose listening-windows are currently active
+        this.targetWords.forEach(targetWord => {
+            if (adjustedTime >= targetWord.startTime && adjustedTime <= targetWord.endTime) {
+                // Parse individual words and calculate similarity scores
+                const individualWords = spokenText.toLowerCase().split(/\s+/).filter(word => word.length > 0);
+                const targetLower = targetWord.word.toLowerCase();
+                
+                individualWords.forEach(spokenWord => {
+                    // Avoid duplicates
+                    if (!targetWord.spokenWords.includes(spokenWord)) {
+                        // Calculate similarity scores
+                        const jaroScore = this.calculateJaroDistance(spokenWord, targetLower);
+                        const trigramScore = this.calculateTrigramSimilarity(spokenWord, targetLower);
+                        
+                        // Store word and scores
+                        targetWord.spokenWords.push(spokenWord);
+                        targetWord.jaroScores.push(jaroScore);
+                        targetWord.trigramScores.push(trigramScore);
+                    }
+                });
+            }
+        });
+        
+        // Update debug table if available
+        if (window.updateDebugTable) {
+            window.updateDebugTable();
         }
     }
 
@@ -696,6 +827,15 @@ class LyricsEngine {
         
         // Reset audio time to beginning
         this.setCurrentTime(0);
+        
+        // Clear all recorded spoken words and scores
+        if (this.targetWords) {
+            this.targetWords.forEach(targetWord => {
+                targetWord.spokenWords = [];
+                targetWord.jaroScores = [];
+                targetWord.trigramScores = [];
+            });
+        }
         
         if (this.sentenceDisplay) {
             this.sentenceDisplay.innerHTML = 'Click "Start" to begin your sing-along experience!';
