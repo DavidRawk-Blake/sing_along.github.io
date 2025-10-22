@@ -27,6 +27,31 @@ class LyricsEngine {
     }
 
     /**
+     * Get the offset based on the first sentence's start time
+     * @returns {number} - Offset in seconds
+     */
+    getOffset() {
+        // Use explicit offset if provided, otherwise use first sentence start time
+        if (this.lyricsData.offset !== undefined) {
+            return this.lyricsData.offset;
+        }
+        
+        // Calculate offset from first sentence start time
+        if (this.lyricsData.sentences && this.lyricsData.sentences.length > 0) {
+            const firstSentence = this.lyricsData.sentences[0];
+            if (firstSentence.words && firstSentence.words.length > 0) {
+                for (const word of firstSentence.words) {
+                    if (word.start_time !== undefined) {
+                        return word.start_time;
+                    }
+                }
+            }
+        }
+        
+        return 0; // Default fallback
+    }
+
+    /**
      * Initialize target words array from lyrics data
      */
     initializeTargetWords() {
@@ -169,7 +194,7 @@ class LyricsEngine {
     recordSpokenWords(spokenText, currentTime) {
         if (!spokenText || spokenText.trim().length === 0) return;
         
-        const adjustedTime = currentTime - (this.lyricsData ? this.lyricsData.offset : 0);
+        const adjustedTime = currentTime - (this.lyricsData ? this.getOffset() : 0);
         
         // Find all target words whose listening-windows are currently active
         this.targetWords.forEach(targetWord => {
@@ -246,23 +271,20 @@ class LyricsEngine {
         const isEarlyPreview = sentenceIndex === 0 && currentTime < sentenceStartTime;
 
         let html = '';
-        let cumulativeTime = 0; // Track cumulative duration to calculate word start times
         
         sentence.words.forEach(word => {
             // Skip empty words - don't display or highlight them
             if (!word.text || word.text.length === 0) {
-                // Still update cumulative time for proper timing
-                cumulativeTime += word.duration;
                 return; // Skip to next word
             }
             
-            // Calculate word start time from cumulative duration of previous words
-            const wordStartTime = cumulativeTime;
+            // Use absolute timing from word data instead of cumulative calculation
+            const wordAbsoluteStart = word.start_time || 0;
+            const wordAbsoluteEnd = word.end_time || 0;
             
-            // Apply 10% slowdown to word timing
-            const slowdownFactor = 1.1;
-            const wordRelativeStart = wordStartTime * slowdownFactor;
-            const wordRelativeEnd = (wordStartTime + word.duration) * slowdownFactor;
+            // Convert to relative time within the sentence
+            const wordRelativeStart = wordAbsoluteStart - sentenceStartTime;
+            const wordRelativeEnd = wordAbsoluteEnd - sentenceStartTime;
             
             let className = 'word';
             let fontSize = '';
@@ -288,9 +310,6 @@ class LyricsEngine {
             }
             
             html += `<span class="${className}" style="${fontSize}">${word.text}</span>`;
-            
-            // Add this word's duration to cumulative time for next word
-            cumulativeTime += word.duration;
         });
 
         this.sentenceDisplay.innerHTML = html;
@@ -315,70 +334,54 @@ class LyricsEngine {
         const currentSentence = this.lyricsData.sentences[sentenceIndex];
         if (!currentSentence) return;
 
-        const sentenceStartTime = this.calculateSentenceStartTime(sentenceIndex);
-        const relativeTime = currentTime - sentenceStartTime;
-        
-        let cumulativeTime = 0;
-        const slowdownFactor = 1.1;
-        
         // Check current sentence for target words
         currentSentence.words.forEach(word => {
             if (!word.text || word.text.length === 0) {
-                cumulativeTime += word.duration;
                 return;
             }
             
             if (word.target_word) {
-                const wordRelativeStart = cumulativeTime * slowdownFactor;
-                const wordRelativeEnd = (cumulativeTime + word.duration) * slowdownFactor;
+                const wordAbsoluteStart = word.start_time || 0;
+                const wordAbsoluteEnd = word.end_time || 0;
                 
-                // Check if we're 2 seconds before the target word
-                const preListenTime = wordRelativeStart - 2.0;
-                const postListenTime = wordRelativeEnd + 5.0;
+                // Check if we're 2 seconds before the target word (using absolute time)
+                const preListenTime = wordAbsoluteStart - 2.0;
+                const postListenTime = wordAbsoluteEnd + 5.0;
                 
-                if (relativeTime >= preListenTime && relativeTime < wordRelativeStart) {
+                if (currentTime >= preListenTime && currentTime < wordAbsoluteStart) {
                     // 2 seconds before target word - start listening
                     window.setTargetWordListening(word.text, 'pre-listening');
-                } else if (relativeTime >= wordRelativeStart && relativeTime <= wordRelativeEnd) {
+                } else if (currentTime >= wordAbsoluteStart && currentTime <= wordAbsoluteEnd) {
                     // Target word is active - active listening
                     window.setTargetWordListening(word.text, 'active');
-                } else if (relativeTime > wordRelativeEnd && relativeTime <= postListenTime) {
+                } else if (currentTime > wordAbsoluteEnd && currentTime <= postListenTime) {
                     // Up to 5 seconds after target word - post listening
                     window.setTargetWordListening(word.text, 'post-listening');
-                } else if (relativeTime > postListenTime) {
+                } else if (currentTime > postListenTime) {
                     // Clear listening if we're past the listening-window
                     window.clearTargetWordListening(word.text);
                 }
             }
-            
-            cumulativeTime += word.duration;
         });
         
         // Also check next sentence for upcoming target words
         if (sentenceIndex + 1 < this.lyricsData.sentences.length) {
             const nextSentence = this.lyricsData.sentences[sentenceIndex + 1];
-            const nextSentenceStartTime = this.calculateSentenceStartTime(sentenceIndex + 1);
-            const nextRelativeTime = currentTime - nextSentenceStartTime;
-            
-            let nextCumulativeTime = 0;
             
             nextSentence.words.forEach(word => {
                 if (!word.text || word.text.length === 0) {
-                    nextCumulativeTime += word.duration;
                     return;
                 }
                 
                 if (word.target_word) {
-                    const wordRelativeStart = nextCumulativeTime * slowdownFactor;
-                    const preListenTime = wordRelativeStart - 2.0;
+                    const wordAbsoluteStart = word.start_time || 0;
+                    const preListenTime = wordAbsoluteStart - 2.0;
                     
                     // Check if we're approaching a target word in the next sentence
-                    if (nextRelativeTime >= preListenTime && nextRelativeTime < wordRelativeStart) {
+                    if (currentTime >= preListenTime && currentTime < wordAbsoluteStart) {
                         window.setTargetWordListening(word.text, 'pre-listening');
                     }
                 }
-                
-                nextCumulativeTime += word.duration;
             });
         }
     }
@@ -470,28 +473,53 @@ class LyricsEngine {
     }
 
     /**
-     * Calculate the start time of a sentence based on cumulative duration of previous sentences
+     * Calculate the start time of a sentence based on the first word's start_time
      * @param {number} sentenceIndex - Index of the sentence
-     * @returns {number} - Calculated start time
+     * @returns {number} - Start time of the sentence
      */
     calculateSentenceStartTime(sentenceIndex) {
-        if (sentenceIndex === 0) return 0;
-        
-        let cumulativeTime = 0;
-        for (let i = 0; i < sentenceIndex; i++) {
-            const sentence = this.lyricsData.sentences[i];
-            cumulativeTime += sentence.words.reduce((sum, word) => sum + word.duration, 0);
+        const sentence = this.lyricsData.sentences[sentenceIndex];
+        if (!sentence || !sentence.words || sentence.words.length === 0) {
+            return 0;
         }
-        return cumulativeTime;
+        
+        // Find the first word with timing data
+        for (const word of sentence.words) {
+            if (word.start_time !== undefined) {
+                return word.start_time;
+            }
+        }
+        
+        return 0; // Fallback if no timing data found
     }
 
     /**
-     * Calculate the duration of a sentence based on word durations
+     * Calculate the duration of a sentence based on start and end times
      * @param {Object} sentence - Sentence object with words array
      * @returns {number} - Total duration of the sentence
      */
     calculateSentenceDuration(sentence) {
-        return sentence.words.reduce((sum, word) => sum + word.duration, 0);
+        if (!sentence || !sentence.words || sentence.words.length === 0) {
+            return 0;
+        }
+        
+        let firstStartTime = null;
+        let lastEndTime = null;
+        
+        for (const word of sentence.words) {
+            if (word.start_time !== undefined && word.end_time !== undefined) {
+                if (firstStartTime === null) {
+                    firstStartTime = word.start_time;
+                }
+                lastEndTime = word.end_time;
+            }
+        }
+        
+        if (firstStartTime !== null && lastEndTime !== null) {
+            return lastEndTime - firstStartTime;
+        }
+        
+        return 0; // Fallback if no timing data found
     }
 
     /**
@@ -513,20 +541,17 @@ class LyricsEngine {
      * @returns {Object} - Object with start and end times
      */
     calculateWordTiming(sentenceIndex, wordIndex) {
-        const sentenceStartTime = this.calculateSentenceStartTime(sentenceIndex);
         const sentence = this.lyricsData.sentences[sentenceIndex];
         
-        // Calculate word start time by adding durations of previous words in this sentence
-        let wordStartTime = sentenceStartTime;
-        for (let i = 0; i < wordIndex; i++) {
-            wordStartTime += sentence.words[i].duration || 0;
+        if (!sentence || !sentence.words || wordIndex >= sentence.words.length) {
+            return { start: 0, end: 0 };
         }
         
-        const wordDuration = sentence.words[wordIndex].duration || 0;
+        const word = sentence.words[wordIndex];
         
         return {
-            start: wordStartTime,
-            end: wordStartTime + wordDuration
+            start: word.start_time || 0,
+            end: word.end_time || 0
         };
     }
 
@@ -543,7 +568,7 @@ class LyricsEngine {
         }
         
         const rawTime = (this.musicAudio && this.musicAudio.currentTime) || (Date.now() - this.startTime) / 1000;
-        const currentTime = rawTime - this.lyricsData.offset;
+        const currentTime = rawTime - this.getOffset();
         
         // Update timestamp display for debugging
         if (this.timestampDisplay) {
@@ -624,7 +649,7 @@ class LyricsEngine {
         
         // Show initial intro message
         if (this.sentenceDisplay) {
-            this.sentenceDisplay.innerHTML = `🎵 Get ready to sing along! 🎵<br>Starting in ${this.lyricsData.offset}...`;
+            this.sentenceDisplay.innerHTML = `🎵 Get ready to sing along! 🎵<br>Starting in ${this.getOffset()}...`;
         }
         
         this.animate();
@@ -766,27 +791,19 @@ class LyricsEngine {
         if (sentenceIndex === -1) return false;
         
         const sentence = this.lyricsData.sentences[sentenceIndex];
-        const sentenceStartTime = this.calculateSentenceStartTime(sentenceIndex);
-        const relativeTime = currentTime - sentenceStartTime;
-        
-        let cumulativeTime = 0;
         
         for (const word of sentence.words) {
             if (!word.text || word.text.length === 0) {
-                cumulativeTime += word.duration;
                 continue;
             }
             
-            const slowdownFactor = 1.1;
-            const wordRelativeStart = cumulativeTime * slowdownFactor;
-            const wordRelativeEnd = (cumulativeTime + word.duration) * slowdownFactor;
+            const wordAbsoluteStart = word.start_time || 0;
+            const wordAbsoluteEnd = word.end_time || 0;
             
             // Check if this word is currently highlighted and has target_word flag
-            if (relativeTime >= wordRelativeStart && relativeTime <= wordRelativeEnd && word.target_word) {
+            if (currentTime >= wordAbsoluteStart && currentTime <= wordAbsoluteEnd && word.target_word) {
                 return true;
             }
-            
-            cumulativeTime += word.duration;
         }
         
         return false;
