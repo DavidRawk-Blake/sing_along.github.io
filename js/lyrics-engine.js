@@ -304,7 +304,9 @@ class LyricsEngine {
             }
             
             // Only highlight if not in early preview mode and timing is right
-            if (!isEarlyPreview && relativeTime >= wordRelativeStart && relativeTime <= wordRelativeEnd) {
+            // Highlight 200ms (0.2 seconds) before the word becomes active
+            const highlightStartTime = wordRelativeStart - 0.2;
+            if (!isEarlyPreview && relativeTime >= highlightStartTime && relativeTime <= wordRelativeEnd) {
                 className += ' highlighted';
                 
                 // Increase font size moderately if target_word is true
