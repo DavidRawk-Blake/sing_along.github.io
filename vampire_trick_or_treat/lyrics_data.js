@@ -40,7 +40,7 @@ window.lyricsData = {
           text: "with",
           start_time: 8.66,
           end_time: 9.14,
-          target_word: false,
+          target_word: true,
         },
         {
           text: "a",
@@ -52,7 +52,7 @@ window.lyricsData = {
           text: "cape",
           start_time: 9.36,
           end_time: 9.68,
-          target_word: false,
+          target_word: true,
         },
         {
           text: "so",
@@ -82,21 +82,21 @@ window.lyricsData = {
           start_time: 11.2,
           end_time: 11.88,
           confidence: 0.0,
-          target_word: false,
+          target_word: true,
         },
         {
           text: "or",
           start_time: 11.88,
           end_time: 12.2,
           confidence: 0.0,
-          target_word: false,
+          target_word: true,
         },
         {
           text: "treating",
           start_time: 12.2,
           end_time: 12.54,
           confidence: 0.0,
-          target_word: false,
+          target_word: true,
         },
         {
           text: "on",
@@ -149,7 +149,7 @@ window.lyricsData = {
           start_time: 15.78,
           end_time: 16.4,
           confidence: 0.0,
-          target_word: false,
+          target_word: true,
         },
         {
           text: "and",
@@ -170,7 +170,7 @@ window.lyricsData = {
           start_time: 17.26,
           end_time: 17.68,
           confidence: 0.0,
-          target_word: false,
+          target_word: true,
         },
         {
           text: "shone",
@@ -209,7 +209,7 @@ window.lyricsData = {
           start_time: 19.52,
           end_time: 19.94,
           confidence: 0.0,
-          target_word: false,
+          target_word: true,
         },
         {
           text: "all",
@@ -248,21 +248,21 @@ window.lyricsData = {
           start_time: 21.92,
           end_time: 22.82,
           confidence: 0.0,
-          target_word: false,
+          target_word: true,
         },
         {
           text: "or",
           start_time: 22.82,
           end_time: 23.32,
           confidence: 0.0,
-          target_word: false,
+          target_word: true,
         },
         {
           text: "treat",
           start_time: 23.32,
           end_time: 23.68,
           confidence: 0.0,
-          target_word: false,
+          target_word: true,
         },
         {
           text: "he",
@@ -371,14 +371,14 @@ window.lyricsData = {
           start_time: 30.04,
           end_time: 30.44,
           confidence: 0.0,
-          target_word: false,
+          target_word: true,
         },
         {
           text: "you",
           start_time: 30.44,
           end_time: 31.08,
           confidence: 0.0,
-          target_word: false,
+          target_word: true,
         },
         {
           text: "and",
@@ -427,7 +427,7 @@ window.lyricsData = {
           start_time: 33.62,
           end_time: 34.22,
           confidence: 0.0,
-          target_word: false,
+          target_word: true,
         },
         {
           text: "away",
@@ -487,7 +487,7 @@ window.lyricsData = {
           start_time: 38.44,
           end_time: 38.84,
           confidence: 0.0,
-          target_word: false,
+          target_word: true,
         },
         {
           text: "he",
@@ -540,7 +540,7 @@ window.lyricsData = {
           start_time: 41.66,
           end_time: 42.68,
           confidence: 0.0,
-          target_word: false,
+          target_word: true,
         },
         {
           text: "but",
