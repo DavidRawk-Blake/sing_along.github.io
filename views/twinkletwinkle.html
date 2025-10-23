@@ -4,10 +4,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pineapple Song - Tropical Karaoke</title>
+  <title>Twinkle Twinkle Little Star</title>
   <link rel="stylesheet" href="../style/style.css">
-  <link rel="stylesheet" href="style.css">
-  <script src="lyrics_data.js"></script>
+  <link rel="stylesheet" href="../style/twinkletwinkle.css">
+  <script src="../twinkletwinkle/lyrics_data.js"></script>
   <script src="../js/lyrics-engine.js"></script>
   <script src="../js/speech-recognition.js"></script>
   <script src="../js/karaoke-controller.js"></script>
@@ -47,20 +47,20 @@
   </details>
 
   <div class="outside-floats">
-    <div class="floating-tropical" style="transform: rotate(45deg);">🍍</div>
-    <div class="floating-tropical">🌺</div>
-    <div class="floating-tropical" style="transform: rotate(-30deg);">�</div>
-    <div class="floating-tropical" style="transform: rotate(90deg);">🌴</div>
-    <div class="floating-tropical">🏖️</div>
-    <div class="floating-tropical" style="transform: rotate(-60deg);">🌊</div>
-    <div class="floating-tropical" style="transform: rotate(120deg);">☀️</div>
-    <div class="floating-tropical">🐚</div>
+    <div class="floater">🎵</div>
+    <div class="floater">🎶</div>
+    <div class="floater">♪</div>
+    <div class="floater">♫</div>
+    <div class="floater">🎼</div>
+    <div class="floater">♬</div>
+    <div class="floater">🎤</div>
+    <div class="floater">🎧</div>
   </div>
 
   <div class="kids-frame-container">
-    <div class="wavy-tropical-frame">
+    <div class="wavy-purple-frame">
       <div class="wavy-border"></div>
-      <div class="beach">
+      <div class="grass-field">
 
       </div>
 
@@ -68,22 +68,23 @@
         <!-- Image Container for Sentence-based Images -->
         <div id="imageContainer" class="image-container"></div>
         
-        <h1>🍍 Pineapple Song - Tropical Karaoke 🏖️</h1>
+        <h1>🎼 Lets Sing Along 🎼</h1>
 
         <div class="fun-decorations">
           <div class="floater">🎵</div>
           <div class="floater">🎶</div>
           <div class="floater">♪</div>
           <div class="floater">♫</div>
-          <div class="floater">🌺</div>
-          <div class="floater">🥥</div>
+          <div class="floater">💜</div>
+          <div class="floater">💖</div>
         </div>
-        <p style="font-size: 0.9em; transform: rotate(-1deg); height: 100pt;">Tropical vibes and sunny beats! �️</p>
+        <p style="font-size: 0.9em; transform: rotate(-1deg); height: 200pt;">This is where we could put some dancing
+          animation. 🎨</p>
 
         <!-- Lyrics Display Area -->
         <div class="lyrics-container">
           <div id="sentenceDisplay" class="sentence-display">
-            Click "Play" to begin your tropical sing-along experience! 🎤🍍
+            Click "Play" to begin your sing-along experience! 🎤
           </div>
           <div class="progress-container">
             <div id="progressFill" class="progress-fill"></div>
@@ -99,31 +100,31 @@
     </div>
   </div>
 
-    <!-- Microphone Permission Modal -->
+  <!-- Microphone Permission Modal -->
   <div id="micPermissionModal" class="modal-overlay">
-    <div class="modal-content pineapple-modal">
+    <div class="modal-content twinkle-modal">
       <div class="modal-header">
-        <h2>🎤 Enable Microphone 🍍</h2>
+        <h2>🎤 Enable Microphone ⭐</h2>
       </div>
       <div class="modal-body">
-        <p>To make your karaoke experience tropical, we need access to your microphone!</p>
-        <p>🍍 This allows us to detect your singing and provide feedback.</p>
+        <p>To make your karaoke experience shine like a star, we need access to your microphone!</p>
+        <p>⭐ This allows us to detect your singing and provide feedback.</p>
       </div>
       <div class="modal-buttons">
-        <button id="enableMicBtn" class="modal-button modal-button-yes">Yes, Enable! �</button>
-        <button id="skipMicBtn" class="modal-button modal-button-no">Skip for Now 🥥</button>
+        <button id="enableMicBtn" class="modal-button modal-button-yes">Yes, Enable! ✨</button>
+        <button id="skipMicBtn" class="modal-button modal-button-no">Skip for Now 🌙</button>
       </div>
     </div>
   </div>
 
   <!-- Microphone Volume Monitor Modal -->
   <div id="micVolumeModal" class="modal-overlay" style="display: none;">
-    <div class="modal-content pineapple-modal">
+    <div class="modal-content twinkle-modal">
       <div class="modal-header">
-        <h2>🎤 Microphone Active 🍍</h2>
+        <h2>🎤 Microphone Active ⭐</h2>
       </div>
       <div class="modal-body">
-        <p>Your microphone is ready for tropical singing!</p>
+        <p>Your microphone is ready for starry singing!</p>
         <div class="volume-container">
           <div class="volume-label">Current Volume:</div>
           <div class="volume-bar-container">
@@ -132,7 +133,7 @@
         </div>
       </div>
       <div class="modal-buttons">
-        <button id="cancelMicBtn" class="modal-button modal-button-no">Cancel 🏖️</button>
+        <button id="cancelMicBtn" class="modal-button modal-button-no">Cancel 🚫</button>
       </div>
     </div>
   </div>
@@ -140,17 +141,13 @@
   <!-- Audio elements (hidden but required for karaoke functionality) -->
   <div style="display: none;">
     <audio id="song" preload="auto">
-      <source src="song.mp3" type="audio/mpeg">
+      <source src="../twinkletwinkle/song.mp3" type="audio/mpeg">
       Your browser does not support the audio element.
     </audio>
     <audio id="music" preload="auto">
-      <source src="music.mp3" type="audio/mpeg">
+      <source src="../twinkletwinkle/song-instrumental.mp3" type="audio/mpeg">
       Your browser does not support the audio element.
     </audio>
   </div>
-
-</body>
-
-</html>
 </body>
 </html>

@@ -6,8 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Frog Goes Ribbit - Sing Along</title>
   <link rel="stylesheet" href="../style/style.css">
-  <link rel="stylesheet" href="style.css">
-  <script src="lyrics_data.js"></script>
+  <link rel="stylesheet" href="../style/frog.css">
+  <script src="../frog/lyrics_data.js"></script>
   <script src="../js/lyrics-engine.js"></script>
   <script src="../js/speech-recognition.js"></script>
   <script src="../js/karaoke-controller.js"></script>
@@ -132,7 +132,7 @@
         </div>
       </div>
       <div class="modal-buttons">
-        <button id="cancelMicBtn" class="modal-button modal-button-no">Cancel �</button>
+        <button id="cancelMicBtn" class="modal-button modal-button-no">Cancel 🍃</button>
       </div>
     </div>
   </div>
@@ -140,17 +140,15 @@
   <!-- Audio elements (hidden but required for karaoke functionality) -->
   <div style="display: none;">
     <audio id="song" preload="auto">
-      <source src="song.mp3" type="audio/mpeg">
+      <source src="../frog/song.mp3" type="audio/mpeg">
       Your browser does not support the audio element.
     </audio>
     <audio id="music" preload="auto">
-      <source src="music.mp3" type="audio/mpeg">
+      <source src="../frog/music.mp3" type="audio/mpeg">
       Your browser does not support the audio element.
     </audio>
   </div>
 
 </body>
 
-</html>
-</body>
 </html>

@@ -31,7 +31,7 @@ window.lyricsData = {
           start_time: 0.7,
           end_time: 1.04,
           confidence: 0.0,
-          target_word: false
+          target_word: true
         } ]
     },
     {

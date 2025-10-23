@@ -14,6 +14,10 @@ const AUDIO_MIME_TYPE = 'audio/mpeg';
 let isSpeechRecognitionEnabled = false;
 let isMicrophoneActive = false;
 
+// Fade-out management
+let fadeOutTimer = null;
+let isFadedOut = false;
+
 // Initialize sentence images in the image container
 function initializeSentenceImages() {
     const imageContainer = document.getElementById('imageContainer');
@@ -41,7 +45,7 @@ function initializeSentenceImages() {
         }
     });
 
-    console.log(`Initialized ${imageContainer.children.length} sentence images`);
+
 }
 
 // Initialize the karaoke system when DOM is loaded
@@ -60,13 +64,13 @@ function initializeKaraoke() {
     if (lyricsEngine.lyricsData.song_source) {
         song.src = lyricsEngine.lyricsData.song_source;
         song.type = AUDIO_MIME_TYPE;
-        console.log(`Song source set to: ${song.src} (${AUDIO_MIME_TYPE})`);
+
     }
     
     if (lyricsEngine.lyricsData.music_source) {
         music.src = lyricsEngine.lyricsData.music_source;
         music.type = AUDIO_MIME_TYPE;
-        console.log(`Music source set to: ${music.src} (${AUDIO_MIME_TYPE})`);
+
     }
     
     // Initialize with DOM elements after data is loaded
@@ -93,28 +97,40 @@ function initializeKaraoke() {
 
     // Handle audio ending events - stop playback when either audio track ends
     song.addEventListener('ended', () => {
-        console.log('Song ended - stopping playback');
+
         lyricsEngine.pause(); // Use engine's pause method to stop both audio sources
         lyricsEngine.pauseAnimation(); // Stop animation but preserve current time position
+        
+        // Stop speech recognition when song ends
+        if (isSpeechRecognitionEnabled && window.SpeechRecognitionModule) {
+            console.log('Song ended - stopping speech recognition');
+            window.SpeechRecognitionModule.stopRecognition();
+        }
+        
         updatePlayButtonAppearance();
         updateRestartButtonAppearance();
     });
     
     music.addEventListener('ended', () => {
-        console.log('Music ended - stopping playback');
+
         lyricsEngine.pause(); // Use engine's pause method to stop both audio sources
         lyricsEngine.pauseAnimation(); // Stop animation but preserve current time position
+        
+        // Stop speech recognition when music ends
+        if (isSpeechRecognitionEnabled && window.SpeechRecognitionModule) {
+            console.log('Music ended - stopping speech recognition');
+            window.SpeechRecognitionModule.stopRecognition();
+        }
+        
         updatePlayButtonAppearance();
         updateRestartButtonAppearance();
     });
 
     // Add audio loading state listeners for debugging
-    song.addEventListener('loadstart', () => console.log('Loading song...'));
-    song.addEventListener('canplay', () => console.log('Song ready to play'));
+
     song.addEventListener('error', (e) => console.error('Error loading song:', e));
 
-    music.addEventListener('loadstart', () => console.log('Loading music...'));
-    music.addEventListener('canplay', () => console.log('Music ready to play'));
+
     music.addEventListener('error', (e) => console.error('Error loading music:', e));
 
     // Add pressed effect to buttons on mouse/touch events
@@ -133,7 +149,7 @@ function initializeKaraoke() {
         if (lyricsEngine && event.code === 'Space') {
             event.preventDefault(); // Prevent page scroll
             togglePlayPause();
-            console.log('Spacebar pressed - toggling play/pause');
+
         }
     });
 
@@ -141,11 +157,21 @@ function initializeKaraoke() {
     updatePlayButtonAppearance();
     updateRestartButtonAppearance();
 
-    console.log('Audio controls initialized after DOM loaded');
+
 }
 
 // Start lyrics display
 function startLyrics() {
+    fadeInLyrics(); // Restore opacity when starting
+    
+    // Restart speech recognition when starting lyrics (if microphone is enabled)
+    if (isSpeechRecognitionEnabled && isMicrophoneActive && window.SpeechRecognitionModule) {
+        console.log('Starting lyrics - restarting speech recognition');
+        window.SpeechRecognitionModule.startContinuousRecognition(true).catch(error => {
+            console.warn('Failed to restart speech recognition:', error);
+        });
+    }
+    
     lyricsEngine.startAnimation(() => stopLyrics());
 }
 
@@ -157,6 +183,15 @@ function pauseLyrics() {
 // Stop and reset lyrics display
 function stopLyrics() {
     lyricsEngine.stopAnimation();
+    
+    // Stop speech recognition when lyrics are stopped
+    if (isSpeechRecognitionEnabled && window.SpeechRecognitionModule) {
+        console.log('Lyrics stopped - stopping speech recognition');
+        window.SpeechRecognitionModule.stopRecognition();
+    }
+    
+    // Schedule fade-out 5 seconds after lyrics end
+    scheduleFadeOut();
 }
 
 // Rewind function for 5-second back functionality
@@ -178,6 +213,52 @@ function rewindFiveSeconds() {
             lyricsEngine.play();
         }, 100); // 100ms pause for smooth transition
     } 
+}
+
+// Schedule fade-out 5 seconds after lyrics end
+function scheduleFadeOut() {
+    // Clear any existing fade-out timer
+    if (fadeOutTimer) {
+        clearTimeout(fadeOutTimer);
+        fadeOutTimer = null;
+    }
+    
+    // Schedule fade-out for 5 seconds after lyrics end
+    fadeOutTimer = setTimeout(() => {
+        fadeOutLyrics();
+    }, 5000);
+}
+
+// Fade out the lyrics display slowly
+function fadeOutLyrics() {
+    const sentenceDisplay = document.getElementById('sentenceDisplay');
+    if (!sentenceDisplay || isFadedOut) return;
+    
+    console.log('Fading out lyrics display');
+    
+    // Apply smooth transition and fade to opacity 0
+    sentenceDisplay.style.transition = 'opacity 3s ease-out';
+    sentenceDisplay.style.opacity = '0';
+    isFadedOut = true;
+}
+
+// Restore lyrics display opacity when song restarts
+function fadeInLyrics() {
+    const sentenceDisplay = document.getElementById('sentenceDisplay');
+    if (!sentenceDisplay || !isFadedOut) return;
+    
+    console.log('Fading in lyrics display');
+    
+    // Clear any pending fade-out
+    if (fadeOutTimer) {
+        clearTimeout(fadeOutTimer);
+        fadeOutTimer = null;
+    }
+    
+    // Restore opacity smoothly
+    sentenceDisplay.style.transition = 'opacity 1s ease-in';
+    sentenceDisplay.style.opacity = '1';
+    isFadedOut = false;
 }
 
 // Skip forward function for 5-second ahead functionality
@@ -206,8 +287,17 @@ function skipForwardFiveSeconds() {
 // Global functions for onclick handlers
 function togglePlayPause() {
     console.log('Toggling playback');
+    
+    // Check if we're starting from paused state
+    const wasPlayingBeforeToggle = !lyricsEngine.isPaused();
+    
     // Use engine's built-in toggle functionality
     lyricsEngine.togglePlayback();
+    
+    // If we just started playing from pause, restore opacity
+    if (wasPlayingBeforeToggle === false && !lyricsEngine.isPaused()) {
+        fadeInLyrics();
+    }
     
     // Update button appearances and provide visual feedback
     updatePlayButtonAppearance();
@@ -249,6 +339,7 @@ function restartAction() {
     if (lyricsEngine.isPaused()) {
         // If paused, reset to beginning
         console.log('Resetting to beginning');
+        fadeInLyrics(); // Restore opacity when resetting
         lyricsEngine.reset(); // Encapsulated reset functionality
     } else {
         // If playing, rewind 5 seconds
@@ -305,8 +396,10 @@ function initializeMicrophoneModal() {
             // Show the volume monitoring modal
             volumeModal.style.display = 'flex';
             startVolumeMonitoring();
-            // Enable speech recognition for target word detection
-            enableSpeechRecognition();
+            // Enable speech recognition for target word detection (permission already granted)
+            enableSpeechRecognition().catch(error => {
+                console.warn('Failed to enable speech recognition:', error);
+            });
         } catch (error) {
             console.error('Microphone access denied:', error);
             alert('Microphone access was denied. You can still enjoy karaoke without microphone feedback!');
@@ -451,9 +544,10 @@ function stopMicrophone() {
 
 /**
  * Enable speech recognition for continuous listening throughout the song
+ * @returns {Promise<boolean>} True if enabled successfully
  */
-function enableSpeechRecognition() {
-    console.log('🎤 Attempting to enable speech recognition...');
+async function enableSpeechRecognition() {
+    console.log('🎤 Enabling speech recognition (microphone permission already granted)...');
     
     if (!window.SpeechRecognitionModule) {
         console.warn('⚠️ Speech recognition module not loaded');
@@ -465,20 +559,26 @@ function enableSpeechRecognition() {
         return false;
     }
     
-    console.log('✅ Prerequisites met, enabling speech recognition...');
+    console.log('✅ Using existing microphone permission for speech recognition...');
     isSpeechRecognitionEnabled = true;
     
-    // Start continuous recognition immediately
-    const success = window.SpeechRecognitionModule.startContinuousRecognition();
-    
-    if (success) {
-        console.log('🎵 Speech recognition enabled successfully!');
-    } else {
-        console.error('❌ Failed to start speech recognition');
+    // Start continuous recognition immediately - no need for permission check since microphone is already active
+    try {
+        const success = await window.SpeechRecognitionModule.startContinuousRecognition(true);
+        
+        if (success) {
+            console.log('🎵 Speech recognition enabled successfully!');
+        } else {
+            console.error('❌ Failed to start speech recognition');
+            isSpeechRecognitionEnabled = false;
+        }
+        
+        return success;
+    } catch (error) {
+        console.error('❌ Error starting speech recognition:', error);
         isSpeechRecognitionEnabled = false;
+        return false;
     }
-    
-    return success;
 }
 
 /**
@@ -486,75 +586,10 @@ function enableSpeechRecognition() {
  */
 function disableSpeechRecognition() {
     if (window.SpeechRecognitionModule) {
-        window.SpeechRecognitionModule.stopTargetWordRecognition();
+        window.SpeechRecognitionModule.stopRecognition();
     }
     
     isSpeechRecognitionEnabled = false;
-}
-
-// Target word timing management - supports multiple overlapping listening-windows
-let activeTargetWords = new Map(); // Map of word -> {state, startTime}
-
-/**
- * Set target word listening with timing state (supports overlapping listening-windows)
- * @param {string} targetWord - The word to detect
- * @param {string} state - The listening state ('pre-listening', 'active', 'post-listening')
- */
-function setTargetWordListening(targetWord, state) {
-    if (!isMicrophoneActive || !isSpeechRecognitionEnabled || !window.SpeechRecognitionModule) {
-        return false;
-    }
-    
-    const currentState = activeTargetWords.get(targetWord);
-    
-    // Only log when state changes for this specific word
-    if (!currentState || currentState.state !== state) {
-        console.log(`🎯 Target word listening: "${targetWord}" -> ${state}`);
-        activeTargetWords.set(targetWord, {
-            state: state,
-            startTime: Date.now()
-        });
-
-        // Update speech recognition module with all active target words
-        const allActiveWords = Array.from(activeTargetWords.keys());
-        console.log(`📋 Active target words: [${allActiveWords.join(', ')}]`);
-        window.SpeechRecognitionModule.setMultipleTargetWords(allActiveWords);
-    }
-    
-    return true;
-}
-
-/**
- * Clear target word listening for a specific word
- * @param {string} targetWord - The word to stop listening for
- */
-function clearTargetWordListening(targetWord) {
-    if (activeTargetWords.has(targetWord)) {
-        activeTargetWords.delete(targetWord);
-        
-        // Update speech recognition module with remaining active target words
-        const allActiveWords = Array.from(activeTargetWords.keys());
-        if (window.SpeechRecognitionModule) {
-            window.SpeechRecognitionModule.setMultipleTargetWords(allActiveWords);
-        }
-    }
-}
-
-/**
- * Get all current target word listening states
- * @returns {Map} Map of active target words and their states
- */
-function getActiveTargetWords() {
-    return new Map(activeTargetWords);
-}
-
-/**
- * Stop current target word recognition
- */
-function stopTargetWordRecognition() {
-    if (window.SpeechRecognitionModule) {
-        window.SpeechRecognitionModule.stopTargetWordRecognition();
-    }
 }
 
 /**
@@ -603,7 +638,6 @@ function updateDebugTable() {
     const currentTime = lyricsEngine.getCurrentTime();
     const adjustedTime = currentTime - (lyricsEngine.lyricsData ? lyricsEngine.lyricsData.offset : 0);
     
-    let matchedCount = 0;
     const totalCount = lyricsEngine.targetWords.length;
 
     lyricsEngine.targetWords.forEach((targetWord, index) => {
@@ -641,25 +675,25 @@ function updateDebugTable() {
         if (matchCell) {
             let matchStatus = '';
             
-            // Check if any Jaro score is over 0.7 (note: user said 0.3 but typical threshold is 0.7)
-            const hasJaroMatch = targetWord.jaroScores.some(score => score > 0.7);
-            if (hasJaroMatch) {
-                matchStatus += '✓';
-            }
-            
-            // Check if any Trigram score is over 0.3 (note: user said 0.7 but typical threshold is 0.3)  
-            const hasTrigramMatch = targetWord.trigramScores.some(score => score > 0.3);
-            if (hasTrigramMatch) {
-                matchStatus += '✓';
+            // Use the match_found flag set by the lyrics engine
+            if (targetWord.match_found) {
+                // Check individual thresholds for detailed display
+                const hasJaroMatch = targetWord.jaroScores.some(score => score > 0.7);
+                const hasTrigramMatch = targetWord.trigramScores.some(score => score > 0.3);
+                
+                if (hasJaroMatch) {
+                    matchStatus += '✓';
+                }
+                if (hasTrigramMatch) {
+                    matchStatus += '✓';
+                }
             }
             
             matchCell.textContent = matchStatus || '-';
             
             // Apply green background if there's a match
-            const hasMatch = hasJaroMatch || hasTrigramMatch;
-            if (hasMatch) {
+            if (targetWord.match_found) {
                 row.classList.add('match-found');
-                matchedCount++;
             } else {
                 row.classList.remove('match-found');
             }
@@ -667,28 +701,37 @@ function updateDebugTable() {
 
         // Update spoken words display
         if (spokenCell) {
-            const spokenWordsText = targetWord.spokenWords.length > 0 
-                ? targetWord.spokenWords.join(', ') 
-                : '-';
-            spokenCell.textContent = spokenWordsText;
+            if (targetWord.spokenWords.length > 0) {
+                const spokenWordsText = targetWord.spokenWords.join(', ');
+                spokenCell.textContent = spokenWordsText;
+            } else {
+                spokenCell.textContent = '-';
+            }
         }
 
         // Update Jaro scores display
         if (jaroCell) {
-            const jaroScoresText = targetWord.jaroScores.length > 0 
-                ? targetWord.jaroScores.map(score => score.toFixed(3)).join(', ')
-                : '-';
-            jaroCell.textContent = jaroScoresText;
+            if (targetWord.jaroScores.length > 0) {
+                const jaroScoresText = targetWord.jaroScores.map(score => score.toFixed(2)).join(', ');
+                jaroCell.textContent = jaroScoresText;
+            } else {
+                jaroCell.textContent = '-';
+            }
         }
 
         // Update Trigram scores display
         if (trigramCell) {
-            const trigramScoresText = targetWord.trigramScores.length > 0 
-                ? targetWord.trigramScores.map(score => score.toFixed(3)).join(', ')
-                : '-';
-            trigramCell.textContent = trigramScoresText;
+            if (targetWord.trigramScores.length > 0) {
+                const trigramScoresText = targetWord.trigramScores.map(score => score.toFixed(2)).join(', ');
+                trigramCell.textContent = trigramScoresText;
+            } else {
+                trigramCell.textContent = '-';
+            }
         }
     });
+    
+    // Count all matches found using the match_found flags
+    const matchedCount = lyricsEngine.targetWords.filter(targetWord => targetWord.match_found).length;
     
     // Update debug summary with match count
     const debugSummary = document.getElementById('debugSummary');
@@ -714,18 +757,15 @@ function highlightTargetWordInTable(targetWordId, highlight) {
     if (row) {
         if (highlight) {
             row.classList.add('listening-active');
-            console.log(`🎨 Highlighting row for target word: ${lyricsEngine.targetWords[targetWordIndex].word}`);
         } else {
             row.classList.remove('listening-active');
-            console.log(`🎨 Removing highlight from row for target word: ${lyricsEngine.targetWords[targetWordIndex].word}`);
         }
     }
 }
 
+
+
 // Make functions available globally for lyrics engine integration
-window.setTargetWordListening = setTargetWordListening;
-window.clearTargetWordListening = clearTargetWordListening;
-window.getActiveTargetWords = getActiveTargetWords;
 window.updateDebugTable = updateDebugTable;
 window.highlightTargetWordInTable = highlightTargetWordInTable;
 

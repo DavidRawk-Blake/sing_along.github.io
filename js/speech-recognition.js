@@ -6,7 +6,8 @@
 // Speech recognition variables
 let speechRecognition = null;
 let isRecognitionActive = false;
-let currentTargetWords = []; // Array to support multiple overlapping target words
+let recognizedWordsLog = []; // Continuous log of all recognized words with timestamps
+let permissionDenied = false; // Track if permission was denied to avoid repeated requests
 
 // Check for browser compatibility and use prefixed versions if necessary
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -18,7 +19,7 @@ const SpeechRecognitionEvent = window.SpeechRecognitionEvent || window.webkitSpe
  * @param {string} s2 - Second string
  * @returns {number} Jaro distance (0-1, where 1 is identical)
  */
-function jaroDistance(s1, s2) {
+function calculateJaroDistance(s1, s2) {
     if (s1 === s2) return 1.0;
 
     const len1 = s1.length;
@@ -57,7 +58,6 @@ function jaroDistance(s1, s2) {
         }
     }
 
-    // Jaro distance formula
     const jaro = (matches / len1 + matches / len2 + (matches - transpositions / 2) / matches) / 3;
     return jaro;
 }
@@ -124,56 +124,47 @@ function initializeSpeechRecognition() {
         speechRecognition.maxAlternatives = 1;
         speechRecognition.continuous = true;
         
-        console.log('✅ Speech recognition initialized successfully');
-        console.log('Speech recognition settings:', {
-            lang: speechRecognition.lang,
-            interimResults: speechRecognition.interimResults,
-            continuous: speechRecognition.continuous,
-            maxAlternatives: speechRecognition.maxAlternatives
-        });
+
 
         // Handle speech recognition results
         speechRecognition.addEventListener('result', handleSpeechResult);
         
         // Handle recognition errors
         speechRecognition.addEventListener('error', (event) => {
-            console.error('Speech recognition error:', event.error);
-            
             // Handle specific error types
             switch(event.error) {
                 case 'not-allowed':
-                    console.error('Microphone permission denied');
-                    updateMicrophoneStatus('error', 'Microphone permission denied');
+                    console.warn('Speech recognition error: Microphone permission denied');
+                    permissionDenied = true; // Mark permission as denied
+                    isRecognitionActive = false; // Stop trying to restart
                     break;
                 case 'network':
-                    console.error('Network error during speech recognition');
-                    updateMicrophoneStatus('error', 'Network error');
+                    console.warn('Speech recognition error: Network error');
                     break;
                 case 'audio-capture':
-                    console.error('Audio capture failed - check microphone');
-                    updateMicrophoneStatus('error', 'Audio capture failed');
+                    console.warn('Speech recognition error: Audio capture failed');
                     break;
                 case 'no-speech':
-                    console.warn('No speech detected - this is usually normal');
-                    // Don't show error for no-speech, it's common and normal
-                    break;
                 case 'aborted':
-                    console.warn('Speech recognition aborted - usually due to restart');
-                    // Don't show error for aborted, happens during restarts
+                    // Don't show error for no-speech or aborted, it's common and normal
                     break;
                 default:
-                    console.error(`Unknown speech recognition error: ${event.error}`);
-                    updateMicrophoneStatus('error', `Error: ${event.error}`);
+                    console.warn(`Speech recognition error: ${event.error}`);
             }
         });
 
         // Handle recognition end
         speechRecognition.addEventListener('end', () => {
-            if (isRecognitionActive && currentTargetWords.length > 0) {
-                // Restart recognition if it's supposed to be active
+            if (isRecognitionActive && !permissionDenied) {
+                // Only restart if permission wasn't denied and we're supposed to be active
                 setTimeout(() => {
-                    if (isRecognitionActive) {
-                        speechRecognition.start();
+                    if (isRecognitionActive && !permissionDenied) {
+                        try {
+                            speechRecognition.start();
+                        } catch (error) {
+                            console.warn('Failed to restart speech recognition:', error.message);
+                            isRecognitionActive = false;
+                        }
                     }
                 }, 100);
             }
@@ -196,191 +187,128 @@ function handleSpeechResult(event) {
     const confidence = event.results[last][0].confidence || 0;
     const isFinal = event.results[last].isFinal;
 
-    console.log(`🎙️ Speech detected: "${spokenText}" (${isFinal ? 'FINAL' : 'interim'}, confidence: ${confidence.toFixed(2)})`);
-
     // Skip processing empty or whitespace-only results
     if (!spokenText || spokenText.length === 0) {
-        console.log('⚠️ Skipping empty speech result');
         return;
     }
 
-    // If no target words are set, just log the recognition and return
-    if (!currentTargetWords || currentTargetWords.length === 0) {
-        console.log('⚠️ No target words set, ignoring speech result');
-        return;
-    }
-    
-    console.log(`🎯 Current target words: [${currentTargetWords.join(', ')}]`);
+    // Get current playback time
+    const currentTime = window.lyricsEngine ? window.lyricsEngine.getCurrentTime() : 0;
 
-    // Get active target word states from karaoke controller
-    const activeWords = window.getActiveTargetWords ? window.getActiveTargetWords() : new Map();
-
+    // For final results, log all recognized words with timestamps
     if (isFinal) {
-        console.log(`🎤 Speech recognition detected: "${spokenText}" (confidence: ${confidence.toFixed(2)})`);
-        
-        // Record all final spoken words for active listening-windows
-        if (window.lyricsEngine && typeof window.lyricsEngine.recordSpokenWords === 'function') {
-            const currentTime = window.lyricsEngine.getCurrentTime();
-            window.lyricsEngine.recordSpokenWords(spokenText, currentTime);
-        } else {
-            console.warn('⚠️ Could not record spoken words - lyricsEngine not available');
-        }
-        
-        // For final results, parse individual words and compare each against currently active target words only
         const spokenWords = spokenText.split(/\s+/).filter(word => word.length > 0);
         
-        // Filter to only active target words (those in their listening-window)
-        const activeTargetWords = currentTargetWords.filter(targetWord => {
-            const targetState = activeWords.get(targetWord);
-            return targetState && targetState.state === 'active';
-        });
-        
-        if (activeTargetWords.length === 0) {
-            // No active target words in current listening-window, skip comparison
-            return;
-        }
-        
-        spokenWords.forEach(spokenWord => {
-            activeTargetWords.forEach(targetWord => {
-                const targetLower = targetWord.toLowerCase();
-
-                // Calculate similarity scores for individual word comparison
-                const trigramSimilarity = calculateTrigramSimilarity(spokenWord, targetLower);
-                const jaroScore = jaroDistance(spokenWord, targetLower);
-
-                // Check if word matches (using thresholds from original code)
-                const isMatch = trigramSimilarity > 0.3 || jaroScore > 0.7;
-                
-                if (isMatch) {
-                    // Trigger word detection event for matched word
-                    triggerWordDetection(targetWord, spokenWord, {
-                        trigramSimilarity,
-                        jaroScore,
-                        confidence
-                    });
-                }
+        spokenWords.forEach(word => {
+            recognizedWordsLog.push({
+                word: word,
+                timestamp: currentTime,
+                confidence: confidence
             });
         });
-    } else {
-        // For interim results, still compare the full phrase (for real-time feedback)
-        currentTargetWords.forEach(targetWord => {
-            const targetLower = targetWord.toLowerCase();
-
-            // Calculate similarity scores for target word comparison
-            const trigramSimilarity = calculateTrigramSimilarity(spokenText, targetLower);
-            const jaroScore = jaroDistance(spokenText, targetLower);
-
-            // Check if word matches (using thresholds from original code)
-            const isMatch = trigramSimilarity > 0.3 || jaroScore > 0.7;
-        });
+        
+        // Output the current recognized words log
+        console.log('Recognized Words Log:', recognizedWordsLog);
     }
+
+
 }
 
-/**
- * Start speech recognition for a target word
- * @param {string} targetWord - The word to detect
- * @returns {boolean} True if started successfully, false otherwise
- */
-function startTargetWordRecognition(targetWord) {
-    if (!speechRecognition) {
-        console.warn('Speech recognition not initialized');
-        return false;
-    }
 
-    if (!targetWord) {
-        console.warn('No target word provided');
-        return false;
-    }
-
-    currentTargetWords = [targetWord];
-    isRecognitionActive = true;
-
-    try {
-        speechRecognition.start();
-        console.log(`Started speech recognition for target word: "${targetWord}"`);
-        return true;
-    } catch (error) {
-        console.error('Error starting speech recognition:', error);
-        isRecognitionActive = false;
-        return false;
-    }
-}
-
-/**
- * Stop speech recognition
- */
-function stopTargetWordRecognition() {
-    if (speechRecognition && isRecognitionActive) {
-        isRecognitionActive = false;
-        currentTargetWords = [];
-        speechRecognition.stop();
-        console.log('Stopped speech recognition');
-    }
-}
 
 /**
  * Check if speech recognition is currently active
  * @returns {boolean} True if recognition is active
  */
 function isRecognitionRunning() {
-    return isRecognitionActive && currentTargetWords.length > 0;
+    return isRecognitionActive;
 }
 
 /**
- * Trigger word detection event (can be overridden by other modules)
- * @param {string} targetWord - The target word that was matched
- * @param {string} spokenWord - The actual spoken word
- * @param {Object} scores - Object containing similarity scores and confidence
+ * Stop speech recognition
  */
-function triggerWordDetection(targetWord, spokenWord, scores) {
-    // Create custom event for word detection
-    const event = new CustomEvent('targetWordDetected', {
-        detail: {
-            targetWord,
-            spokenWord,
-            scores
+function stopRecognition() {
+    if (speechRecognition && isRecognitionActive) {
+        isRecognitionActive = false;
+        speechRecognition.stop();
+    }
+}
+
+/**
+ * Check if microphone permission is available
+ * @returns {Promise<boolean>} True if microphone is available, false otherwise
+ */
+async function checkMicrophonePermission() {
+    try {
+        const permissionStatus = await navigator.permissions.query({ name: 'microphone' });
+        return permissionStatus.state === 'granted';
+    } catch (error) {
+        // Fallback for browsers that don't support permissions API
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach(track => track.stop()); // Stop the stream immediately
+            return true;
+        } catch (micError) {
+            console.warn('Microphone permission check failed:', micError);
+            return false;
         }
-    });
-    
-    document.dispatchEvent(event);
-    
-    // Also call global callback if it exists
-    if (window.onTargetWordDetected && typeof window.onTargetWordDetected === 'function') {
-        window.onTargetWordDetected(targetWord, spokenWord, scores);
     }
 }
 
 /**
  * Start continuous speech recognition for the entire song
- * @returns {boolean} True if started successfully, false otherwise
+ * @param {boolean} skipPermissionCheck - Skip microphone permission check (when called from karaoke system that already has permission)
+ * @returns {Promise<boolean>} True if started successfully, false otherwise
  */
-function startContinuousRecognition() {
+async function startContinuousRecognition(skipPermissionCheck = false) {
     if (!speechRecognition) {
-        console.warn('⚠️ Speech recognition not initialized');
+        console.warn('Speech recognition not initialized');
         return false;
     }
 
-    console.log('🎤 Starting continuous speech recognition...');
-    
+    // Don't start if permission was previously denied
+    if (permissionDenied) {
+        console.warn('Speech recognition permission previously denied, not attempting to start');
+        return false;
+    }
+
+    // Check microphone permission before starting (only if permission hasn't been granted elsewhere)
+    if (!skipPermissionCheck) {
+        console.log('Checking microphone permission for speech recognition...');
+        const hasMicPermission = await checkMicrophonePermission();
+        if (!hasMicPermission) {
+            console.warn('Microphone permission not granted, skipping speech recognition');
+            permissionDenied = true; // Mark as denied to prevent future attempts
+            return false;
+        }
+    } else {
+        console.log('Skipping microphone permission check - permission already verified by caller');
+    }
+
     isRecognitionActive = true;
-    currentTargetWords = []; // No specific target words initially, just listen to everything
+    recognizedWordsLog = []; // Reset the log when starting
 
     try {
         speechRecognition.start();
-        console.log('✅ Started continuous speech recognition for entire song');
-        console.log('🔊 Recognition is now actively listening...');
         return true;
     } catch (error) {
-        console.error('❌ Error starting continuous speech recognition:', error);
+        console.warn('Speech recognition start error:', error.message);
+        
+        if (error.message.includes('not-allowed') || error.message.includes('permission')) {
+            permissionDenied = true;
+            isRecognitionActive = false;
+            return false;
+        }
+        
         if (error.name === 'InvalidStateError') {
-            console.log('💡 Recognition might already be running. Stopping and restarting...');
             speechRecognition.stop();
             setTimeout(() => {
                 try {
-                    speechRecognition.start();
-                    console.log('✅ Successfully restarted speech recognition');
+                    if (!permissionDenied) {
+                        speechRecognition.start();
+                    }
                 } catch (retryError) {
-                    console.error('❌ Failed to restart speech recognition:', retryError);
+                    console.warn('Speech recognition retry failed:', retryError.message);
                     isRecognitionActive = false;
                 }
             }, 100);
@@ -391,59 +319,52 @@ function startContinuousRecognition() {
     }
 }
 
-/**
- * Set multiple target words for overlapping listening-windows
- * @param {Array<string>} targetWords - Array of words to detect
- */
-function setMultipleTargetWords(targetWords) {
-    currentTargetWords = targetWords || [];
-}
 
-/**
- * Set a single target word without starting recognition (legacy function)
- * @param {string} targetWord - The word to set as target
- */
-function setTargetWord(targetWord) {
-    if (targetWord) {
-        currentTargetWords = [targetWord];
-    } else {
-        currentTargetWords = [];
-    }
-}
 
-/**
- * Get the current target words
- * @returns {Array<string>} Array of current target words
- */
-function getCurrentTargetWords() {
-    return [...currentTargetWords];
-}
 
-/**
- * Get the first current target word (legacy function)
- * @returns {string|null} First target word or null
- */
-function getCurrentTargetWord() {
-    return currentTargetWords.length > 0 ? currentTargetWords[0] : null;
-}
 
 // Initialize speech recognition when the module loads
 document.addEventListener('DOMContentLoaded', () => {
     initializeSpeechRecognition();
 });
 
+
+
+/**
+ * Get the current recognized words log
+ * @returns {Array} Array of recognized words with timestamps
+ */
+function getRecognizedWordsLog() {
+    return [...recognizedWordsLog];
+}
+
+/**
+ * Clear the recognized words log
+ */
+function clearRecognizedWordsLog() {
+    recognizedWordsLog = [];
+}
+
 // Export functions for use by other modules
 window.SpeechRecognitionModule = {
-    jaroDistance,
-    calculateTrigramSimilarity,
-    generateTrigrams,
     initializeSpeechRecognition,
-    startTargetWordRecognition,
     startContinuousRecognition,
-    stopTargetWordRecognition,
+    stopRecognition,
     isRecognitionRunning,
-    setTargetWord,
-    setMultipleTargetWords,
-    getCurrentTargetWord,
-    getCurrentTargetWords
+    getRecognizedWordsLog,
+    clearRecognizedWordsLog,
+    calculateJaroDistance,
+    generateTrigrams,
+    calculateTrigramSimilarity,
+    checkMicrophonePermission
 };
+
+// Also expose functions globally
+window.startContinuousRecognition = startContinuousRecognition;
+window.stopRecognition = stopRecognition;
+window.getRecognizedWordsLog = getRecognizedWordsLog;
+window.clearRecognizedWordsLog = clearRecognizedWordsLog;
+window.calculateJaroDistance = calculateJaroDistance;
+window.generateTrigrams = generateTrigrams;
+window.calculateTrigramSimilarity = calculateTrigramSimilarity;
+window.checkMicrophonePermission = checkMicrophonePermission;

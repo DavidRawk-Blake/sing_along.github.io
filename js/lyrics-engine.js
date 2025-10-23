@@ -27,23 +27,17 @@ class LyricsEngine {
     }
 
     /**
-     * Get the offset based on the first sentence's start time
+     * Get the offset based on the first word's start time
      * @returns {number} - Offset in seconds
      */
     getOffset() {
-        // Use explicit offset if provided, otherwise use first sentence start time
-        if (this.lyricsData.offset !== undefined) {
-            return this.lyricsData.offset;
-        }
-
-        // Calculate offset from first sentence start time
+        // Simply return the start time of the first word in the first sentence
         if (this.lyricsData.sentences && this.lyricsData.sentences.length > 0) {
             const firstSentence = this.lyricsData.sentences[0];
             if (firstSentence.words && firstSentence.words.length > 0) {
-                for (const word of firstSentence.words) {
-                    if (word.start_time !== undefined) {
-                        return word.start_time;
-                    }
+                const firstWord = firstSentence.words[0];
+                if (firstWord.start_time !== undefined) {
+                    return firstWord.start_time;
                 }
             }
         }
@@ -86,156 +80,15 @@ class LyricsEngine {
                             id: `${sentenceIndex}-${wordIndex}`, // Unique identifier
                             spokenWords: [], // Store all final words spoken during this listening-window
                             jaroScores: [], // Store Jaro distances for each spoken word
-                            trigramScores: [] // Store trigram similarity scores for each spoken word
+                            trigramScores: [], // Store trigram similarity scores for each spoken word
+                            listeningActive: false, // Track if listening window is active
+                            match_found: false // Boolean flag to indicate if target word passed thresholds
                         });
                     }
                 });
             });
         }
     }
-
-    /**
-     * Calculate the Jaro distance between two strings
-     * @param {string} s1 - First string
-     * @param {string} s2 - Second string
-     * @returns {number} Jaro distance (0-1, where 1 is identical)
-     */
-    calculateJaroDistance(s1, s2) {
-        if (s1 === s2) return 1.0;
-
-        const len1 = s1.length;
-        const len2 = s2.length;
-
-        if (len1 === 0 || len2 === 0) return 0.0;
-
-        const maxDist = Math.floor(Math.max(len1, len2) / 2) - 1;
-        let matches = 0;
-        let transpositions = 0;
-
-        const m1 = new Array(len1).fill(false);
-        const m2 = new Array(len2).fill(false);
-
-        for (let i = 0; i < len1; i++) {
-            for (let j = Math.max(0, i - maxDist); j < Math.min(len2, i + maxDist + 1); j++) {
-                if (!m1[i] && !m2[j] && s1[i] === s2[j]) {
-                    matches++;
-                    m1[i] = true;
-                    m2[j] = true;
-                    break;
-                }
-            }
-        }
-
-        if (matches === 0) return 0.0;
-
-        let k = 0;
-        for (let i = 0; i < len1; i++) {
-            if (m1[i]) {
-                while (!m2[k]) k++;
-                if (s1[i] !== s2[k]) {
-                    transpositions++;
-                }
-                k++;
-            }
-        }
-
-        const jaro = (matches / len1 + matches / len2 + (matches - transpositions / 2) / matches) / 3;
-        return jaro;
-    }
-
-    /**
-     * Generate trigrams from a string
-     * @param {string} str - Input string
-     * @returns {Set} Set of trigrams
-     */
-    generateTrigrams(str) {
-        const trigrams = new Set();
-        const paddedStr = " " + str + " ";
-        for (let i = 0; i < paddedStr.length - 2; i++) {
-            trigrams.add(paddedStr.substring(i, i + 3));
-        }
-        return trigrams;
-    }
-
-    /**
-     * Calculate trigram similarity between two strings
-     * @param {string} str1 - First string
-     * @param {string} str2 - Second string
-     * @returns {number} Trigram similarity (0-1, where 1 is identical)
-     */
-    calculateTrigramSimilarity(str1, str2) {
-        if (str1 === str2) return 1.0;
-
-        const trigrams1 = this.generateTrigrams(str1);
-        const trigrams2 = this.generateTrigrams(str2);
-
-        let commonTrigramsCount = 0;
-        for (const trigram of trigrams1) {
-            if (trigrams2.has(trigram)) {
-                commonTrigramsCount++;
-            }
-        }
-
-        const totalUniqueTrigrams = trigrams1.size + trigrams2.size - commonTrigramsCount;
-
-        if (totalUniqueTrigrams === 0) return 0.0;
-
-        return commonTrigramsCount / totalUniqueTrigrams;
-    }
-
-    /**
-     * Record spoken words during listening-windows with similarity scores
-     * @param {string} spokenText - The final spoken text to record
-     * @param {number} currentTime - Current playback time when spoken
-     */
-    recordSpokenWords(spokenText, currentTime) {
-        if (!spokenText || spokenText.trim().length === 0) return;
-        
-        // Find all target words whose listening-windows are currently active
-        // Use the same dynamic calculation as checkTargetWordTiming
-        this.targetWords.forEach(targetWord => {
-            const wordStartTime = this.lyricsData.sentences[targetWord.sentenceIndex].words[targetWord.wordIndex].start_time || 0;
-            const wordEndTime = this.lyricsData.sentences[targetWord.sentenceIndex].words[targetWord.wordIndex].end_time || 0;
-            
-            // Calculate sentence boundaries for this target word
-            const sentenceStartTime = this.calculateSentenceStartTime(targetWord.sentenceIndex);
-            const sentenceEndTime = this.calculateSentenceEndTime(targetWord.sentenceIndex);
-            
-            // Calculate listening window: 5 seconds before and 2 seconds after word, constrained by sentence
-            const windowStart = Math.max(sentenceStartTime, wordStartTime - 5.0);
-            const windowEnd = Math.min(sentenceEndTime, wordEndTime + 2.0);
-            
-            if (currentTime >= windowStart && currentTime <= windowEnd) {
-                // Parse individual words and calculate similarity scores
-                const individualWords = spokenText.toLowerCase().split(/\s+/).filter(word => word.length > 0);
-                const targetLower = targetWord.word.toLowerCase();
-                
-                console.log(`📝 Recording spoken words for "${targetWord.word}": [${individualWords.join(', ')}] at ${currentTime.toFixed(2)}s`);
-                
-                individualWords.forEach(spokenWord => {
-                    // Always append new spoken words (even duplicates from multiple utterances)
-                    targetWord.spokenWords.push(spokenWord);
-                    
-                    // Calculate similarity scores for this utterance
-                    const jaroScore = this.calculateJaroDistance(spokenWord, targetLower);
-                    const trigramScore = this.calculateTrigramSimilarity(spokenWord, targetLower);
-                    
-                    // Append scores for this utterance
-                    targetWord.jaroScores.push(jaroScore);
-                    targetWord.trigramScores.push(trigramScore);
-                });
-            }
-        });
-        
-        // Update debug table if available
-        if (window.updateDebugTable) {
-            window.updateDebugTable();
-        }
-    }
-
-
-
-
 
 
 
@@ -347,89 +200,97 @@ class LyricsEngine {
     }
 
     /**
-     * Check for target words and manage listening windows with table highlighting
+     * Check target word timing for visual highlighting
      * @param {number} sentenceIndex - Current sentence index
      * @param {number} currentTime - Current playback time
      */
     checkTargetWordTiming(sentenceIndex, currentTime) {
-        if (!window.setTargetWordListening || !window.clearTargetWordListening) return;
-
-        // Check all target words across all sentences for their listening windows
+        // Check all target words across all sentences for their timing windows
         this.targetWords.forEach(targetWord => {
             const wordStartTime = this.lyricsData.sentences[targetWord.sentenceIndex].words[targetWord.wordIndex].start_time || 0;
             const wordEndTime = this.lyricsData.sentences[targetWord.sentenceIndex].words[targetWord.wordIndex].end_time || 0;
             
-            // Calculate sentence boundaries for this target word
-            const sentenceStartTime = this.calculateSentenceStartTime(targetWord.sentenceIndex);
-            const sentenceEndTime = this.calculateSentenceEndTime(targetWord.sentenceIndex);
+            // Calculate timing window: 3 seconds before and 2 seconds after word
+            const windowStart = wordStartTime - 3.0;
+            const windowEnd = wordEndTime + 2.0;
             
-            // Calculate listening window: 5 seconds before and 2 seconds after word, constrained by sentence
-            const windowStart = Math.max(sentenceStartTime, wordStartTime - 5.0);
-            const windowEnd = Math.min(sentenceEndTime, wordEndTime + 2.0);
-            
+            // Check if we're entering the timing window
             if (currentTime >= windowStart && currentTime <= windowEnd) {
-                // Within listening window - determine state based on word timing
-                if (currentTime < wordStartTime) {
-                    // Before the word starts
-                    window.setTargetWordListening(targetWord.word, 'pre-listening');
-                    
-                    // Log target window start (only log once when entering pre-listening)
-                    if (!targetWord.loggedWindowStart) {
-                        console.log(`🎯 TARGET WINDOW STARTED for "${targetWord.word}" (sentence ${targetWord.sentenceIndex + 1}, word ${targetWord.wordIndex + 1})`);
-                        console.log(`   Current time: ${currentTime.toFixed(2)}s`);
-                        console.log(`   Window: ${windowStart.toFixed(2)}s - ${windowEnd.toFixed(2)}s (duration: ${(windowEnd - windowStart).toFixed(2)}s)`);
-                        console.log(`   Word timing: ${wordStartTime.toFixed(2)}s - ${wordEndTime.toFixed(2)}s`);
-                        console.log(`   Sentence bounds: ${sentenceStartTime.toFixed(2)}s - ${sentenceEndTime.toFixed(2)}s`);
-                        console.log(`   State: PRE-LISTENING (${(wordStartTime - currentTime).toFixed(2)}s until word starts)`);
-                        targetWord.loggedWindowStart = true;
-                    }
-                } else if (currentTime >= wordStartTime && currentTime <= wordEndTime) {
-                    // Word is currently being sung
-                    window.setTargetWordListening(targetWord.word, 'active');
-                    
-                    // Log when word becomes active (only once)
-                    if (!targetWord.loggedActive) {
-                        console.log(`🎤 TARGET WORD ACTIVE: "${targetWord.word}" is now being sung!`);
-                        console.log(`   Current time: ${currentTime.toFixed(2)}s, Word ends at: ${wordEndTime.toFixed(2)}s`);
-                        targetWord.loggedActive = true;
-                    }
-                } else {
-                    // After the word ends but still in listening window
-                    window.setTargetWordListening(targetWord.word, 'post-listening');
-                    
-                    // Log when entering post-listening (only once)
-                    if (!targetWord.loggedPostListening) {
-                        console.log(`⏰ POST-LISTENING for "${targetWord.word}" - window ends at ${windowEnd.toFixed(2)}s`);
-                        console.log(`   Current time: ${currentTime.toFixed(2)}s, ${(windowEnd - currentTime).toFixed(2)}s remaining`);
-                        targetWord.loggedPostListening = true;
-                    }
+                if (!targetWord.listeningActive) {
+                    // Start timing window for this target word
+                    targetWord.listeningActive = true;
                 }
                 
-                // Highlight in debug table if available
+                // Update debug table highlighting
                 if (window.highlightTargetWordInTable) {
                     window.highlightTargetWordInTable(targetWord.id, true);
                 }
-            } else {
-                // Outside listening window
-                window.clearTargetWordListening(targetWord.word);
                 
-                // Log when window ends (only once)
-                if (targetWord.loggedWindowStart && !targetWord.loggedWindowEnd) {
-                    console.log(`🔚 TARGET WINDOW ENDED for "${targetWord.word}" at ${currentTime.toFixed(2)}s`);
-                    targetWord.loggedWindowEnd = true;
+            } else if (targetWord.listeningActive && currentTime > windowEnd) {
+                // End of timing window
+                targetWord.listeningActive = false;
+                
+                // Grab the last 5 spoken words from the recognition log
+                if (window.getRecognizedWordsLog) {
+                    const recognizedWordsLog = window.getRecognizedWordsLog();
+                    // Get the last 5 words from the log
+                    const lastFiveWords = recognizedWordsLog.slice(-5).map(entry => entry.word);
+                    // Store them in the target word's spokenWords array
+                    targetWord.spokenWords = lastFiveWords;
+                    
+                    // Calculate Jaro and trigram scores for each spoken word against the target word
+                    const targetWordText = targetWord.word.toLowerCase();
+                    targetWord.jaroScores = [];
+                    targetWord.trigramScores = [];
+                    
+                    lastFiveWords.forEach(spokenWord => {
+                        const spokenWordLower = spokenWord.toLowerCase();
+                        
+                        // Calculate Jaro distance
+                        const jaroScore = window.calculateJaroDistance ? 
+                            window.calculateJaroDistance(targetWordText, spokenWordLower) : 0;
+                        targetWord.jaroScores.push(jaroScore);
+                        
+                        // Calculate trigram similarity
+                        const trigramScore = window.calculateTrigramSimilarity ?
+                            window.calculateTrigramSimilarity(targetWordText, spokenWordLower) : 0;
+                        targetWord.trigramScores.push(trigramScore);
+                    });
+                    
+                    // Check if any scores pass the thresholds and set match_found flag
+                    const hasJaroMatch = targetWord.jaroScores.some(score => score > 0.7);
+                    const hasTrigramMatch = targetWord.trigramScores.some(score => score > 0.3);
+                    targetWord.match_found = hasJaroMatch || hasTrigramMatch;
+                    
+                    // Update the debug table with these words and scores
+                    const targetWordIndex = this.targetWords.findIndex(tw => tw.id === targetWord.id);
+                    if (targetWordIndex !== -1) {
+                        // Update spoken words cell
+                        const spokenCell = document.getElementById(`spoken-${targetWordIndex}`);
+                        if (spokenCell) {
+                            const spokenWordsText = lastFiveWords.join(', ');
+                            spokenCell.textContent = spokenWordsText || '-';
+                        }
+                        
+                        // Update Jaro scores cell
+                        const jaroCell = document.getElementById(`jaro-${targetWordIndex}`);
+                        if (jaroCell && targetWord.jaroScores.length > 0) {
+                            const jaroScoresText = targetWord.jaroScores.map(score => score.toFixed(2)).join(', ');
+                            jaroCell.textContent = jaroScoresText;
+                        }
+                        
+                        // Update trigram scores cell
+                        const trigramCell = document.getElementById(`trigram-${targetWordIndex}`);
+                        if (trigramCell && targetWord.trigramScores.length > 0) {
+                            const trigramScoresText = targetWord.trigramScores.map(score => score.toFixed(2)).join(', ');
+                            trigramCell.textContent = trigramScoresText;
+                        }
+                    }
                 }
                 
-                // Remove highlight from debug table if available
+                // Remove debug table highlighting
                 if (window.highlightTargetWordInTable) {
                     window.highlightTargetWordInTable(targetWord.id, false);
-                }
-                
-                // Reset logging flags when completely outside window for potential future replays
-                if (currentTime < windowStart - 1.0 || currentTime > windowEnd + 1.0) {
-                    targetWord.loggedWindowStart = false;
-                    targetWord.loggedActive = false;
-                    targetWord.loggedPostListening = false;
-                    targetWord.loggedWindowEnd = false;
                 }
             }
         });
@@ -591,27 +452,6 @@ class LyricsEngine {
     }
 
     /**
-     * Calculate the start and end time of a specific word
-     * @param {number} sentenceIndex - Index of the sentence
-     * @param {number} wordIndex - Index of the word within the sentence
-     * @returns {Object} - Object with start and end times
-     */
-    calculateWordTiming(sentenceIndex, wordIndex) {
-        const sentence = this.lyricsData.sentences[sentenceIndex];
-        
-        if (!sentence || !sentence.words || wordIndex >= sentence.words.length) {
-            return { start: 0, end: 0 };
-        }
-        
-        const word = sentence.words[wordIndex];
-        
-        return {
-            start: word.start_time || 0,
-            end: word.end_time || 0
-        };
-    }
-
-    /**
      * Main animation loop with timing offset and intro messages
      */
     animate() {
@@ -674,8 +514,13 @@ class LyricsEngine {
         // Find current sentence using raw time (no offset adjustment for sentence detection)
         let sentenceIndex = this.findCurrentSentenceIndex(rawTime);
         
-        if (sentenceIndex === -1 && this.isSongFinished(rawTime)) {
-            // Song and outro finished - call stop callback if provided
+        if (sentenceIndex === -1 && this.isSongFinished(currentTime)) {
+            // Song and outro finished - stop speech recognition and call stop callback
+            if (window.SpeechRecognitionModule && window.SpeechRecognitionModule.isRecognitionRunning()) {
+                console.log('Song animation finished - stopping speech recognition');
+                window.SpeechRecognitionModule.stopRecognition();
+            }
+            
             if (this.onStop) {
                 this.onStop();
             }
@@ -705,6 +550,9 @@ class LyricsEngine {
         this.startTime = Date.now();
         this.currentSentenceIndex = 0;
         this.onStop = onStopCallback;
+        
+        // Speech recognition is now managed by the karaoke controller
+        // This prevents duplicate starts and ensures proper lifecycle management
         
         // Show initial intro message
         if (this.sentenceDisplay) {
@@ -925,6 +773,24 @@ class LyricsEngine {
         this.previousRecognitionState = false; // Reset recognition state
         this.currentImageIndex = -1; // Reset image state
         
+        // Stop speech recognition when resetting
+        if (window.SpeechRecognitionModule && window.SpeechRecognitionModule.isRecognitionRunning()) {
+            console.log('Lyrics reset - stopping speech recognition');
+            window.SpeechRecognitionModule.stopRecognition();
+        }
+        
+        // Clear recognition log when resetting
+        if (window.clearRecognizedWordsLog) {
+            window.clearRecognizedWordsLog();
+        }
+        
+        // Reset target word timing windows
+        if (this.targetWords) {
+            this.targetWords.forEach(targetWord => {
+                targetWord.listeningActive = false;
+            });
+        }
+        
         // Reset audio time to beginning
         this.setCurrentTime(0);
         
@@ -934,6 +800,7 @@ class LyricsEngine {
                 targetWord.spokenWords = [];
                 targetWord.jaroScores = [];
                 targetWord.trigramScores = [];
+                targetWord.match_found = false;
             });
         }
         
@@ -982,7 +849,7 @@ class LyricsEngine {
             newImg.classList.add('active');
             newImg.style.opacity = '1';
             this.currentImageIndex = sentenceIndex;
-            console.log(`Activated image for sentence ${sentenceIndex}`);
+
         }
     }
 
