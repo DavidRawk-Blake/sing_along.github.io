@@ -57,6 +57,39 @@ function initializeKaraoke() {
     // Initialize lyrics engine (data is now hardcoded, so this always succeeds)
     lyricsEngine = new LyricsEngine();
     
+    // DEBUG: Log all sentences when song loads
+    console.log('🎵 KOOKABURRA SONG LOADED - DEBUGGING SENTENCES:');
+    console.log('='.repeat(60));
+    
+    if (window.lyricsData && window.lyricsData.sentences) {
+        console.log(`📊 Total sentences found: ${window.lyricsData.sentences.length}`);
+        console.log(`🎵 Song source: ${window.lyricsData.song_source}`);
+        console.log(`🎶 Music source: ${window.lyricsData.music_source}`);
+        console.log(`⏰ Generated: ${window.lyricsData.generated_timestamp}`);
+        console.log(`🔚 Outro time: ${window.lyricsData.outro}s`);
+        console.log('');
+        
+        window.lyricsData.sentences.forEach((sentence, index) => {
+            const words = sentence.words.map(word => word.text).join(' ');
+            const startTime = sentence.words[0]?.start_time || 0;
+            const endTime = sentence.words[sentence.words.length - 1]?.end_time || 0;
+            console.log(`📝 Sentence ${index + 1} [${startTime}s - ${endTime}s]: "${words}"`);
+            console.log(`   Words count: ${sentence.words.length}`);
+            
+            // Log individual words for first few sentences
+            if (index < 3) {
+                sentence.words.forEach((word, wordIndex) => {
+                    console.log(`     Word ${wordIndex + 1}: "${word.text}" (${word.start_time}s - ${word.end_time}s)`);
+                });
+            }
+            console.log('');
+        });
+    } else {
+        console.error('❌ No lyrics data found! window.lyricsData is:', window.lyricsData);
+    }
+    
+    console.log('='.repeat(60));
+    
     // Make lyrics engine globally accessible for speech recognition
     window.lyricsEngine = lyricsEngine;
     
@@ -206,12 +239,23 @@ function rewindFiveSeconds() {
     const wasPlaying = !lyricsEngine.isPaused();
     const newTime = Math.max(0, lyricsEngine.getCurrentTime() - 5);
     
+    // Pause first to prevent audio desync during seek
+    if (wasPlaying) {
+        lyricsEngine.pause();
+    }
+    
     lyricsEngine.setCurrentTime(newTime);
     
     if (wasPlaying) {
         setTimeout(() => {
             lyricsEngine.play();
-        }, 100); // 100ms pause for smooth transition
+            // Verify sync after resuming playback
+            setTimeout(() => {
+                if (lyricsEngine.verifyPlaybackSync) {
+                    lyricsEngine.verifyPlaybackSync();
+                }
+            }, 200);
+        }, 150); // Longer pause to ensure seek completes
     } 
 }
 
@@ -276,11 +320,23 @@ function skipForwardFiveSeconds() {
     const maxTime = lyricsEngine.getTotalEndTime() || Infinity;
     const newTime = Math.min(maxTime, lyricsEngine.getCurrentTime() + 5);
     
+    // Pause first to prevent audio desync during seek
+    if (wasPlaying) {
+        lyricsEngine.pause();
+    }
+    
     lyricsEngine.setCurrentTime(newTime);
+    
     if (wasPlaying) {
         setTimeout(() => {
             lyricsEngine.play();
-        }, 100); // 100ms pause for smooth transition
+            // Verify sync after resuming playback
+            setTimeout(() => {
+                if (lyricsEngine.verifyPlaybackSync) {
+                    lyricsEngine.verifyPlaybackSync();
+                }
+            }, 200);
+        }, 150); // Longer pause to ensure seek completes
     }
 }
 

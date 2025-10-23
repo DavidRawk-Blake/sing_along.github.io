@@ -3,19 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sing Along Games</title>
+    <title>Karaoke Games</title>
     <style>
         body {
             margin: 0;
-            padding: 40px;
+            padding: 0;
             background: linear-gradient(45deg, #FFE4E6, #E0E7FF, #F3E8FF, #FEF3C7);
             background-size: 400% 400%;
             animation: gradientShift 8s ease-in-out infinite;
             font-family: 'Comic Sans MS', cursive, sans-serif;
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
         @keyframes gradientShift {
@@ -23,70 +20,152 @@
             50% { background-position: 100% 50%; }
         }
 
-        .container {
+        .header {
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             text-align: center;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 60px 40px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(147, 51, 234, 0.3);
-            max-width: 600px;
+            background: rgba(255, 255, 255, 0.1);
         }
 
-        h1 {
+        .main-content {
+            height: 100vh;
+            padding: 0;
+            margin: 0;
+            max-width: none;
+        }
+
+        .header h1 {
             color: #7C3AED;
-            font-size: 3em;
+            font-size: 4em;
             margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.2);
         }
 
         .subtitle {
             color: #6B46C1;
-            font-size: 1.3em;
+            font-size: 1.5em;
             margin-bottom: 40px;
             font-weight: normal;
         }
 
+        .cards-container {
+            display: flex;
+            height: 80vh;
+            margin: 0;
+            padding: 12px;
+            gap: 12px;
+        }
+
+        .card {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 30px;
+            padding: 60px 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h2 {
+            color: #7C3AED;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .traditional-card {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(46, 125, 50, 0.2));
+        }
+
+        .traditional-card h2 {
+            color: #2E7D32;
+        }
+
+        .threep-card {
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(243, 156, 18, 0.2));
+        }
+
+        .threep-card h2 {
+            color: #FF6B35;
+        }
+
+        .ai-card {
+            background: linear-gradient(135deg, rgba(107, 70, 193, 0.1), rgba(26, 26, 26, 0.2));
+        }
+
+        .ai-card h2 {
+            color: #6B46C1;
+        }
+
         .game-link {
-            display: inline-block;
+            display: block;
             background: linear-gradient(45deg, #9333EA, #7C3AED);
             color: white;
             text-decoration: none;
-            padding: 20px 40px;
+            padding: 20px 30px;
             border-radius: 15px;
-            font-size: 1.5em;
+            font-size: 1.3em;
             font-weight: bold;
-            margin: 20px;
-            box-shadow: 0 5px 15px rgba(147, 51, 234, 0.4);
+            margin: 15px 0;
+            box-shadow: 0 6px 20px rgba(147, 51, 234, 0.4);
             transition: all 0.3s ease;
             border: none;
+            text-align: center;
+            width: 80%;
+            max-width: 300px;
         }
 
         .game-link:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(147, 51, 234, 0.6);
-        }
-        
-        .game-link[href="frog/index.html"]:hover {
-            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.8) !important;
-        }
-        
-        .game-link[href="vampire_trick_or_treat/index.html"]:hover {
-            box-shadow: 0 8px 25px rgba(255, 102, 0, 0.8) !important;
-        }
-        
-        .game-link[href="pineapple/index.html"]:hover {
-            box-shadow: 0 8px 25px rgba(26, 188, 156, 0.8) !important;
-        }
-        
-        .game-link[href="kookaburra/index.html"]:hover {
-            box-shadow: 0 8px 25px rgba(210, 105, 30, 0.8) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(147, 51, 234, 0.4);
         }
 
-        .game-description {
+        .traditional-card .game-link {
+            background: linear-gradient(45deg, #2E7D32, #4CAF50);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .traditional-card .game-link:hover {
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .threep-card .game-link {
+            background: linear-gradient(45deg, #FF6B35, #F39C12);
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+        }
+
+        .threep-card .game-link:hover {
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+        }
+
+        .ai-card .game-link {
+            background: linear-gradient(45deg, #1a1a1a, #6B46C1);
+            box-shadow: 0 4px 12px rgba(107, 70, 193, 0.3);
+        }
+
+        .ai-card .game-link:hover {
+            box-shadow: 0 6px 20px rgba(107, 70, 193, 0.4);
+        }
+
+        .card-description {
             color: #4C1D95;
             margin-top: 30px;
             font-size: 1.1em;
-            line-height: 1.6;
+            line-height: 1.5;
+            text-align: center;
+            max-width: 300px;
         }
 
         .floaters {
@@ -112,8 +191,9 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎵 Sing Along Games 🎵</h1>
+    <!-- Header Section -->
+    <div class="header">
+        <h1>� Karaoke �</h1>
         <p class="subtitle">Choose your musical adventure!</p>
         
         <div class="floaters">
@@ -122,31 +202,51 @@
             <span class="note">🌟</span>
             <span class="note">🎵</span>
         </div>
+    </div>
 
-        <a href="twinkletwinkle/index.html" class="game-link">
-            🌟 Twinkle Twinkle Little Star 🌟
-        </a>
-        
-        <a href="frog/index.html" class="game-link" style="background: linear-gradient(45deg, #2E7D32, #4CAF50); box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);">
-            🐸 Frog Goes Ribbit 🐸
-        </a>
-        
-        <a href="vampire_trick_or_treat/index.html" class="game-link" style="background: linear-gradient(45deg, #1a1a1a, #ff6600); box-shadow: 0 5px 15px rgba(255, 102, 0, 0.4);">
-            🦇 Vampire Trick or Treat 🎃
-        </a>
-        
-        <a href="pineapple/index.html" class="game-link" style="background: linear-gradient(45deg, #1abc9c, #f39c12); box-shadow: 0 5px 15px rgba(26, 188, 156, 0.4);">
-            🍍 Pineapple Karaoke 🏖️
-        </a>
-        
-        <a href="kookaburra/index.html" class="game-link" style="background: linear-gradient(45deg, #4682B4, #D2691E); box-shadow: 0 5px 15px rgba(70, 130, 180, 0.4);">
-            🦜 Kookaburra in the Gum Tree 🇦🇺
-        </a>
+    <!-- Main Content - Cards Section -->
+    <div class="main-content">
+        <div class="cards-container">
+            
+            <!-- Traditional Card -->
+            <div class="card traditional-card">
+                <h2>🌟 Traditional</h2>
+                <a href="twinkletwinkle/index.html" class="game-link">
+                    🌟 Twinkle Twinkle Little Star
+                </a>
+                <a href="kookaburra/index.html" class="game-link">
+                    🦜 Kookaburra in the Gum Tree 🇦🇺
+                </a>
+                <div class="card-description">
+                    <p>Classic children's songs and traditional melodies that everyone knows and loves!</p>
+                </div>
+            </div>
 
-        <div class="game-description">
-            <p>Practice your singing!</p>
-            <p>Features karaoke-style lyrics, timing, and recognition challenges.</p>
-            <p>Perfect for kids and anyone who loves to sing along! 🎤✨</p>
+            <!-- 3P Card -->
+            <div class="card threep-card">
+                <h2>🎨 3P</h2>
+                <a href="frog/index.html" class="game-link">
+                    🐸 Frog Goes Ribbit
+                </a>
+                <a href="pineapple/index.html" class="game-link">
+                    🍍 Pineapple Karaoke 🏖️
+                </a>
+                <div class="card-description">
+                    <p>Creative and playful songs with unique themes and fun characters!</p>
+                </div>
+            </div>
+
+            <!-- AI Card -->
+            <div class="card ai-card">
+                <h2>🤖 AI</h2>
+                <a href="vampire_trick_or_treat/index.html" class="game-link">
+                    🦇 Vampire Trick or Treat 🎃
+                </a>
+                <div class="card-description">
+                    <p>AI-generated songs and innovative musical experiences with modern themes!</p>
+                </div>
+            </div>
+
         </div>
     </div>
 </body>

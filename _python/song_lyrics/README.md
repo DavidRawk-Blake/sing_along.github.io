@@ -15,22 +15,71 @@ A standalone script that uses OpenAI Whisper (medium model) to parse audio files
 
 ## Installation
 
-First, install the required dependency:
+Install the required dependency using one of these methods:
 
 ```bash
+# Method 1: Standard pip install
 pip install openai-whisper
-```
 
-Or if you encounter permission issues:
-```bash
+# Method 2: Using pip3 explicitly
+pip3 install openai-whisper
+
+# Method 3: Using python3 module install
+python3 -m pip install openai-whisper
+
+# Method 4: User-local install (if permission issues)
+pip install --user openai-whisper
+
+# Method 5: System python (if other methods fail)
 /usr/bin/python3 -m pip install --user openai-whisper
 ```
 
+## Troubleshooting
+
+If you get "Whisper not found" errors:
+
+1. **Run the diagnostic script** (recommended first step):
+   ```bash
+   python3 test_whisper.py
+   ```
+
+2. **Version Manager Issues** (common on macOS):
+   - If using `asdf`, `pyenv`, or similar: make sure the correct Python version is active
+   - Try with system Python: `/usr/bin/python3 simple_whisper_parser.py your_file.mp3`
+   - Check active Python: `which python3`
+
+3. **Check your Python version**: Make sure you're using Python 3.8+
+   ```bash
+   python3 --version
+   ```
+
+4. **Verify Whisper installation**:
+   ```bash
+   python3 -c "import whisper; print('Whisper found!')"
+   ```
+
+5. **The script will auto-detect** working Python environments and suggest the correct command
+
+6. **Manual installation troubleshooting**:
+   ```bash
+   # Find which Python has Whisper
+   /usr/bin/python3 -c "import whisper; print('System Python OK')"
+   python3 -c "import whisper; print('Current Python OK')"
+   
+   # Install for specific Python
+   /usr/bin/python3 -m pip install openai-whisper
+   ```
+
 ## Usage
 
-Simple usage - just provide the audio file:
+First, verify Whisper is properly installed:
 ```bash
-python3 simple_whisper_parser.py your_song.mp3
+python3 -c "import whisper; print('✅ Whisper is ready!')"
+```
+
+Then run the script with your audio file:
+```bash
+/usr/bin/python3 simple_whisper_parser.py song.mp3
 ```
 
 The script will:

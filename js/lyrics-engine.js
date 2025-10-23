@@ -347,10 +347,18 @@ class LyricsEngine {
      * @returns {number} - Index of current sentence, or -1 if none found
      */
     findCurrentSentenceIndex(currentTime) {
-        // Find sentence based on exact timing - no early showing
+        // Find sentence based on timing, with early preview for first sentence
         return this.lyricsData.sentences.findIndex((sentence, index) => {
             const sentenceStartTime = this.calculateSentenceStartTime(index);
             const sentenceEndTime = this.calculateSentenceEndTime(index);
+            
+            // Show first sentence 2 seconds early
+            if (index === 0) {
+                const earlyStartTime = Math.max(0, sentenceStartTime - 2.0);
+                return currentTime >= earlyStartTime && currentTime < sentenceEndTime;
+            }
+            
+            // Normal timing for all other sentences
             return currentTime >= sentenceStartTime && currentTime < sentenceEndTime;
         });
     }
@@ -472,20 +480,20 @@ class LyricsEngine {
             this.timestampDisplay.textContent = `${rawTime.toFixed(2)}s`;
         }
         
-        // Handle intro period (countdown using offset, but don't show lyrics until first word time)
+        // Handle intro period (countdown using offset, but show first sentence 2 seconds early)
         if (rawTime < offset) {
             const remainingTime = Math.ceil(offset - rawTime);
             
-            if (remainingTime > 10) {
+            // Stop countdown at 2 seconds and show first sentence for preparation
+            if (remainingTime <= 2) {
+                // Show first sentence 2 seconds early for user preparation
+                this.displaySentence(0, rawTime);
+            } else if (remainingTime > 10) {
                 this.sentenceDisplay.innerHTML = `🎵 Get ready to sing along! 🎵<br>Starting in ${remainingTime}...`;
             } else if (remainingTime > 5) {
                 this.sentenceDisplay.innerHTML = `🎤 Almost ready! 🎤<br>Starting in ${remainingTime}...`;
             } else if (remainingTime > 2) {
                 this.sentenceDisplay.innerHTML = `✨ Get ready! ✨<br>Starting in ${remainingTime}...`;
-            } else if (remainingTime > 1) {
-                this.sentenceDisplay.innerHTML = `🎤 Ready? 🎤<br>Starting in ${remainingTime}...`;
-            } else {
-                this.sentenceDisplay.innerHTML = `🌟 Here we go! 🌟<br>Starting in ${remainingTime}...`;
             }
             
             this.animationFrame = requestAnimationFrame(() => this.animate());
@@ -590,14 +598,128 @@ class LyricsEngine {
      * @param {number} time - Time in seconds to set
      */
     setCurrentTime(time) {
+        // Ensure both audio tracks are synchronized to the exact same time
+        const targetTime = Math.max(0, time); // Prevent negative time
+        
         if (this.songAudio) {
-            this.songAudio.currentTime = time;
+            this.songAudio.currentTime = targetTime;
         }
         if (this.musicAudio) {
-            this.musicAudio.currentTime = time;
+            this.musicAudio.currentTime = targetTime;
         }
-        // Update timestamp display when manually setting time
-        this.updateTimestampDisplay();
+        
+        // Wait for audio seek operations to complete before synchronizing state
+        setTimeout(() => {
+            this.ensureAudioSync(targetTime);
+            // SYNC FIX: Update internal state to match the new position
+            this.synchronizeStateToTime(targetTime);
+            // Update timestamp display when manually setting time
+            this.updateTimestampDisplay();
+        }, 50); // Small delay to ensure audio seek completes
+    }
+
+    /**
+     * Ensure both audio tracks are perfectly synchronized
+     * @param {number} targetTime - The target time both tracks should be at
+     */
+    ensureAudioSync(targetTime) {
+        if (!this.songAudio || !this.musicAudio) return;
+        
+        const songTime = this.songAudio.currentTime;
+        const musicTime = this.musicAudio.currentTime;
+        const tolerance = 0.1; // 100ms tolerance
+        
+        // Check if audio tracks are out of sync
+        const songDiff = Math.abs(songTime - targetTime);
+        const musicDiff = Math.abs(musicTime - targetTime);
+        const trackDiff = Math.abs(songTime - musicTime);
+        
+        console.log(`🎵 Audio sync check: Song=${songTime.toFixed(2)}s, Music=${musicTime.toFixed(2)}s, Target=${targetTime.toFixed(2)}s`);
+        
+        // Re-sync if any track is significantly off
+        if (songDiff > tolerance) {
+            console.log(`🔄 Re-syncing song audio: ${songTime.toFixed(2)}s → ${targetTime.toFixed(2)}s`);
+            this.songAudio.currentTime = targetTime;
+        }
+        
+        if (musicDiff > tolerance) {
+            console.log(`🔄 Re-syncing music audio: ${musicTime.toFixed(2)}s → ${targetTime.toFixed(2)}s`);
+            this.musicAudio.currentTime = targetTime;
+        }
+        
+        if (trackDiff > tolerance) {
+            console.log(`⚠️  Audio tracks out of sync by ${trackDiff.toFixed(2)}s - forcing re-sync`);
+            this.songAudio.currentTime = targetTime;
+            this.musicAudio.currentTime = targetTime;
+        }
+    }
+
+    /**
+     * Verify that both audio tracks are still synchronized during playback
+     */
+    verifyPlaybackSync() {
+        if (!this.songAudio || !this.musicAudio) return;
+        
+        const songTime = this.songAudio.currentTime;
+        const musicTime = this.musicAudio.currentTime;
+        const timeDiff = Math.abs(songTime - musicTime);
+        const tolerance = 0.1; // 100ms tolerance
+        
+        if (timeDiff > tolerance) {
+            console.log(`⚠️  Playback sync drift detected: ${timeDiff.toFixed(2)}s difference`);
+            console.log(`🔄 Re-syncing: Song=${songTime.toFixed(2)}s → Music=${musicTime.toFixed(2)}s`);
+            
+            // Use music audio as the source of truth and sync song to it
+            this.songAudio.currentTime = musicTime;
+        }
+    }
+
+    /**
+     * Synchronize the lyrics engine's internal state to match a specific time
+     * This ensures lyrics display correctly after seeking/skipping
+     * @param {number} time - The time to synchronize to
+     */
+    synchronizeStateToTime(time) {
+        // Find which sentence should be active at this time
+        const newSentenceIndex = this.findCurrentSentenceIndex(time);
+        
+        // Update current sentence index
+        if (newSentenceIndex >= 0) {
+            this.currentSentenceIndex = newSentenceIndex;
+        } else {
+            // If no sentence is active, set to -1 or 0 depending on time
+            const offset = this.getOffset();
+            this.currentSentenceIndex = time < offset ? 0 : this.lyricsData.sentences.length - 1;
+        }
+        
+        // Update sentence display immediately to show correct lyrics
+        if (time >= this.getOffset()) {
+            // We're in the main song content
+            if (newSentenceIndex >= 0) {
+                this.displaySentence(newSentenceIndex, time);
+            }
+        } else {
+            // We're in the intro/countdown period
+            const remainingTime = Math.ceil(this.getOffset() - time);
+            if (remainingTime <= 2) {
+                // Show first sentence if within 2 seconds of start
+                this.displaySentence(0, time);
+            } else {
+                // Show appropriate countdown message
+                if (remainingTime > 10) {
+                    this.sentenceDisplay.innerHTML = `🎵 Get ready to sing along! 🎵<br>Starting in ${remainingTime}...`;
+                } else if (remainingTime > 5) {
+                    this.sentenceDisplay.innerHTML = `🎤 Almost ready! 🎤<br>Starting in ${remainingTime}...`;
+                } else {
+                    this.sentenceDisplay.innerHTML = `✨ Get ready! ✨<br>Starting in ${remainingTime}...`;
+                }
+            }
+        }
+        
+        // Update progress bar
+        this.updateProgress(time);
+        
+        console.log(`🔄 State synchronized to time ${time.toFixed(2)}s, sentence index: ${this.currentSentenceIndex}`);
     }
 
     /**
@@ -624,22 +746,39 @@ class LyricsEngine {
     }
 
     /**
-     * Play both audio sources and start lyrics animation
+     * Play both audio sources and start animation
      * Synchronizes song with music before playing
      */
     play() {
-        // Synchronize song with music before playing
+        // Ensure both audio tracks are synchronized before playing
         if (this.musicAudio && this.songAudio) {
-            this.setCurrentTime(this.musicAudio.currentTime);
+            const musicTime = this.musicAudio.currentTime;
+            const songTime = this.songAudio.currentTime;
+            const timeDiff = Math.abs(musicTime - songTime);
+            
+            // If tracks are out of sync, synchronize them
+            if (timeDiff > 0.05) { // 50ms tolerance
+                console.log(`🔄 Syncing audio before play: Music=${musicTime.toFixed(2)}s, Song=${songTime.toFixed(2)}s`);
+                this.songAudio.currentTime = musicTime; // Use music as the source of truth
+            }
         }
         
-        // Play both audio sources
+        // Play both audio sources simultaneously
+        const playPromises = [];
+        
         if (this.songAudio) {
-            this.songAudio.play().catch(e => console.log('Song play error:', e));
+            playPromises.push(this.songAudio.play().catch(e => console.log('Song play error:', e)));
         }
         if (this.musicAudio) {
-            this.musicAudio.play().catch(e => console.log('Music play error:', e));
+            playPromises.push(this.musicAudio.play().catch(e => console.log('Music play error:', e)));
         }
+        
+        // Wait for both to start playing, then verify sync
+        Promise.all(playPromises).then(() => {
+            setTimeout(() => {
+                this.verifyPlaybackSync();
+            }, 100); // Check sync after 100ms of playback
+        });
         
         // Start lyrics animation
         this.startAnimation();

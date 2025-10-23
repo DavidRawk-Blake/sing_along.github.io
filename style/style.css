@@ -96,13 +96,7 @@ body {
     font-weight: bold;
 }
 
-.target-words-table .match-found {
-    background-color: rgba(0, 255, 0, 0.3) !important;
-}
-
-.target-words-table .match-found:hover {
-    background-color: rgba(0, 255, 0, 0.4) !important;
-}
+/* Removed .match-found styling - no longer highlights matched rows in green */
 
 /* Debug Controls */
 .debug-controls {
