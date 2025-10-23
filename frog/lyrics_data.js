@@ -32,7 +32,10 @@ window.lyricsData = {
           end_time: 1.04,
           confidence: 0.0,
           target_word: false
-        },
+        } ]
+    },
+    {
+      words: [
         {
           text: "I",
           start_time: 1.04,
@@ -53,7 +56,10 @@ window.lyricsData = {
           end_time: 2.02,
           confidence: 0.0,
           target_word: true
-        },
+        } ]
+    },
+    {
+      words: [
         {
           text: "ribbit,",
           start_time: 2.06,
@@ -127,7 +133,10 @@ window.lyricsData = {
           end_time: 7.84,
           confidence: 0.0,
           target_word: false
-        },
+        } ]
+    },
+    {
+      words: [
         {
           text: "I",
           start_time: 8.08,
@@ -187,7 +196,10 @@ window.lyricsData = {
           end_time: 12.86,
           confidence: 0.0,
           target_word: false
-        },
+        } ]
+    },
+    {
+      words: [
         {
           text: "I",
           start_time: 13.12,

@@ -109,7 +109,11 @@ function calculateTrigramSimilarity(str1, str2) {
  */
 function initializeSpeechRecognition() {
     if (!SpeechRecognition) {
-        console.error('Speech recognition not supported in this browser');
+        console.error('❌ Speech recognition not supported in this browser');
+        console.log('Available APIs:', {
+            SpeechRecognition: !!window.SpeechRecognition,
+            webkitSpeechRecognition: !!window.webkitSpeechRecognition
+        });
         return false;
     }
 
@@ -119,6 +123,14 @@ function initializeSpeechRecognition() {
         speechRecognition.interimResults = true;
         speechRecognition.maxAlternatives = 1;
         speechRecognition.continuous = true;
+        
+        console.log('✅ Speech recognition initialized successfully');
+        console.log('Speech recognition settings:', {
+            lang: speechRecognition.lang,
+            interimResults: speechRecognition.interimResults,
+            continuous: speechRecognition.continuous,
+            maxAlternatives: speechRecognition.maxAlternatives
+        });
 
         // Handle speech recognition results
         speechRecognition.addEventListener('result', handleSpeechResult);
@@ -167,10 +179,9 @@ function initializeSpeechRecognition() {
             }
         });
 
-        console.log('Speech recognition initialized successfully');
         return true;
     } catch (error) {
-        console.error('Error initializing speech recognition:', error);
+        console.error('❌ Error initializing speech recognition:', error);
         return false;
     }
 }
@@ -185,15 +196,21 @@ function handleSpeechResult(event) {
     const confidence = event.results[last][0].confidence || 0;
     const isFinal = event.results[last].isFinal;
 
+    console.log(`🎙️ Speech detected: "${spokenText}" (${isFinal ? 'FINAL' : 'interim'}, confidence: ${confidence.toFixed(2)})`);
+
     // Skip processing empty or whitespace-only results
     if (!spokenText || spokenText.length === 0) {
+        console.log('⚠️ Skipping empty speech result');
         return;
     }
 
     // If no target words are set, just log the recognition and return
     if (!currentTargetWords || currentTargetWords.length === 0) {
+        console.log('⚠️ No target words set, ignoring speech result');
         return;
     }
+    
+    console.log(`🎯 Current target words: [${currentTargetWords.join(', ')}]`);
 
     // Get active target word states from karaoke controller
     const activeWords = window.getActiveTargetWords ? window.getActiveTargetWords() : new Map();
@@ -339,20 +356,37 @@ function triggerWordDetection(targetWord, spokenWord, scores) {
  */
 function startContinuousRecognition() {
     if (!speechRecognition) {
-        console.warn('Speech recognition not initialized');
+        console.warn('⚠️ Speech recognition not initialized');
         return false;
     }
 
+    console.log('🎤 Starting continuous speech recognition...');
+    
     isRecognitionActive = true;
     currentTargetWords = []; // No specific target words initially, just listen to everything
 
     try {
         speechRecognition.start();
-        console.log('🎵 Started continuous speech recognition for entire song');
+        console.log('✅ Started continuous speech recognition for entire song');
+        console.log('🔊 Recognition is now actively listening...');
         return true;
     } catch (error) {
-        console.error('Error starting continuous speech recognition:', error);
-        isRecognitionActive = false;
+        console.error('❌ Error starting continuous speech recognition:', error);
+        if (error.name === 'InvalidStateError') {
+            console.log('💡 Recognition might already be running. Stopping and restarting...');
+            speechRecognition.stop();
+            setTimeout(() => {
+                try {
+                    speechRecognition.start();
+                    console.log('✅ Successfully restarted speech recognition');
+                } catch (retryError) {
+                    console.error('❌ Failed to restart speech recognition:', retryError);
+                    isRecognitionActive = false;
+                }
+            }, 100);
+        } else {
+            isRecognitionActive = false;
+        }
         return false;
     }
 }

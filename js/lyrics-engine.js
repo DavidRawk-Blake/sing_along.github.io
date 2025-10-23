@@ -281,19 +281,33 @@ class LyricsEngine {
 
         let html = '';
         
-        sentence.words.forEach(word => {
+        // First pass: find the current word that should be highlighted (only one at a time)
+        let currentHighlightedWordIndex = -1;
+        if (!isEarlyPreview) {
+            for (let i = 0; i < sentence.words.length; i++) {
+                const word = sentence.words[i];
+                if (!word.text || word.text.length === 0) continue;
+                
+                const wordAbsoluteStart = word.start_time || 0;
+                const wordAbsoluteEnd = word.end_time || 0;
+                const wordRelativeStart = wordAbsoluteStart - sentenceStartTime;
+                const wordRelativeEnd = wordAbsoluteEnd - sentenceStartTime;
+                const highlightStartTime = wordRelativeStart - 0.2;
+                
+                // Check if this word should be highlighted
+                if (relativeTime >= highlightStartTime && relativeTime <= wordRelativeEnd) {
+                    currentHighlightedWordIndex = i;
+                    break; // Only highlight one word at a time
+                }
+            }
+        }
+        
+        // Second pass: render all words, highlighting only the current one
+        sentence.words.forEach((word, wordIndex) => {
             // Skip empty words - don't display or highlight them
             if (!word.text || word.text.length === 0) {
                 return; // Skip to next word
             }
-            
-            // Use absolute timing from word data instead of cumulative calculation
-            const wordAbsoluteStart = word.start_time || 0;
-            const wordAbsoluteEnd = word.end_time || 0;
-            
-            // Convert to relative time within the sentence
-            const wordRelativeStart = wordAbsoluteStart - sentenceStartTime;
-            const wordRelativeEnd = wordAbsoluteEnd - sentenceStartTime;
             
             let className = 'word';
             let fontSize = '';
@@ -303,10 +317,8 @@ class LyricsEngine {
                 className += ' target-word';
             }
             
-            // Only highlight if not in early preview mode and timing is right
-            // Highlight 200ms (0.2 seconds) before the word becomes active
-            const highlightStartTime = wordRelativeStart - 0.2;
-            if (!isEarlyPreview && relativeTime >= highlightStartTime && relativeTime <= wordRelativeEnd) {
+            // Only highlight if this is the current word (ensures only one word highlighted at a time)
+            if (wordIndex === currentHighlightedWordIndex) {
                 className += ' highlighted';
                 
                 // Increase font size moderately if target_word is true
@@ -854,8 +866,12 @@ class LyricsEngine {
             const wordAbsoluteStart = word.start_time || 0;
             const wordAbsoluteEnd = word.end_time || 0;
             
+            // Apply the same 200ms early offset used for highlighting to audio switching
+            const earlyStartTime = wordAbsoluteStart - 0.2;
+            
             // Check if this word is currently highlighted and has target_word flag
-            if (currentTime >= wordAbsoluteStart && currentTime <= wordAbsoluteEnd && word.target_word) {
+            // Use the same timing as word highlighting (200ms early)
+            if (currentTime >= earlyStartTime && currentTime <= wordAbsoluteEnd && word.target_word) {
                 return true;
             }
         }

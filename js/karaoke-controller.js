@@ -453,22 +453,32 @@ function stopMicrophone() {
  * Enable speech recognition for continuous listening throughout the song
  */
 function enableSpeechRecognition() {
+    console.log('🎤 Attempting to enable speech recognition...');
+    
     if (!window.SpeechRecognitionModule) {
-        console.warn('Speech recognition module not loaded');
+        console.warn('⚠️ Speech recognition module not loaded');
         return false;
     }
     
     if (!isMicrophoneActive) {
-        console.warn('Cannot enable speech recognition: microphone not active');
+        console.warn('⚠️ Cannot enable speech recognition: microphone not active');
         return false;
     }
     
+    console.log('✅ Prerequisites met, enabling speech recognition...');
     isSpeechRecognitionEnabled = true;
     
     // Start continuous recognition immediately
-    window.SpeechRecognitionModule.startContinuousRecognition();
+    const success = window.SpeechRecognitionModule.startContinuousRecognition();
     
-    return true;
+    if (success) {
+        console.log('🎵 Speech recognition enabled successfully!');
+    } else {
+        console.error('❌ Failed to start speech recognition');
+        isSpeechRecognitionEnabled = false;
+    }
+    
+    return success;
 }
 
 /**
