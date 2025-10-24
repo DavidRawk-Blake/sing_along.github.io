@@ -398,14 +398,14 @@ h1 {
     font-weight: bold;
     margin-bottom: 15px;
     word-wrap: break-word;
-    word-break: keep-all;
+    word-break: normal;
     overflow-wrap: break-word;
     white-space: normal;
     width: 100%;
     box-sizing: border-box;
     max-width: 100%;
-    padding: 0 10px;
-    overflow: hidden;
+    padding: 0 15px;
+    overflow: visible;
 }
 
 /* Progress bar container */

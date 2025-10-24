@@ -21,7 +21,8 @@ body {
 }
 
 .debug-details[open] {
-    opacity: 0.7;
+    opacity: 0.35;
+    transition: opacity 0.3s ease;
 }
 
 .debug-details[open]:hover {
@@ -58,6 +59,7 @@ body {
     margin: 10px 0;
     max-height: 60vh;
     overflow-y: auto;
+    scroll-behavior: smooth;
 }
 
 /* Debug Content */
@@ -81,6 +83,7 @@ body {
     padding: 4px 8px;
     border: 1px solid;
     text-align: left;
+    transition: all 0.3s ease;
 }
 
 .target-words-table th {
@@ -94,6 +97,7 @@ body {
 
 .target-words-table .active-word {
     font-weight: bold;
+    transform: scale(1.02);
 }
 
 /* Removed .match-found styling - no longer highlights matched rows in green */
@@ -156,7 +160,7 @@ body {
     font-weight: bold;
     margin-bottom: 15px;
     word-wrap: break-word;
-    word-break: keep-all;
+    word-break: normal;
     overflow-wrap: break-word;
     white-space: normal;
 }

@@ -554,14 +554,14 @@ p {
     text-shadow: 2px 2px 4px #D2691E, 0 0 8px #CD853F;
     margin-bottom: 15px;
     word-wrap: break-word;
-    word-break: keep-all;
+    word-break: normal;
     overflow-wrap: break-word;
     white-space: normal;
     flex-wrap: wrap;
     width: 100%;
     box-sizing: border-box;
-    padding: 0 10px;
-    overflow: hidden;
+    padding: 0 15px;
+    overflow: visible;
 }
 
 .word {

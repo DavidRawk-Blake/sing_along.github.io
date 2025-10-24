@@ -101,7 +101,7 @@ The script generates a JavaScript file with this structure:
 
 // Global lyrics data
 window.lyricsData = {
-  outro: 3.25,
+  total_song_length: 180.45,
   song_source: "song.mp3",
   music_source: "music.mp3",
   generated_timestamp: "2025-10-24T14:30:45.123456",
@@ -148,7 +148,7 @@ The script shows helpful progress messages with emoji indicators:
 ## Features in Output
 
 The generated JavaScript file includes:
-- **outro**: Time duration after last word ends
+- **total_song_length**: Total duration of the song in seconds
 - **song_source**: Reference to the audio file with vocals
 - **music_source**: Reference to the backing track file
 - **generated_timestamp**: When the file was created

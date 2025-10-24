@@ -8,6 +8,7 @@ let speechRecognition = null;
 let isRecognitionActive = false;
 let recognizedWordsLog = []; // Continuous log of all recognized words with timestamps
 let permissionDenied = false; // Track if permission was denied to avoid repeated requests
+let lastPermissionRequestTime = 0; // Track when we last requested permission to prevent spam
 
 // Check for browser compatibility and use prefixed versions if necessary
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -131,25 +132,40 @@ function initializeSpeechRecognition() {
         
         // Handle recognition errors
         speechRecognition.addEventListener('error', (event) => {
+            console.log('🔍 Speech recognition error details:', event.error, event.message);
+            
             // Handle specific error types
             switch(event.error) {
                 case 'not-allowed':
-                    console.warn('Speech recognition error: Microphone permission denied');
+                    console.warn('❌ Speech recognition error: Microphone permission denied');
                     permissionDenied = true; // Mark permission as denied
                     isRecognitionActive = false; // Stop trying to restart
                     break;
                 case 'network':
-                    console.warn('Speech recognition error: Network error');
+                    console.warn('🌐 Speech recognition error: Network error');
+                    // Don't stop recognition for network errors, they might be temporary
                     break;
                 case 'audio-capture':
-                    console.warn('Speech recognition error: Audio capture failed');
+                    console.warn('🎤 Speech recognition error: Audio capture failed - microphone might be in use');
+                    // This could indicate microphone conflict - stop completely to avoid permission loops
+                    isRecognitionActive = false;
+                    permissionDenied = true; // Treat audio capture failure as permission issue to prevent loops
+                    console.warn('⚠️ Marking permission as denied due to audio capture failure to prevent loops');
                     break;
                 case 'no-speech':
                 case 'aborted':
                     // Don't show error for no-speech or aborted, it's common and normal
+                    console.log('🔇 Speech recognition: no speech detected or aborted (normal)');
+                    break;
+                case 'service-not-allowed':
+                    console.warn('🚫 Speech recognition service not allowed');
+                    permissionDenied = true;
+                    isRecognitionActive = false;
                     break;
                 default:
-                    console.warn(`Speech recognition error: ${event.error}`);
+                    console.warn(`⚠️ Speech recognition error: ${event.error}`);
+                    // For unknown errors, don't immediately disable, but add some delay
+                    break;
             }
         });
 
@@ -157,16 +173,28 @@ function initializeSpeechRecognition() {
         speechRecognition.addEventListener('end', () => {
             if (isRecognitionActive && !permissionDenied) {
                 // Only restart if permission wasn't denied and we're supposed to be active
+                // Add a longer delay to prevent rapid restart loops
                 setTimeout(() => {
                     if (isRecognitionActive && !permissionDenied) {
                         try {
+                            console.log('🔄 Auto-restarting speech recognition...');
                             speechRecognition.start();
                         } catch (error) {
                             console.warn('Failed to restart speech recognition:', error.message);
-                            isRecognitionActive = false;
+                            // If restart fails, don't keep trying aggressively
+                            if (error.name === 'InvalidStateError' || 
+                                error.name === 'NotAllowedError' ||
+                                error.message.includes('not-allowed') ||
+                                error.message.includes('permission')) {
+                                console.warn('⚠️ Stopping auto-restart due to permission or state error');
+                                isRecognitionActive = false;
+                                permissionDenied = true; // Mark as denied to prevent further attempts
+                            }
                         }
                     }
-                }, 100);
+                }, 1000); // Increased delay from 500ms to 1000ms to prevent rapid restart loops
+            } else {
+                console.log('🛑 Not restarting speech recognition - isActive:', isRecognitionActive, 'permissionDenied:', permissionDenied);
             }
         });
 
@@ -225,33 +253,63 @@ function isRecognitionRunning() {
 }
 
 /**
+ * Reset permission denied state (useful when user grants permission later)
+ */
+function resetPermissionState() {
+    console.log('🔄 Resetting speech recognition permission state');
+    permissionDenied = false;
+    lastPermissionRequestTime = 0; // Reset timer so permission can be checked again
+}
+
+/**
  * Stop speech recognition
  */
 function stopRecognition() {
-    if (speechRecognition && isRecognitionActive) {
+    console.log('🛑 Stopping speech recognition...');
+    if (speechRecognition) {
         isRecognitionActive = false;
-        speechRecognition.stop();
+        try {
+            speechRecognition.stop();
+            console.log('✅ Speech recognition stopped successfully');
+        } catch (error) {
+            console.warn('⚠️ Error stopping speech recognition:', error.message);
+        }
+    } else {
+        console.log('⚠️ Speech recognition was not initialized');
     }
 }
 
 /**
- * Check if microphone permission is available
+ * Check if microphone permission is available - ONLY uses permissions API, no getUserMedia
  * @returns {Promise<boolean>} True if microphone is available, false otherwise
  */
 async function checkMicrophonePermission() {
+    // Prevent permission spam - don't check more than once every 5 seconds
+    const now = Date.now();
+    if (now - lastPermissionRequestTime < 5000) {
+        console.log('⏸️ Skipping permission check - too recent (preventing spam)');
+        return false;
+    }
+    lastPermissionRequestTime = now;
+    
     try {
+        // Only use the permissions API - do NOT call getUserMedia as it can trigger permission prompts
         const permissionStatus = await navigator.permissions.query({ name: 'microphone' });
-        return permissionStatus.state === 'granted';
-    } catch (error) {
-        // Fallback for browsers that don't support permissions API
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            stream.getTracks().forEach(track => track.stop()); // Stop the stream immediately
+        console.log('🔍 Microphone permission status:', permissionStatus.state);
+        
+        if (permissionStatus.state === 'granted') {
             return true;
-        } catch (micError) {
-            console.warn('Microphone permission check failed:', micError);
+        } else if (permissionStatus.state === 'denied') {
+            console.warn('❌ Microphone permission explicitly denied');
+            return false;
+        } else {
+            // If 'prompt', we should not call getUserMedia as it will show permission dialog
+            console.log('⚠️ Microphone permission is in prompt state - assuming not granted to avoid permission dialog');
             return false;
         }
+    } catch (error) {
+        console.log('⚠️ Permissions API not supported - assuming permission not granted to avoid permission dialog');
+        return false;
     }
 }
 
@@ -283,36 +341,52 @@ async function startContinuousRecognition(skipPermissionCheck = false) {
         }
     } else {
         console.log('Skipping microphone permission check - permission already verified by caller');
+        // When skipping permission check, reset permission denied flag since caller has verified permission
+        permissionDenied = false;
     }
 
-    isRecognitionActive = true;
+    console.log('🎤 Starting continuous speech recognition...');
     recognizedWordsLog = []; // Reset the log when starting
 
     try {
+        // Make sure we're not already running
+        if (isRecognitionActive) {
+            console.log('⚠️ Speech recognition already active - not starting again');
+            return true; // Return success since it's already running
+        }
+
+        isRecognitionActive = true;
         speechRecognition.start();
+        console.log('✅ Speech recognition started successfully');
         return true;
     } catch (error) {
-        console.warn('Speech recognition start error:', error.message);
+        console.warn('❌ Speech recognition start error:', error.name, error.message);
         
-        if (error.message.includes('not-allowed') || error.message.includes('permission')) {
+        if (error.message.includes('not-allowed') || error.message.includes('permission') || error.name === 'NotAllowedError') {
+            console.error('🚫 Microphone permission denied - marking as denied');
             permissionDenied = true;
             isRecognitionActive = false;
             return false;
         }
         
         if (error.name === 'InvalidStateError') {
-            speechRecognition.stop();
-            setTimeout(() => {
-                try {
-                    if (!permissionDenied) {
-                        speechRecognition.start();
-                    }
-                } catch (retryError) {
-                    console.warn('Speech recognition retry failed:', retryError.message);
-                    isRecognitionActive = false;
+            console.log('🔄 InvalidStateError - attempting clean restart...');
+            try {
+                speechRecognition.stop();
+                await new Promise(resolve => setTimeout(resolve, 500)); // Wait longer for clean stop
+                
+                if (!permissionDenied) {
+                    console.log('🔄 Retrying speech recognition start...');
+                    speechRecognition.start();
+                    return true;
                 }
-            }, 100);
+            } catch (retryError) {
+                console.warn('❌ Speech recognition retry failed:', retryError.message);
+                isRecognitionActive = false;
+                return false;
+            }
         } else {
+            console.error('❌ Unhandled speech recognition error:', error);
             isRecognitionActive = false;
         }
         return false;
@@ -351,6 +425,7 @@ window.SpeechRecognitionModule = {
     startContinuousRecognition,
     stopRecognition,
     isRecognitionRunning,
+    resetPermissionState,
     getRecognizedWordsLog,
     clearRecognizedWordsLog,
     calculateJaroDistance,
@@ -362,6 +437,7 @@ window.SpeechRecognitionModule = {
 // Also expose functions globally
 window.startContinuousRecognition = startContinuousRecognition;
 window.stopRecognition = stopRecognition;
+window.resetPermissionState = resetPermissionState;
 window.getRecognizedWordsLog = getRecognizedWordsLog;
 window.clearRecognizedWordsLog = clearRecognizedWordsLog;
 window.calculateJaroDistance = calculateJaroDistance;

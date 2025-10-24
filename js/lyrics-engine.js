@@ -63,9 +63,9 @@ class LyricsEngine {
                         const sentenceStartTime = this.calculateSentenceStartTime(sentenceIndex);
                         const sentenceEndTime = this.calculateSentenceEndTime(sentenceIndex);
 
-                        // Calculate listening window: 5 seconds before and 2 seconds after the word
-                        const desiredStartTime = wordStartTime - 5.0;
-                        const desiredEndTime = wordEndTime + 2.0;
+                        // Calculate listening window: 8 seconds before and 3 seconds after the word (extended for 15-word capture)
+                        const desiredStartTime = wordStartTime - 8.0;
+                        const desiredEndTime = wordEndTime + 3.0;
 
                         // Constrain to sentence boundaries
                         const constrainedStartTime = Math.max(sentenceStartTime, desiredStartTime);
@@ -78,9 +78,9 @@ class LyricsEngine {
                             startTime: constrainedStartTime,
                             endTime: constrainedEndTime,
                             id: `${sentenceIndex}-${wordIndex}`, // Unique identifier
-                            spokenWords: [], // Store all final words spoken during this listening-window
-                            jaroScores: [], // Store Jaro distances for each spoken word
-                            trigramScores: [], // Store trigram similarity scores for each spoken word
+                            spokenWords: [], // Store last 15 words spoken during this listening-window
+                            jaroScores: [], // Store Jaro distances for each of the 15 spoken words
+                            trigramScores: [], // Store trigram similarity scores for each of the 15 spoken words
                             listeningActive: false, // Track if listening window is active
                             match_found: false // Boolean flag to indicate if target word passed thresholds
                         });
@@ -230,20 +230,20 @@ class LyricsEngine {
                 // End of timing window
                 targetWord.listeningActive = false;
                 
-                // Grab the last 5 spoken words from the recognition log
+                // Grab the last 15 spoken words from the recognition log
                 if (window.getRecognizedWordsLog) {
                     const recognizedWordsLog = window.getRecognizedWordsLog();
-                    // Get the last 5 words from the log
-                    const lastFiveWords = recognizedWordsLog.slice(-5).map(entry => entry.word);
+                    // Get the last 15 words from the log
+                    const lastFifteenWords = recognizedWordsLog.slice(-15).map(entry => entry.word);
                     // Store them in the target word's spokenWords array
-                    targetWord.spokenWords = lastFiveWords;
+                    targetWord.spokenWords = lastFifteenWords;
                     
                     // Calculate Jaro and trigram scores for each spoken word against the target word
                     const targetWordText = targetWord.word.toLowerCase();
                     targetWord.jaroScores = [];
                     targetWord.trigramScores = [];
                     
-                    lastFiveWords.forEach(spokenWord => {
+                    lastFifteenWords.forEach(spokenWord => {
                         const spokenWordLower = spokenWord.toLowerCase();
                         
                         // Calculate Jaro distance
@@ -258,8 +258,12 @@ class LyricsEngine {
                     });
                     
                     // Check if any scores pass the thresholds and set match_found flag
-                    const hasJaroMatch = targetWord.jaroScores.some(score => score > 0.7);
-                    const hasTrigramMatch = targetWord.trigramScores.some(score => score > 0.3);
+                    // With 15 words captured (vs previous 5), we use stricter thresholds:
+                    // - Jaro threshold: 0.8 (was 0.7) - requires closer phonetic match
+                    // - Trigram threshold: 0.4 (was 0.3) - requires better character sequence match
+                    // This compensates for the increased chance of false positives with more words
+                    const hasJaroMatch = targetWord.jaroScores.some(score => score > 0.8);
+                    const hasTrigramMatch = targetWord.trigramScores.some(score => score > 0.4);
                     targetWord.match_found = hasJaroMatch || hasTrigramMatch;
                     
                     // Update the debug table with these words and scores
@@ -268,7 +272,7 @@ class LyricsEngine {
                         // Update spoken words cell
                         const spokenCell = document.getElementById(`spoken-${targetWordIndex}`);
                         if (spokenCell) {
-                            const spokenWordsText = lastFiveWords.join(', ');
+                            const spokenWordsText = lastFifteenWords.join(', ');
                             spokenCell.textContent = spokenWordsText || '-';
                         }
                         
@@ -327,17 +331,18 @@ class LyricsEngine {
     }
 
     /**
-     * Update progress bar based on current time
+     * Update progress bar based on current time (uses total song duration)
      * @param {number} currentTime - Current playback time
      */
     updateProgress(currentTime) {
         if (!this.progressFill) return;
 
-        const totalEndTime = Math.max(
-            ...this.lyricsData.sentences.map((s, index) => this.calculateSentenceEndTime(index)),
-            (this.musicAudio && this.musicAudio.duration) || 16
-        );
-        const progress = (currentTime / totalEndTime) * 100;
+        // Use total_song_length from lyrics data as the primary source, fallback to music audio duration
+        const totalSongDuration = this.getTotalEndTime() || 
+                                 (this.musicAudio && this.musicAudio.duration) || 
+                                 16;
+        
+        const progress = (currentTime / totalSongDuration) * 100;
         this.progressFill.style.width = `${Math.min(progress, 100)}%`;
     }
 
@@ -364,25 +369,28 @@ class LyricsEngine {
     }
 
     /**
-     * Check if the song has ended (including outro period)
+     * Check if the song has ended (uses total_song_length from lyrics data)
      * @param {number} currentTime - Current playback time
-     * @returns {boolean} - Whether the song has finished including outro
+     * @returns {boolean} - Whether the song has finished
      */
     isSongFinished(currentTime) {
-        const lastSentenceIndex = this.lyricsData.sentences.length - 1;
-        const songEndTime = this.calculateSentenceEndTime(lastSentenceIndex);
-        return currentTime >= (songEndTime + this.lyricsData.outro);
+        // Use total_song_length as the authoritative end time
+        const totalSongDuration = this.getTotalEndTime();
+        return currentTime >= totalSongDuration;
     }
 
     /**
-     * Check if lyrics have ended but outro is still playing
+     * Check if lyrics have ended but song is still playing (outro/instrumental period)
      * @param {number} currentTime - Current playback time
      * @returns {boolean} - Whether in outro period
      */
     isInOutroPeriod(currentTime) {
         const lastSentenceIndex = this.lyricsData.sentences.length - 1;
-        const songEndTime = this.calculateSentenceEndTime(lastSentenceIndex);
-        return currentTime >= songEndTime && currentTime < (songEndTime + this.lyricsData.outro);
+        const lyricsEndTime = this.calculateSentenceEndTime(lastSentenceIndex);
+        const totalSongDuration = this.getTotalEndTime();
+        
+        // We're in outro if lyrics have ended but song is still playing
+        return currentTime >= lyricsEndTime && currentTime < totalSongDuration;
     }
 
     /**
@@ -475,9 +483,10 @@ class LyricsEngine {
         const offset = this.getOffset();
         const currentTime = rawTime - offset;
         
-        // Update timestamp display for debugging
+        // Update timestamp display for debugging (show current time / total song duration)
         if (this.timestampDisplay) {
-            this.timestampDisplay.textContent = `${rawTime.toFixed(2)}s`;
+            const totalDuration = this.getTotalEndTime() || (this.musicAudio && this.musicAudio.duration) || 0;
+            this.timestampDisplay.textContent = `${rawTime.toFixed(2)}s / ${totalDuration.toFixed(2)}s`;
         }
         
         // Handle intro period (countdown using offset, but show first sentence 2 seconds early)
@@ -500,18 +509,17 @@ class LyricsEngine {
             return;
         }
         
-        // Check if in outro period (lyrics finished but outro still playing)
+        // Check if in outro period (lyrics finished but song still playing)
         if (this.isInOutroPeriod(rawTime)) {
             const lastSentenceIndex = this.lyricsData.sentences.length - 1;
-            const songEndTime = this.calculateSentenceEndTime(lastSentenceIndex);
-            const outroRemaining = Math.ceil((songEndTime + this.lyricsData.outro) - rawTime);
             
             // Keep the last sentence visible during outro instead of showing completion message
             this.displaySentence(lastSentenceIndex, rawTime);
             
-            // Update timestamp display (no outro countdown shown)
+            // Update timestamp display (show current time / total song duration during outro)
             if (this.timestampDisplay) {
-                this.timestampDisplay.textContent = `${rawTime.toFixed(2)}s`;
+                const totalDuration = this.getTotalEndTime() || (this.musicAudio && this.musicAudio.duration) || 0;
+                this.timestampDisplay.textContent = `${rawTime.toFixed(2)}s / ${totalDuration.toFixed(2)}s`;
             }
             
             this.updateProgress(rawTime);
@@ -723,12 +731,13 @@ class LyricsEngine {
     }
 
     /**
-     * Manually update the timestamp display
+     * Manually update the timestamp display (shows current time / total song duration)
      */
     updateTimestampDisplay() {
         if (this.timestampDisplay && this.musicAudio) {
             const currentTime = this.musicAudio.currentTime || 0;
-            this.timestampDisplay.textContent = `${currentTime.toFixed(2)}s`;
+            const totalDuration = this.getTotalEndTime() || this.musicAudio.duration || 0;
+            this.timestampDisplay.textContent = `${currentTime.toFixed(2)}s / ${totalDuration.toFixed(2)}s`;
         }
     }
 
@@ -819,19 +828,14 @@ class LyricsEngine {
     }
 
     /**
-     * Get the total end time including outro (timing authority)
-     * @returns {number} - Total end time in seconds, or 0 if no music audio or not loaded
+     * Get the total song duration (timing authority)
+     * @returns {number} - Total song duration in seconds
      */
     getTotalEndTime() {
-        // Calculate the last sentence end time plus outro
-        const lastSentenceIndex = this.lyricsData.sentences.length - 1;
-        const lastSentenceEndTime = this.calculateSentenceEndTime(lastSentenceIndex);
-        const outro = this.lyricsData.outro || 3;
-        
-        return Math.max(
-            lastSentenceEndTime + outro,
-            (this.musicAudio && this.musicAudio.duration) || 0
-        );
+        // Use total_song_length from lyrics data if available, otherwise fall back to music audio duration
+        return this.lyricsData.total_song_length || 
+               (this.musicAudio && this.musicAudio.duration) || 
+               0;
     }
 
     /**
@@ -871,6 +875,16 @@ class LyricsEngine {
      * @param {boolean} isRecognitionActive - Whether a recognition word is currently highlighted
      */
     pauseVoicePlayback(isRecognitionActive) {
+        // Check if vocal muting is enabled (default to true if not specified)
+        const muteVocalsEnabled = this.lyricsData.mute_vocals_during_target !== false;
+        
+        // Only proceed with muting logic if mute_vocals_during_target is true
+        if (!muteVocalsEnabled) {
+            // If muting is disabled, just track the state but don't pause/resume vocals
+            this.previousRecognitionState = isRecognitionActive;
+            return;
+        }
+        
         // Only change playback state when recognition state actually changes
         if (isRecognitionActive !== this.previousRecognitionState) {
             if (this.songAudio) {

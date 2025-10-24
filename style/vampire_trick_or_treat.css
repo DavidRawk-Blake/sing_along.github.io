@@ -551,15 +551,15 @@ p {
     text-shadow: 2px 2px 4px #000000, 0 0 8px #ff6600;
     margin-bottom: 15px;
     word-wrap: break-word;
-    word-break: keep-all;
+    word-break: normal;
     overflow-wrap: break-word;
     overflow-wrap: break-word;
     white-space: normal;
     flex-wrap: wrap;
     width: 100%;
     box-sizing: border-box;
-    padding: 0 10px;
-    overflow: hidden;
+    padding: 0 15px;
+    overflow: visible;
 }
 
 .word {

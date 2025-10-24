@@ -5,7 +5,8 @@
 
 // Global lyrics data
 window.lyricsData = {
-  outro: 9.86,
+  total_song_length: 79.48,
+  mute_vocals_during_target: false,
   song_source: "vlad.mp3",
   music_source: "vlad-instrumental.mp3",
   generated_timestamp: "2025-10-23T15:29:49.055333",

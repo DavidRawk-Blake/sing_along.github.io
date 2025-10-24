@@ -5,7 +5,8 @@
 
 // Global lyrics data for the Twinkle Twinkle Little Star karaoke game
 window.lyricsData = {
-    outro: 3,
+    total_song_length: 52.19,
+    mute_vocals_during_target: false,
     song_source: "song.mp3",
     music_source: "song-instrumental.mp3",
     full_sentence: [

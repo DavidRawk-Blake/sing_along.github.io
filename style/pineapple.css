@@ -301,6 +301,14 @@ body {
 .floating-tropical:nth-child(6) { top: 60%; right: 85%; animation-delay: 5s; }
 .floating-tropical:nth-child(7) { top: 40%; left: 3%; animation-delay: 2.5s; }
 .floating-tropical:nth-child(8) { top: 90%; right: 20%; animation-delay: 4.5s; }
+.floating-tropical:nth-child(9) { top: 25%; left: 70%; animation-delay: 1.5s; }
+.floating-tropical:nth-child(10) { top: 65%; right: 15%; animation-delay: 3.5s; }
+.floating-tropical:nth-child(11) { top: 50%; left: 25%; animation-delay: 0.8s; }
+.floating-tropical:nth-child(12) { top: 15%; right: 70%; animation-delay: 4.2s; }
+.floating-tropical:nth-child(13) { top: 35%; left: 45%; animation-delay: 1.2s; }
+.floating-tropical:nth-child(14) { top: 75%; right: 60%; animation-delay: 3.8s; }
+.floating-tropical:nth-child(15) { top: 55%; left: 90%; animation-delay: 0.3s; }
+.floating-tropical:nth-child(16) { top: 85%; left: 40%; animation-delay: 5.1s; }
 
 @keyframes float {
     0% { 
@@ -346,6 +354,10 @@ body {
 
 .floater:nth-child(5) { top: 20%; left: 85%; }
 .floater:nth-child(6) { bottom: 25%; right: 80%; animation-delay: 1s; }
+.floater:nth-child(7) { top: 60%; left: 5%; animation-delay: 2s; }
+.floater:nth-child(8) { bottom: 45%; right: 90%; animation-delay: 2.5s; }
+.floater:nth-child(9) { top: 40%; left: 60%; animation-delay: 3s; }
+.floater:nth-child(10) { bottom: 60%; right: 40%; animation-delay: 0.8s; }
 
 @keyframes bounce {
     0%, 100% { transform: translateY(0px); }
@@ -392,14 +404,14 @@ h1 {
     font-weight: bold;
     margin-bottom: 15px;
     word-wrap: break-word;
-    word-break: keep-all;
+    word-break: normal;
     overflow-wrap: break-word;
     white-space: normal;
     width: 100%;
     box-sizing: border-box;
     max-width: 100%;
-    padding: 0 10px;
-    overflow: hidden;
+    padding: 0 15px;
+    overflow: visible;
 }
 
 /* Progress bar container */
@@ -429,11 +441,13 @@ h1 {
 }
 
 .word.highlighted {
-    background-color: #FFE0B2;
-    color: #f39c12;
+    background-color: #DC143C;
+    color: #FFFFFF;
     font-weight: bold;
     transform: scale(1.1);
-    box-shadow: 0 2px 8px rgba(243, 156, 18, 0.4);
+    box-shadow: 0 3px 12px rgba(220, 20, 60, 0.6);
+    border-radius: 6px;
+    padding: 4px 8px;
 }
 
 .word.target-word {

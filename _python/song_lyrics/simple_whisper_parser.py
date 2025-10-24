@@ -134,18 +134,21 @@ def main():
         if not word_text:
             continue
             
+        # Remove trailing comma from word text for display
+        display_word_text = word_text.rstrip(',')
+        
         # Show word as it's being processed
-        print(f"  📖 {word_text} ({word_data['start']:.1f}s)", end=" ", flush=True)
+        print(f"  📖 {display_word_text} ({word_data['start']:.1f}s)", end=" ", flush=True)
             
         word_entry = {
-            "text": word_text,
+            "text": display_word_text,
             "start_time": round(word_data['start'], 3),
             "end_time": round(word_data['end'], 3),
             "target_word": False
         }
         
         current_sentence.append(word_entry)
-        sentence_words.append(word_text)
+        sentence_words.append(display_word_text)
         
         # More aggressive sentence break on punctuation, shorter pauses, or sentence length
         should_break = False
@@ -187,17 +190,13 @@ def main():
         print(f"     ⏱️  {current_sentence[0]['start_time']:.1f}s - {current_sentence[-1]['end_time']:.1f}s")
         sentences.append({"words": current_sentence})
     
-    # Calculate outro
-    last_word_end = 0.0
-    if sentences and sentences[-1]['words']:
-        last_word_end = sentences[-1]['words'][-1]['end_time']
-    
-    total_duration = max(segment['end'] for segment in result['segments']) if result['segments'] else last_word_end
-    outro_time = max(0.0, total_duration - last_word_end)
+    # Calculate total song length from Whisper transcription
+    total_song_length = max(segment['end'] for segment in result['segments']) if result['segments'] else 0.0
     
     # Create output
     lyrics_data = {
-        "outro": round(outro_time, 2),
+        "total_song_length": round(total_song_length, 2),
+        "mute_vocals_during_target": True,
         "generated_timestamp": datetime.now().isoformat(),
         "sentences": sentences
     }
@@ -214,7 +213,8 @@ def main():
 
 // Global lyrics data
 window.lyricsData = {{
-  outro: {lyrics_data['outro']},
+  total_song_length: {lyrics_data['total_song_length']},
+  mute_vocals_during_target: {str(lyrics_data['mute_vocals_during_target']).lower()},
   song_source: "song.mp3",
   music_source: "music.mp3",
   generated_timestamp: "{lyrics_data['generated_timestamp']}",

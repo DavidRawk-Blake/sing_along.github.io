@@ -66,7 +66,7 @@ function initializeKaraoke() {
         console.log(`🎵 Song source: ${window.lyricsData.song_source}`);
         console.log(`🎶 Music source: ${window.lyricsData.music_source}`);
         console.log(`⏰ Generated: ${window.lyricsData.generated_timestamp}`);
-        console.log(`🔚 Outro time: ${window.lyricsData.outro}s`);
+        console.log(`🎵 Total song length: ${window.lyricsData.total_song_length}s`);
         console.log('');
         
         window.lyricsData.sentences.forEach((sentence, index) => {
@@ -199,9 +199,32 @@ function startLyrics() {
     
     // Restart speech recognition when starting lyrics (if microphone is enabled)
     if (isSpeechRecognitionEnabled && isMicrophoneActive && window.SpeechRecognitionModule) {
-        console.log('Starting lyrics - restarting speech recognition');
-        window.SpeechRecognitionModule.startContinuousRecognition(true).catch(error => {
-            console.warn('Failed to restart speech recognition:', error);
+        // Check if speech recognition is already running to avoid multiple starts
+        if (!window.SpeechRecognitionModule.isRecognitionRunning()) {
+            console.log('🎵 Starting lyrics - starting speech recognition');
+            console.log('📊 Speech recognition status:', {
+                enabled: isSpeechRecognitionEnabled,
+                micActive: isMicrophoneActive,
+                moduleAvailable: !!window.SpeechRecognitionModule,
+                isRunning: window.SpeechRecognitionModule.isRecognitionRunning()
+            });
+            
+            window.SpeechRecognitionModule.startContinuousRecognition(true).catch(error => {
+                console.warn('❌ Failed to start speech recognition:', error);
+                // If we get permission errors, disable it to prevent repeated attempts
+                if (error.name === 'NotAllowedError' || error.message.includes('not-allowed')) {
+                    console.warn('⚠️ Disabling speech recognition due to permission error');
+                    isSpeechRecognitionEnabled = false;
+                }
+            });
+        } else {
+            console.log('✅ Speech recognition already running - no need to restart');
+        }
+    } else {
+        console.log('⏸️ Not starting speech recognition:', {
+            enabled: isSpeechRecognitionEnabled,
+            micActive: isMicrophoneActive,
+            moduleAvailable: !!window.SpeechRecognitionModule
         });
     }
     
@@ -219,8 +242,10 @@ function stopLyrics() {
     
     // Stop speech recognition when lyrics are stopped
     if (isSpeechRecognitionEnabled && window.SpeechRecognitionModule) {
-        console.log('Lyrics stopped - stopping speech recognition');
+        console.log('🛑 Lyrics stopped - stopping speech recognition');
         window.SpeechRecognitionModule.stopRecognition();
+    } else {
+        console.log('📝 Lyrics stopped - speech recognition was not active');
     }
     
     // Schedule fade-out 5 seconds after lyrics end
@@ -452,6 +477,11 @@ function initializeMicrophoneModal() {
             // Show the volume monitoring modal
             volumeModal.style.display = 'flex';
             startVolumeMonitoring();
+            // Reset any previous permission denial state since user just granted permission
+            if (window.SpeechRecognitionModule && window.SpeechRecognitionModule.resetPermissionState) {
+                window.SpeechRecognitionModule.resetPermissionState();
+            }
+            
             // Enable speech recognition for target word detection (permission already granted)
             enableSpeechRecognition().catch(error => {
                 console.warn('Failed to enable speech recognition:', error);
@@ -616,6 +646,12 @@ async function enableSpeechRecognition() {
     }
     
     console.log('✅ Using existing microphone permission for speech recognition...');
+    
+    // Reset speech recognition permission state since we have verified microphone access
+    if (window.SpeechRecognitionModule && window.SpeechRecognitionModule.resetPermissionState) {
+        window.SpeechRecognitionModule.resetPermissionState();
+    }
+    
     isSpeechRecognitionEnabled = true;
     
     // Start continuous recognition immediately - no need for permission check since microphone is already active
@@ -682,6 +718,73 @@ function initializeDebugTable() {
     }
 }
 
+// Debounce timer for table scrolling
+let scrollDebugTableTimer = null;
+
+/**
+ * Smoothly scroll the debug table to show the current sentence
+ */
+function scrollDebugTableToCurrentSentence() {
+    const tableContainer = document.querySelector('.debug-table-container');
+    if (!tableContainer) return;
+    
+    // Prioritize listening-active rows, then fall back to active-word rows
+    let activeRows = tableContainer.querySelectorAll('.listening-active');
+    if (activeRows.length === 0) {
+        activeRows = tableContainer.querySelectorAll('.active-word');
+    }
+    if (activeRows.length === 0) return;
+    
+    // Convert NodeList to Array for easier manipulation
+    activeRows = Array.from(activeRows);
+    
+    // Get the first and last active rows to determine the sentence span
+    const firstActiveRow = activeRows[0];
+    const lastActiveRow = activeRows[activeRows.length - 1];
+    
+    // Calculate the bounding box that includes the entire active sentence
+    const containerRect = tableContainer.getBoundingClientRect();
+    const firstRowRect = firstActiveRow.getBoundingClientRect();
+    const lastRowRect = lastActiveRow.getBoundingClientRect();
+    
+    // Calculate the sentence block bounds
+    const containerTop = containerRect.top;
+    const containerHeight = containerRect.height;
+    const sentenceTop = firstRowRect.top;
+    const sentenceBottom = lastRowRect.bottom;
+    const sentenceHeight = sentenceBottom - sentenceTop;
+    
+    // Calculate relative position of the sentence block within the container
+    const relativeTop = sentenceTop - containerTop;
+    
+    // Try to center the sentence block, but ensure it's fully visible
+    const centerOffset = (containerHeight - sentenceHeight) / 2;
+    
+    // Calculate the scroll amount needed
+    const currentScrollTop = tableContainer.scrollTop;
+    let targetScrollTop = currentScrollTop + relativeTop - centerOffset;
+    
+    // Ensure the entire sentence is visible (adjust if too large for container)
+    const maxScroll = tableContainer.scrollHeight - containerHeight;
+    if (targetScrollTop < 0) {
+        targetScrollTop = 0;
+    } else if (targetScrollTop > maxScroll) {
+        targetScrollTop = maxScroll;
+    }
+    
+    // Only scroll if the sentence is not already fully visible
+    const sentenceVisibleTop = relativeTop;
+    const sentenceVisibleBottom = relativeTop + sentenceHeight;
+    const isFullyVisible = sentenceVisibleTop >= 0 && sentenceVisibleBottom <= containerHeight;
+    
+    if (!isFullyVisible) {
+        tableContainer.scrollTo({
+            top: targetScrollTop,
+            behavior: 'smooth'
+        });
+    }
+}
+
 /**
  * Update the debug table to reflect active words based on listening-windows
  */
@@ -695,6 +798,7 @@ function updateDebugTable() {
     const adjustedTime = currentTime - (lyricsEngine.lyricsData ? lyricsEngine.lyricsData.offset : 0);
     
     const totalCount = lyricsEngine.targetWords.length;
+    let hasActiveWords = false;
 
     lyricsEngine.targetWords.forEach((targetWord, index) => {
         const row = document.getElementById(`debug-row-${index}`);
@@ -722,6 +826,7 @@ function updateDebugTable() {
             
             if (isInWindow) {
                 row.classList.add('active-word');
+                hasActiveWords = true;
             } else {
                 row.classList.remove('active-word');
             }
@@ -734,8 +839,8 @@ function updateDebugTable() {
             // Use the match_found flag set by the lyrics engine
             if (targetWord.match_found) {
                 // Check individual thresholds for detailed display
-                const hasJaroMatch = targetWord.jaroScores.some(score => score > 0.7);
-                const hasTrigramMatch = targetWord.trigramScores.some(score => score > 0.3);
+                const hasJaroMatch = targetWord.jaroScores.some(score => score > 0.8);
+                const hasTrigramMatch = targetWord.trigramScores.some(score => score > 0.4);
                 
                 if (hasJaroMatch) {
                     matchStatus += '✓';
@@ -794,6 +899,20 @@ function updateDebugTable() {
     if (debugSummary) {
         debugSummary.textContent = `${matchedCount} : ${totalCount}`;
     }
+    
+    // Scroll to current sentence if there are active words (with debouncing)
+    if (hasActiveWords) {
+        // Clear any existing timer
+        if (scrollDebugTableTimer) {
+            clearTimeout(scrollDebugTableTimer);
+        }
+        
+        // Set a small delay to debounce rapid updates
+        scrollDebugTableTimer = setTimeout(() => {
+            scrollDebugTableToCurrentSentence();
+            scrollDebugTableTimer = null;
+        }, 100);
+    }
 }
 
 function highlightTargetWordInTable(targetWordId, highlight) {
@@ -824,6 +943,7 @@ function highlightTargetWordInTable(targetWordId, highlight) {
 // Make functions available globally for lyrics engine integration
 window.updateDebugTable = updateDebugTable;
 window.highlightTargetWordInTable = highlightTargetWordInTable;
+window.scrollDebugTableToCurrentSentence = scrollDebugTableToCurrentSentence;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {

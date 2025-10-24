@@ -5,7 +5,8 @@
 
 // Global lyrics data
 window.lyricsData = {
-  outro: 0.0,
+  total_song_length: 95.72,
+  mute_vocals_during_target: false,
   song_source: "song.mp3",
   music_source: "music.mp3",
   generated_timestamp: "2025-10-24T09:46:51.321575",

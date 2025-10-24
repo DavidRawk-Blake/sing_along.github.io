@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Waltzing Matilda - Australian Karaoke</title>
+  <link rel="stylesheet" href="../style/style.css">
+  <link rel="stylesheet" href="../style/waltzing_matilda.css">
+  <script src="lyrics_data.js"></script>
+  <script src="../js/lyrics-engine.js"></script>
+  <script src="../js/speech-recognition.js"></script>
+  <script src="../js/karaoke-controller.js"></script>
+</head>
+
+<body>
+  <!-- Back Button -->
+  <button id="backBtn" class="control-button back-button" onclick="window.location.href='../index.html'"
+    title="Back to Games">‹‹</button>
+
+  <!-- Debug Details Panel -->
+  <details id="debugDetails" class="debug-details">
+    <summary id="debugSummary" class="debug-summary">(0/0)</summary>
+    <div class="debug-content">
+      <div id="timestampDisplay" class="timestamp-display">0.00s</div>
+      <div class="debug-controls">
+        <button id="rewindBtn" class="debug-button" onclick="rewindFiveSeconds()" title="Rewind 5s">⏪</button>
+        <button id="skipBtn" class="debug-button" onclick="skipForwardFiveSeconds()" title="Skip 5s">⏩</button>
+      </div>
+      <div class="debug-table-container">
+        <table id="targetWordsTable" class="target-words-table">
+          <thead>
+            <tr>
+              <th>Match</th>
+              <th>Target Word</th>
+              <th>Spoken Words</th>
+              <th>Jaro Scores</th>
+              <th>Trigram Scores</th>
+            </tr>
+          </thead>
+          <tbody id="targetWordsTableBody">
+            <!-- Target words will be populated here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </details>
+
+  <div class="outside-floats">
+    <div class="floating-outback" style="transform: rotate(45deg);">🪃</div>
+    <div class="floating-outback">🌿</div>
+    <div class="floating-outback" style="transform: rotate(-30deg);">🏕️</div>
+    <div class="floating-outback" style="transform: rotate(90deg);">🌳</div>
+    <div class="floating-outback">🦘</div>
+    <div class="floating-outback" style="transform: rotate(-60deg);">⭐</div>
+    <div class="floating-outback" style="transform: rotate(120deg);">🔥</div>
+    <div class="floating-outback">🍃</div>
+    <div class="floating-outback" style="transform: rotate(15deg);">🎶</div>
+    <div class="floating-outback" style="transform: rotate(-45deg);">🎵</div>
+    <div class="floating-outback" style="transform: rotate(75deg);">♪</div>
+    <div class="floating-outback" style="transform: rotate(-90deg);">♫</div>
+    <div class="floating-outback" style="transform: rotate(30deg);">🐑</div>
+    <div class="floating-outback" style="transform: rotate(-75deg);">🏞️</div>
+    <div class="floating-outback" style="transform: rotate(105deg);">🌾</div>
+    <div class="floating-outback" style="transform: rotate(-120deg);">🎒</div>
+  </div>
+
+  <div class="kids-frame-container">
+    <div class="wavy-outback-frame">
+      <div class="wavy-border"></div>
+      <div class="outback">
+
+      </div>
+
+      <div class="frame-content">
+        <!-- Image Container for Sentence-based Images -->
+        <div id="imageContainer" class="image-container"></div>
+        
+        <h1>🪃 Waltzing Matilda - Australian Karaoke 🏕️</h1>
+
+        <div class="fun-decorations">
+          <div class="floater">🎵</div>
+          <div class="floater">🎶</div>
+          <div class="floater">♪</div>
+          <div class="floater">♫</div>
+          <div class="floater">🌿</div>
+          <div class="floater">🦘</div>
+          <div class="floater">🪃</div>
+          <div class="floater">🐑</div>
+          <div class="floater">⭐</div>
+          <div class="floater">🔥</div>
+        </div>
+        <p style="font-size: 0.9em; transform: rotate(-1deg); height: 100pt;">Australian outback tales and campfire songs! 🔥</p>
+
+        <!-- Lyrics Display Area -->
+        <div class="lyrics-container">
+          <div id="sentenceDisplay" class="sentence-display">
+            Click "Play" to begin your Australian sing-along experience! 🪃🦘
+          </div>
+          <div class="progress-container">
+            <div id="progressFill" class="progress-fill"></div>
+          </div>
+        </div>
+
+        <div class="media-controls">
+          <button id="playBtn" class="control-button play-button" onclick="togglePlayPause()" title="Play/Pause">▶</button>
+          <button id="restartBtn" class="control-button restart-button" onclick="restartAction()"
+            title="Previous/Reset">◀</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- Microphone Permission Modal -->
+  <div id="micPermissionModal" class="modal-overlay">
+    <div class="modal-content waltzing-modal">
+      <div class="modal-header">
+        <h2>🪃 Enable Microphone 🦘</h2>
+      </div>
+      <div class="modal-body">
+        <p>To make your karaoke experience authentically Australian, we need access to your microphone!</p>
+        <p>🪃 This allows us to detect your singing and provide feedback.</p>
+      </div>
+      <div class="modal-buttons">
+        <button id="enableMicBtn" class="modal-button modal-button-yes">Yes, Enable! 🌿</button>
+        <button id="skipMicBtn" class="modal-button modal-button-no">Skip for Now 🐑</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Microphone Volume Monitor Modal -->
+  <div id="micVolumeModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content waltzing-modal">
+      <div class="modal-header">
+        <h2>🦘 Microphone Active 🪃</h2>
+      </div>
+      <div class="modal-body">
+        <p>Your microphone is ready for Australian singing!</p>
+        <div class="volume-container">
+          <div class="volume-label">Current Volume:</div>
+          <div class="volume-bar-container">
+            <div id="volumeBar" class="volume-bar"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button id="cancelMicBtn" class="modal-button modal-button-no">Cancel 🏕️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio elements (hidden but required for karaoke functionality) -->
+  <div style="display: none;">
+    <audio id="song" preload="auto">
+      <source src="song.mp3" type="audio/mpeg">
+      Your browser does not support the audio element.
+    </audio>
+    <audio id="music" preload="auto">
+      <source src="music.mp3" type="audio/mpeg">
+      Your browser does not support the audio element.
+    </audio>
+  </div>
+
+</body>
+
+</html>
