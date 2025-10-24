@@ -291,8 +291,27 @@ class LyricsEngine {
                 if (window.highlightTargetWordInTable) {
                     window.highlightTargetWordInTable(targetWord.id, false);
                 }
+                
+                // Check if this was the last target word to complete its timing window
+                this.checkForRatificationTrigger();
             }
         });
+    }
+
+    /**
+     * Check if all target words have completed their timing windows and trigger ratification
+     */
+    checkForRatificationTrigger() {
+        // Check if all target words have finished their listening windows
+        const allFinished = this.targetWords.every(targetWord => !targetWord.listeningActive);
+        
+        if (allFinished && this.targetWords.length > 0) {
+            // All target words have completed - trigger ratification if recognition is enabled
+            if (window.isSpeechRecognitionEnabled && typeof this.score_ratification === 'function') {
+                console.log('🎯 All target words completed - triggering score ratification');
+                this.score_ratification();
+            }
+        }
     }
 
     /**

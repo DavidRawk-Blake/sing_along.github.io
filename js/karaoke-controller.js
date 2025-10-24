@@ -140,12 +140,6 @@ function initializeKaraoke() {
             lyricsEngine.processFinalWords();
         }
         
-        // Perform comprehensive score ratification if recognition is enabled
-        if (isSpeechRecognitionEnabled && lyricsEngine && typeof lyricsEngine.score_ratification === 'function') {
-            console.log('Song ended - performing score ratification for all target words');
-            lyricsEngine.score_ratification();
-        }
-        
         // Stop speech recognition when song ends
         if (isSpeechRecognitionEnabled && window.SpeechRecognitionModule) {
             console.log('Song ended - stopping speech recognition');
@@ -165,12 +159,6 @@ function initializeKaraoke() {
         if (lyricsEngine && typeof lyricsEngine.processFinalWords === 'function') {
             console.log('Music ended - processing final words for any unscored target words');
             lyricsEngine.processFinalWords();
-        }
-        
-        // Perform comprehensive score ratification if recognition is enabled
-        if (isSpeechRecognitionEnabled && lyricsEngine && typeof lyricsEngine.score_ratification === 'function') {
-            console.log('Music ended - performing score ratification for all target words');
-            lyricsEngine.score_ratification();
         }
         
         // Stop speech recognition when music ends
