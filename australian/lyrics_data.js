@@ -2211,8 +2211,8 @@ window.lyricsData = {
         {
           text: "Australian",
           start_time: 249.04,
-          end_time: 251.6,
-          target_word: true
+          end_time: 250.6,
+          target_word: false
         }
       ]
     }    
