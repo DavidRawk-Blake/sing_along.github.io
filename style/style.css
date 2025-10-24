@@ -57,9 +57,10 @@ body {
     border-radius: 20px;
     padding: 20px;
     margin: 10px 0;
-    max-height: 60vh;
+    max-height: 40vh;
     overflow-y: auto;
     scroll-behavior: smooth;
+    scroll-snap-type: y proximity;
 }
 
 /* Debug Content */

@@ -280,7 +280,7 @@ function stopRecognition() {
 }
 
 /**
- * Check if microphone permission is available - ONLY uses permissions API, no getUserMedia
+ * Check if microphone permission is available - ONLY for standalone use (not when integrated with karaoke)
  * @returns {Promise<boolean>} True if microphone is available, false otherwise
  */
 async function checkMicrophonePermission() {
@@ -293,22 +293,13 @@ async function checkMicrophonePermission() {
     lastPermissionRequestTime = now;
     
     try {
-        // Only use the permissions API - do NOT call getUserMedia as it can trigger permission prompts
+        // Only use the permissions API - NEVER call getUserMedia to avoid duplicate permission dialogs
         const permissionStatus = await navigator.permissions.query({ name: 'microphone' });
         console.log('🔍 Microphone permission status:', permissionStatus.state);
         
-        if (permissionStatus.state === 'granted') {
-            return true;
-        } else if (permissionStatus.state === 'denied') {
-            console.warn('❌ Microphone permission explicitly denied');
-            return false;
-        } else {
-            // If 'prompt', we should not call getUserMedia as it will show permission dialog
-            console.log('⚠️ Microphone permission is in prompt state - assuming not granted to avoid permission dialog');
-            return false;
-        }
+        return permissionStatus.state === 'granted';
     } catch (error) {
-        console.log('⚠️ Permissions API not supported - assuming permission not granted to avoid permission dialog');
+        console.log('⚠️ Permissions API not supported - assuming permission not granted');
         return false;
     }
 }
@@ -330,8 +321,11 @@ async function startContinuousRecognition(skipPermissionCheck = false) {
         return false;
     }
 
-    // Check microphone permission before starting (only if permission hasn't been granted elsewhere)
-    if (!skipPermissionCheck) {
+    // When called from karaoke system, trust that permission is already granted
+    if (skipPermissionCheck) {
+        console.log('Using karaoke system microphone permission - no additional permission check needed');
+        permissionDenied = false; // Reset any previous permission issues
+    } else {
         console.log('Checking microphone permission for speech recognition...');
         const hasMicPermission = await checkMicrophonePermission();
         if (!hasMicPermission) {
@@ -339,10 +333,6 @@ async function startContinuousRecognition(skipPermissionCheck = false) {
             permissionDenied = true; // Mark as denied to prevent future attempts
             return false;
         }
-    } else {
-        console.log('Skipping microphone permission check - permission already verified by caller');
-        // When skipping permission check, reset permission denied flag since caller has verified permission
-        permissionDenied = false;
     }
 
     console.log('🎤 Starting continuous speech recognition...');
@@ -361,34 +351,20 @@ async function startContinuousRecognition(skipPermissionCheck = false) {
         return true;
     } catch (error) {
         console.warn('❌ Speech recognition start error:', error.name, error.message);
+        isRecognitionActive = false;
         
-        if (error.message.includes('not-allowed') || error.message.includes('permission') || error.name === 'NotAllowedError') {
-            console.error('🚫 Microphone permission denied - marking as denied');
-            permissionDenied = true;
-            isRecognitionActive = false;
+        // For karaoke integration, don't retry on errors to avoid permission loops
+        if (skipPermissionCheck) {
+            console.warn('⚠️ Speech recognition failed in karaoke mode - not retrying to avoid permission loops');
             return false;
         }
         
-        if (error.name === 'InvalidStateError') {
-            console.log('🔄 InvalidStateError - attempting clean restart...');
-            try {
-                speechRecognition.stop();
-                await new Promise(resolve => setTimeout(resolve, 500)); // Wait longer for clean stop
-                
-                if (!permissionDenied) {
-                    console.log('🔄 Retrying speech recognition start...');
-                    speechRecognition.start();
-                    return true;
-                }
-            } catch (retryError) {
-                console.warn('❌ Speech recognition retry failed:', retryError.message);
-                isRecognitionActive = false;
-                return false;
-            }
-        } else {
-            console.error('❌ Unhandled speech recognition error:', error);
-            isRecognitionActive = false;
+        // Only for standalone usage, handle specific error types
+        if (error.message.includes('not-allowed') || error.message.includes('permission') || error.name === 'NotAllowedError') {
+            console.error('🚫 Microphone permission denied - marking as denied');
+            permissionDenied = true;
         }
+        
         return false;
     }
 }

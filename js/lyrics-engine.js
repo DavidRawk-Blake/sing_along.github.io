@@ -174,14 +174,9 @@ class LyricsEngine {
             if (wordIndex === currentHighlightedWordIndex) {
                 className += ' highlighted';
                 
-                // Increase font size moderately if target_word is true
-                if (word.target_word) {
-                    fontSize = 'font-size: 1.5em; ';
-                    
-                    // Set this as the current target word for speech recognition
-                    if (window.setCurrentTargetWord) {
-                        window.setCurrentTargetWord(word.text);
-                    }
+                // Set this as the current target word for speech recognition (if target word)
+                if (word.target_word && window.setCurrentTargetWord) {
+                    window.setCurrentTargetWord(word.text);
                 }
             }
             
@@ -1018,6 +1013,173 @@ class LyricsEngine {
             img.style.opacity = '0';
         });
         this.currentImageIndex = -1;
+    }
+
+    /**
+     * Score ratification - comprehensive rescoring of all target words using closest spoken words
+     * Goes through each target word and finds the 15 closest spoken words by timestamp proximity
+     */
+    score_ratification() {
+        if (!window.getRecognizedWordsLog) {
+            console.log('No recognized words log available for score ratification');
+            return;
+        }
+        
+        const recognizedWordsLog = window.getRecognizedWordsLog();
+        if (recognizedWordsLog.length === 0) {
+            console.log('No recognized words in log for score ratification');
+            return;
+        }
+        
+        console.log('🔍 Starting score ratification for all target words...');
+        let ratificationChanges = 0;
+        
+        this.targetWords.forEach((targetWord, index) => {
+            // Get the target word's timing from lyrics data
+            const sentence = this.lyricsData.sentences[targetWord.sentenceIndex];
+            const word = sentence.words[targetWord.wordIndex];
+            const wordStartTime = word.start_time || 0;
+            const wordEndTime = word.end_time || wordStartTime;
+            const wordMidTime = (wordStartTime + wordEndTime) / 2;
+            
+            // Find the 15 words that surround the target word's timing
+            // Sort all recognized words by their distance from the target word time
+            const wordsWithDistance = recognizedWordsLog.map(entry => ({
+                word: entry.word,
+                timestamp: entry.timestamp,
+                distance: Math.abs(entry.timestamp - wordMidTime)
+            }));
+            
+            // Sort by distance and take the closest 15 words
+            wordsWithDistance.sort((a, b) => a.distance - b.distance);
+            const wordsInWindow = wordsWithDistance.slice(0, 15).map(entry => entry.word);
+            
+            // Store original values for comparison
+            const originalSpokenWords = [...targetWord.spokenWords];
+            const originalMatchFound = targetWord.match_found;
+            
+            // Replace spoken words with words found in the precise timing window
+            targetWord.spokenWords = wordsInWindow;
+            
+            // Recalculate scores with the new words
+            const targetWordText = targetWord.word.toLowerCase();
+            targetWord.jaroScores = [];
+            targetWord.trigramScores = [];
+            
+            wordsInWindow.forEach(spokenWord => {
+                const spokenWordLower = spokenWord.toLowerCase();
+                
+                // Calculate Jaro distance
+                const jaroScore = window.calculateJaroDistance ? 
+                    window.calculateJaroDistance(targetWordText, spokenWordLower) : 0;
+                targetWord.jaroScores.push(jaroScore);
+                
+                // Calculate trigram similarity
+                const trigramScore = window.calculateTrigramSimilarity ?
+                    window.calculateTrigramSimilarity(targetWordText, spokenWordLower) : 0;
+                targetWord.trigramScores.push(trigramScore);
+            });
+            
+            // Recalculate match_found flag using same thresholds
+            const hasJaroMatch = targetWord.jaroScores.some(score => score > 0.8);
+            const hasTrigramMatch = targetWord.trigramScores.some(score => score > 0.4);
+            targetWord.match_found = hasJaroMatch || hasTrigramMatch;
+            
+            // Log changes for debugging
+            const statusChange = originalMatchFound !== targetWord.match_found;
+            const wordsChange = originalSpokenWords.length !== wordsInWindow.length || 
+                               !originalSpokenWords.every((word, i) => word === wordsInWindow[i]);
+            
+            if (statusChange || wordsChange) {
+                ratificationChanges++;
+                const closestWords = wordsWithDistance.slice(0, 15);
+                const timeRange = closestWords.length > 0 ? 
+                    `${Math.min(...closestWords.map(w => w.timestamp)).toFixed(1)}s - ${Math.max(...closestWords.map(w => w.timestamp)).toFixed(1)}s` : 
+                    'no words';
+                console.log(`🔄 Ratification for "${targetWord.word}" (${wordMidTime.toFixed(1)}s):`, {
+                    closest15Words: timeRange,
+                    originalWords: originalSpokenWords.length,
+                    newWords: wordsInWindow.length,
+                    originalMatch: originalMatchFound,
+                    newMatch: targetWord.match_found,
+                    statusChanged: statusChange ? '✅' : '➖'
+                });
+            }
+        });
+        
+        console.log(`✅ Score ratification complete: ${ratificationChanges} target words updated`);
+        
+        // Update debug table to reflect ratification results
+        if (window.updateDebugTable) {
+            window.updateDebugTable();
+        }
+    }
+
+    /**
+     * Process final words when song ends - check if last target words need final scoring
+     */
+    processFinalWords() {
+        if (!window.getRecognizedWordsLog) {
+            console.log('No recognized words log available for final processing');
+            return;
+        }
+        
+        const recognizedWordsLog = window.getRecognizedWordsLog();
+        if (recognizedWordsLog.length === 0) {
+            console.log('No recognized words in log for final processing');
+            return;
+        }
+        
+        // Find target words that have no spoken words recorded (didn't capture during normal listening)
+        const unprocessedTargetWords = this.targetWords.filter(targetWord => 
+            targetWord.spokenWords.length === 0 && !targetWord.match_found
+        );
+        
+        if (unprocessedTargetWords.length === 0) {
+            console.log('All target words were already processed during normal playback');
+            return;
+        }
+        
+        console.log(`Processing final words for ${unprocessedTargetWords.length} unprocessed target words`);
+        
+        // Get the last 15 words from the recognition log for final processing
+        const lastFifteenWords = recognizedWordsLog.slice(-15).map(entry => entry.word);
+        
+        unprocessedTargetWords.forEach(targetWord => {
+            // Store the final words
+            targetWord.spokenWords = lastFifteenWords;
+            
+            // Calculate Jaro and trigram scores
+            const targetWordText = targetWord.word.toLowerCase();
+            targetWord.jaroScores = [];
+            targetWord.trigramScores = [];
+            
+            lastFifteenWords.forEach(spokenWord => {
+                const spokenWordLower = spokenWord.toLowerCase();
+                
+                // Calculate Jaro distance
+                const jaroScore = window.calculateJaroDistance ? 
+                    window.calculateJaroDistance(targetWordText, spokenWordLower) : 0;
+                targetWord.jaroScores.push(jaroScore);
+                
+                // Calculate trigram similarity
+                const trigramScore = window.calculateTrigramSimilarity ?
+                    window.calculateTrigramSimilarity(targetWordText, spokenWordLower) : 0;
+                targetWord.trigramScores.push(trigramScore);
+            });
+            
+            // Check if any scores pass the thresholds and set match_found flag
+            const hasJaroMatch = targetWord.jaroScores.some(score => score > 0.8);
+            const hasTrigramMatch = targetWord.trigramScores.some(score => score > 0.4);
+            targetWord.match_found = hasJaroMatch || hasTrigramMatch;
+            
+            console.log(`Final processing for "${targetWord.word}": ${targetWord.match_found ? 'MATCH' : 'NO MATCH'}`);
+        });
+        
+        // Update debug table to reflect final processing
+        if (window.updateDebugTable) {
+            window.updateDebugTable();
+        }
     }
 }
 

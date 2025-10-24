@@ -134,6 +134,18 @@ function initializeKaraoke() {
         lyricsEngine.pause(); // Use engine's pause method to stop both audio sources
         lyricsEngine.pauseAnimation(); // Stop animation but preserve current time position
         
+        // Process any final words before stopping speech recognition
+        if (lyricsEngine && typeof lyricsEngine.processFinalWords === 'function') {
+            console.log('Song ended - processing final words for any unscored target words');
+            lyricsEngine.processFinalWords();
+        }
+        
+        // Perform comprehensive score ratification if recognition is enabled
+        if (isSpeechRecognitionEnabled && lyricsEngine && typeof lyricsEngine.score_ratification === 'function') {
+            console.log('Song ended - performing score ratification for all target words');
+            lyricsEngine.score_ratification();
+        }
+        
         // Stop speech recognition when song ends
         if (isSpeechRecognitionEnabled && window.SpeechRecognitionModule) {
             console.log('Song ended - stopping speech recognition');
@@ -148,6 +160,18 @@ function initializeKaraoke() {
 
         lyricsEngine.pause(); // Use engine's pause method to stop both audio sources
         lyricsEngine.pauseAnimation(); // Stop animation but preserve current time position
+        
+        // Process any final words before stopping speech recognition
+        if (lyricsEngine && typeof lyricsEngine.processFinalWords === 'function') {
+            console.log('Music ended - processing final words for any unscored target words');
+            lyricsEngine.processFinalWords();
+        }
+        
+        // Perform comprehensive score ratification if recognition is enabled
+        if (isSpeechRecognitionEnabled && lyricsEngine && typeof lyricsEngine.score_ratification === 'function') {
+            console.log('Music ended - performing score ratification for all target words');
+            lyricsEngine.score_ratification();
+        }
         
         // Stop speech recognition when music ends
         if (isSpeechRecognitionEnabled && window.SpeechRecognitionModule) {
@@ -757,12 +781,25 @@ function scrollDebugTableToCurrentSentence() {
     // Calculate relative position of the sentence block within the container
     const relativeTop = sentenceTop - containerTop;
     
-    // Try to center the sentence block, but ensure it's fully visible
-    const centerOffset = (containerHeight - sentenceHeight) / 2;
+    // Calculate row height to position target word within top 5 rows
+    const rowHeight = firstRowRect.height;
+    const maxRowsFromTop = 5;
+    const maxOffsetFromTop = rowHeight * maxRowsFromTop;
     
-    // Calculate the scroll amount needed
+    // Calculate the scroll amount needed to position the first active row within top 5 rows
     const currentScrollTop = tableContainer.scrollTop;
-    let targetScrollTop = currentScrollTop + relativeTop - centerOffset;
+    let targetScrollTop;
+    
+    if (relativeTop > maxOffsetFromTop) {
+        // If the first active row is below the 5th row, scroll to bring it to the 5th row
+        targetScrollTop = currentScrollTop + relativeTop - maxOffsetFromTop;
+    } else if (relativeTop < 0) {
+        // If the first active row is above the visible area, scroll to bring it to the top
+        targetScrollTop = currentScrollTop + relativeTop;
+    } else {
+        // If the first active row is already within the top 5 rows, don't scroll
+        targetScrollTop = currentScrollTop;
+    }
     
     // Ensure the entire sentence is visible (adjust if too large for container)
     const maxScroll = tableContainer.scrollHeight - containerHeight;
@@ -772,16 +809,34 @@ function scrollDebugTableToCurrentSentence() {
         targetScrollTop = maxScroll;
     }
     
-    // Only scroll if the sentence is not already fully visible
-    const sentenceVisibleTop = relativeTop;
-    const sentenceVisibleBottom = relativeTop + sentenceHeight;
-    const isFullyVisible = sentenceVisibleTop >= 0 && sentenceVisibleBottom <= containerHeight;
+    // Only scroll if the first active row is not within the top 5 visible rows
+    const needsScrolling = relativeTop > maxOffsetFromTop || relativeTop < 0;
     
-    if (!isFullyVisible) {
-        tableContainer.scrollTo({
-            top: targetScrollTop,
-            behavior: 'smooth'
-        });
+    if (needsScrolling) {
+        // Custom slower scroll animation
+        const startScrollTop = tableContainer.scrollTop;
+        const scrollDistance = targetScrollTop - startScrollTop;
+        const duration = 2000; // 2 seconds for slower scrolling
+        const startTime = performance.now();
+        
+        function animateScroll(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Ease-in-out function for smooth animation
+            const easeInOut = progress < 0.5 
+                ? 2 * progress * progress 
+                : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+            
+            const currentScrollTop = startScrollTop + (scrollDistance * easeInOut);
+            tableContainer.scrollTop = currentScrollTop;
+            
+            if (progress < 1) {
+                requestAnimationFrame(animateScroll);
+            }
+        }
+        
+        requestAnimationFrame(animateScroll);
     }
 }
 
