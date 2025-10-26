@@ -33,15 +33,20 @@
         .main-content {
             height: 100vh;
             padding: 0;
-            margin: 0;
-            max-width: none;
+            margin: 0 auto;
+            max-width: 1800px;
+            width: 80%;
         }
 
         .header h1 {
             color: #7C3AED;
-            font-size: 4em;
+            font-size: 8em;
             margin-bottom: 20px;
             text-shadow: 3px 3px 6px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            text-align: center;
         }
 
         .subtitle {
@@ -188,9 +193,42 @@
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-10px); }
         }
+        /* Floating full screen button */
+        .fullscreen-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: linear-gradient(45deg, #9333EA, #7C3AED);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(147, 51, 234, 0.4);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fullscreen-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(147, 51, 234, 0.6);
+        }
+
+        .fullscreen-btn:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body>
+    <!-- Floating Full Screen Button -->
+    <button class="fullscreen-btn" onclick="toggleFullScreen()" title="Toggle Full Screen">
+        ⛶
+    </button>
     <!-- Header Section -->
     <div class="header">
         <h1>� Karaoke �</h1>
@@ -206,6 +244,191 @@
 
     <!-- Main Content - Cards Section -->
     <div class="main-content">
+        <h1>Presentation</h1>
+        <div style="text-align: center; margin: 20px 0;">
+            
+            <h2>Picking A Song</h2>
+            <!-- Two-column wrapper -->
+            <div style="display: flex; gap: 80px; margin: 10%; margin-top: 0; align-items: flex-start;">
+              
+                <!-- Left side container -->
+                <div style="flex: 1;">
+                    <!-- Useful Resources card -->
+                    <div style="width: 100%; text-align: left; background: rgba(255, 255, 255, 0.95); border-radius: 15px; padding: 35px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); border: 3px solid rgba(124, 58, 237, 0.4);">
+                        <p>We have a pile of songs, already, <strong>but</strong> since I didn't have a company AI account, I figured out there are hundreds of songs in the public domain.</p>
+                        
+                        <h4 style="color: #7C3AED; margin-top: 30px;">Useful Resources:</h4>
+                        <ul style="text-align: left;">
+                            <li><a href="https://www.pdinfo.com/" target="_blank" style="color: #7C3AED;">https://www.pdinfo.com/</a></li>
+                            <li><a href="https://www.pdinfo.com/mobile/pd-music-genres/pd-children-songs.php" target="_blank" style="color: #7C3AED;">https://www.pdinfo.com/mobile/pd-music-genres/pd-children-songs.php</a></li>
+                            <li><a href="https://en.wikipedia.org/wiki/List_of_public_domain_songs" target="_blank" style="color: #7C3AED;">https://en.wikipedia.org/wiki/List_of_public_domain_songs</a></li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Audio Player card -->
+                    <div style="width: 100%; margin-top: 20px; background: rgba(255, 255, 255, 0.95); border-radius: 15px; padding: 25px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); border: 3px solid rgba(124, 58, 237, 0.4);">
+                        <h4 style="color: #7C3AED; text-align: center; margin-top: 0; margin-bottom: 20px;">🎵 A song we already own. Thanks Tom</h4>
+                        <div style="text-align: center;">
+                            <audio controls style="width: 100%; max-width: 400px; margin-bottom: 15px;">
+                                <source src="4x3_dingle_dangle_scarecrow.mp3" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
+                            <p style="color: #4C1D95; font-size: 1em; font-style: italic; margin: 5px 0;">Dingle Dangle Scarecrow - Example Track</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right side - Song lists -->
+                <div style="flex: 1; background: rgba(255, 255, 255, 0.95); border-radius: 15px; padding: 35px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); border: 3px solid rgba(124, 58, 237, 0.4);">
+                    <h3 style="color: #7C3AED; margin-top: 0;">15 Popular Public Domain Kids Songs</h3>
+                    <div style="text-align: left; margin-bottom: 30px;">
+                        <ol style="color: #4C1D95; font-size: 1.0em; line-height: 1.4;">
+                            <li>🌟 Twinkle, Twinkle, Little Star</li>
+                            <li>🎵 ABC Song (Alphabet Song)</li>
+                            <li>🐑 Mary Had a Little Lamb</li>
+                            <li>🕷️ Itsy Bitsy Spider</li>
+                            <li>🚣 Row, Row, Row Your Boat</li>
+                            <li>🐸 Old MacDonald Had a Farm</li>
+                            <li>🦀 She'll Be Coming 'Round the Mountain</li>
+                            <li>🎪 If You're Happy and You Know It</li>
+                            <li>🕐 Hickory Dickory Dock</li>
+                            <li>🌉 London Bridge is Falling Down</li>
+                            <li>🔔 Jingle Bells</li>
+                            <li>🏠 Home on the Range</li>
+                            <li>🎺 This Old Man</li>
+                            <li>🌸 Ring Around the Rosie</li>
+                            <li>🎭 Pop Goes the Weasel</li>
+                        </ol>
+                    </div>
+
+                    <h3 style="color: #7C3AED;">8 Australian Public Domain Kids Songs 🇦🇺</h3>
+                    <div style="text-align: left;">
+                        <ol style="color: #4C1D95; font-size: 1.0em; line-height: 1.4;">
+                            <li>🦜 Kookaburra Sits in the Old Gum Tree</li>
+                            <li>🪃 Waltzing Matilda</li>
+                            <li>🐑 Click Go the Shears</li>
+                            <li>🚂 I've Been Working on the Railroad</li>
+                            <li>🌿 Botany Bay</li>
+                            <li>🥾 The Wild Rover</li>
+                            <li>🌊 Bound for South Australia</li>
+                            <li>🎪 Six White Boomers</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Creating Song Card -->
+            <div style="background: rgba(255, 255, 255, 0.9); border-radius: 15px; padding: 30px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); border: 1px solid rgba(124, 58, 237, 0.2); margin: 5% 10%; text-align: center;">
+                <h2 style="color: #7C3AED; margin-top: 0;">OR.. Creating The Song With AI</h2>
+                <p style="margin-bottom: 20px;">First create a poem with chat GPT</p>
+                      <a href="https://chatgpt.com/?utm_source=google&utm_medium=paidsearch_nonbrand&utm_campaign=GOOG_C_SEM_GNB_Core-Generic_CHT_BAU_ACQ_PER_BRD_ALL_APAC_AU_EN_081225&utm_term=ai%20tools&utm_content=185072390113&utm_ad=768470486331&utm_match=b&gad_source=1&gad_campaignid=22880502688&gbraid=0AAAAA-IW-UXkhj0QM5YnQ3c8uqZ41uwq0&gclid=CjwKCAjwpOfHBhAxEiwAm1SwEkaF_f4YhYTY4RUN_M9hEIeSBJCaS8fZ3b5aiVc-K3v6NuRPLMuo4xoCiEkQAvD_BwE" target="_blank" style="display: inline-block; background: linear-gradient(45deg, #9333EA, #7C3AED); color: white; text-decoration: none; padding: 15px 30px; border-radius: 10px; font-weight: bold; transition: transform 0.3s ease; margin-bottom: 30px;">🤖 Try ChatGPT for a POEM</a>
+                
+                <!-- Example Poem Section -->
+                <div style="background: rgba(107, 70, 193, 0.1); border-radius: 10px; padding: 25px; margin-top: 20px; border-left: 4px solid #7C3AED;">
+                    <h4 style="color: #6B46C1; text-align: center; font-style: italic; margin-bottom: 20px;">"The Vampire's Trick-or-Treat Night"</h4>
+                    
+                    <div style="font-family: 'Georgia', serif; line-height: 1.8; color: #4C1D95; text-align: left; max-width: 500px; margin: 0 auto;">
+                        <p style="margin-bottom: 15px;">
+                            A vampire named Vlad, with a cape so wide,<br>
+                            Went trick-or-treating on Halloween night.<br>
+                            With fangs that gleamed and eyes that shone,<br>
+                            He knocked on doors, all on his own!
+                        </p>
+                        
+                        <p style="margin-bottom: 15px;">
+                            "Trick or treat!" he said with a grin,<br>
+                            And out popped candy from the bins.<br>
+                            With a "Thank you!" and a bow, so neat,<br>
+                            He flew away on tiny feet.
+                        </p>
+                        
+                        <p style="margin-bottom: 0;">
+                            No need for blood, he just wanted sweets,<br>
+                            A real vampire, but not for treats that bite!<br>
+                            So off he flew, with a bat's delight,<br>
+                            Ready to snack on candy all night!
+                        </p>
+                    </div>  
+                </div>
+                
+                <div style="margin-top: 100px">
+                <p > Next Copy The Poem Into a Song Generator. Do this to have 100% control over the words in the song.</p>
+                <a href="https://www.aisongmaker.io/tools/lyrics-to-song" target="_blank" style="display: inline-block; background: linear-gradient(45deg, #9333EA, #7C3AED); color: white; text-decoration: none; padding: 15px 30px; border-radius: 10px; font-weight: bold; transition: transform 0.3s ease; margin: 15px 0;">🎵 Try AI Song Generator</a>
+                
+                <div style="margin-top: 20px;">
+                    <img src="presentation/ai_song_generator.png" alt="AI Song Generator" style="width: 900px; border: 3px solid black; border-radius: 10px; max-width: 100%; height: auto;">
+                </div>
+              </div>
+            </div>
+            
+            <!-- Hiring Singer Card -->
+            <div style="background: rgba(255, 255, 255, 0.9); border-radius: 15px; padding: 30px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); border: 1px solid rgba(124, 58, 237, 0.2); margin: 5% 10%; text-align: center;">
+                <h2 style="color: #7C3AED; margin-top: 0;">Hiring someone to sing the song</h2>
+                <p style="margin-top: 15px; color: #4C1D95; font-style: italic;">Combining budget considerations with low paid child labor.. Like really low paid.</p>
+                <!-- Top row: Money and Kids images -->
+                <div style="display: flex; justify-content: center; gap: 50px; align-items: center; margin: 30px 0;">
+                    <div style="position: relative;">
+                        <img src="presentation/money.jpg" alt="Money" style="border: 3px solid black; border-radius: 10px; width: 600px; height: 400px; object-fit: cover;">
+                        <!-- Arrow from money image -->
+                        <div style="position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%); font-size: 30px; color: #7C3AED;">↓</div>
+                    </div>
+                    <div style="position: relative;">
+                        <img src="presentation/kids.jpg" alt="Kids" style="border: 3px solid black; border-radius: 10px; width: 600px; height: 400px; object-fit: cover;">
+                        <!-- Arrow from kids image -->
+                        <div style="position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%); font-size: 30px; color: #7C3AED;">↓</div>
+                    </div>
+                </div>
+                
+                
+                <!-- Bottom: Frog image -->
+                <div style="margin-top: 50px; text-align: center;">
+                    <img src="presentation/frog.jpg" alt="Frog" style="border: 3px solid black; border-radius: 10px; width: 600px; height: 400px; object-fit: cover;">
+                    
+                    <!-- Button under frog image -->
+                    <div style="margin-top: 20px;">
+                        <a href="frog/index.html" style="display: inline-block; background: linear-gradient(45deg, #4CAF50, #2E7D32); color: white; text-decoration: none; padding: 20px 30px; border-radius: 15px; font-size: 1.2em; font-weight: bold; transition: transform 0.3s ease; box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4); text-align: center; min-width: 200px;">🐸 Try Frog Song<br><span style="font-size: 0.9em; opacity: 0.9;">Play the Result!</span></a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Removing Vocals Card -->
+            <div style="background: rgba(255, 255, 255, 0.9); border-radius: 15px; padding: 30px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); border: 1px solid rgba(124, 58, 237, 0.2); margin: 5% 10%; text-align: center;">
+                <h2 style="color: #7C3AED; margin-top: 0;">Removing the vocals (with AI)</h2>
+                <p>Use AI-powered tools to separate vocals from instrumental tracks, creating karaoke-ready backing tracks.</p>
+                <div style="margin: 20px 0;">
+                    <a href="https://vocalremover.easeus.com/" target="_blank" style="display: inline-block; background: linear-gradient(45deg, #9333EA, #7C3AED); color: white; text-decoration: none; padding: 15px 30px; border-radius: 10px; font-weight: bold; transition: transform 0.3s ease; margin: 15px 0;">
+                        🎵 Try EaseUS Vocal Remover
+                    </a>
+                </div>
+                <div style="margin-top: 20px;">
+                    <img src="presentation/remove_vocals.png" alt="Remove Vocals Process" style="border: 3px solid black; border-radius: 10px; max-width: 80%; height: auto;">
+                </div>
+            </div>
+
+            <!-- Converting Song to Lyrics Card -->
+            <div style="background: rgba(255, 255, 255, 0.9); border-radius: 15px; padding: 30px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); border: 1px solid rgba(124, 58, 237, 0.2); margin: 5% 10%; text-align: center;">
+                <h2 style="color: #7C3AED; margin-top: 0;">Converting the song to lyrics</h2>
+                <p>Use AI-powered speech recognition to automatically transcribe your audio files into synchronized lyrics.</p>
+                <div style="margin-top: 20px;">
+                    <img src="presentation/processing_a_song.png" alt="Processing a Song" style="border: 3px solid black; border-radius: 10px; max-width: 80%; height: auto;">
+                </div>
+            </div>
+
+            <!-- Adjusting Lyrics Manually Card -->
+            <div style="background: rgba(255, 255, 255, 0.9); border-radius: 15px; padding: 30px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); border: 1px solid rgba(124, 58, 237, 0.2); margin: 5% 10%; text-align: center;">
+                <h2 style="color: #7C3AED; margin-top: 0;">Adjusting the lyrics manually</h2>
+                <p>The lyrics can be fine-tuned, and often need to be.</p>
+                <p>This is because though the AI is really good at finding most words, it can struggle with ends of sentences, and words from specific dialects</p>
+                <p>For this I open up the lyrics file and listen to the song at the same time... </p>
+                <p>There's a timestamp in the debug section of the karaoke software that helps find the word errors.</p>
+                <div style="margin-top: 20px;">
+                    <img src="presentation/adjusting_lyrics.png" alt="Adjusting Lyrics" style="border: 3px solid black; border-radius: 10px; max-width: 80%; height: auto;">
+                </div>
+            </div>
+        </div>
+
+        <h1 style="font-size: 6em; color: #7C3AED; text-shadow: 3px 3px 6px rgba(0,0,0,0.2); margin: 40px 0;">Now we sing</h1>
+
         <div class="cards-container">
             
             <!-- Traditional Card -->
@@ -255,5 +478,45 @@
 
         </div>
     </div>
+
+    <script>
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                // Enter fullscreen
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    document.documentElement.webkitRequestFullscreen();
+                } else if (document.documentElement.msRequestFullscreen) {
+                    document.documentElement.msRequestFullscreen();
+                }
+            } else {
+                // Exit fullscreen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        }
+
+        // Update button icon based on fullscreen state
+        document.addEventListener('fullscreenchange', updateFullscreenButton);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+        document.addEventListener('msfullscreenchange', updateFullscreenButton);
+
+        function updateFullscreenButton() {
+            const btn = document.querySelector('.fullscreen-btn');
+            if (document.fullscreenElement) {
+                btn.innerHTML = '⛶'; // Exit fullscreen icon
+                btn.title = 'Exit Full Screen';
+            } else {
+                btn.innerHTML = '⛶'; // Enter fullscreen icon
+                btn.title = 'Toggle Full Screen';
+            }
+        }
+    </script>
 </body>
 </html>
