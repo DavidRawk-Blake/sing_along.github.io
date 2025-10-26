@@ -179,7 +179,10 @@ def main():
                 print(f"     ⏱️  {current_sentence[0]['start_time']:.1f}s - {current_sentence[-1]['end_time']:.1f}s")
                 print()
                 
-                sentences.append({"words": current_sentence})
+                sentences.append({
+                    "image": None,
+                    "words": current_sentence
+                })
                 current_sentence = []
                 sentence_words = []
     
@@ -188,7 +191,10 @@ def main():
         sentence_text = " ".join(sentence_words)
         print(f"\n  ✅ Final sentence {len(sentences) + 1}: \"{sentence_text}\"")
         print(f"     ⏱️  {current_sentence[0]['start_time']:.1f}s - {current_sentence[-1]['end_time']:.1f}s")
-        sentences.append({"words": current_sentence})
+        sentences.append({
+            "image": None,
+            "words": current_sentence
+        })
     
     # Calculate total song length from Whisper transcription
     total_song_length = max(segment['end'] for segment in result['segments']) if result['segments'] else 0.0
@@ -223,7 +229,9 @@ window.lyricsData = {{
     
     # Add sentences with unquoted keys
     for i, sentence in enumerate(sentences):
-        js_content += "    {\n      words: [\n"
+        js_content += "    {\n"
+        js_content += f"      image: {json.dumps(sentence['image'])},\n"
+        js_content += "      words: [\n"
         for j, word in enumerate(sentence['words']):
             # Use JSON encoding for safe JavaScript string literals
             escaped_text = json.dumps(word['text'])  # This properly escapes quotes, brackets, etc.
@@ -236,7 +244,8 @@ window.lyricsData = {{
             if j < len(sentence['words']) - 1:
                 js_content += ","
             js_content += "\n"
-        js_content += "      ]\n    }"
+        js_content += "      ]\n"
+        js_content += "    }"
         if i < len(sentences) - 1:
             js_content += ","
         js_content += "\n"
