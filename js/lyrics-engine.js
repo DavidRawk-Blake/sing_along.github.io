@@ -173,11 +173,6 @@ class LyricsEngine {
             // Only highlight if this is the current word (ensures only one word highlighted at a time)
             if (wordIndex === currentHighlightedWordIndex) {
                 className += ' highlighted';
-                
-                // Set this as the current target word for speech recognition (if target word)
-                if (word.target_word && window.setCurrentTargetWord) {
-                    window.setCurrentTargetWord(word.text);
-                }
             }
             
             html += `<span class="${className}" style="${fontSize}">${word.text}</span>`;
@@ -871,12 +866,13 @@ class LyricsEngine {
             const wordAbsoluteStart = word.start_time || 0;
             const wordAbsoluteEnd = word.end_time || 0;
             
-            // Apply the same 200ms early offset used for highlighting to audio switching
-            const earlyStartTime = wordAbsoluteStart - 0.2;
+            // Audio muting should happen exactly at the target word's timestamp
+            // (Visual highlighting uses 200ms early for user preparation, but audio timing should be precise)
+            // Add 100ms buffer to end time for smoother unmuting
+            const extendedEndTime = wordAbsoluteEnd + 0.1;
             
-            // Check if this word is currently highlighted and has target_word flag
-            // Use the same timing as word highlighting (200ms early)
-            if (currentTime >= earlyStartTime && currentTime <= wordAbsoluteEnd && word.target_word) {
+            // Check if this word is currently at its exact timing and has target_word flag
+            if (currentTime >= wordAbsoluteStart && currentTime <= extendedEndTime && word.target_word) {
                 return true;
             }
         }

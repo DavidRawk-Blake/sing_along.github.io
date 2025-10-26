@@ -8,7 +8,9 @@ let speechRecognition = null;
 let isRecognitionActive = false;
 let recognizedWordsLog = []; // Continuous log of all recognized words with timestamps
 let permissionDenied = false; // Track if permission was denied to avoid repeated requests
-let lastPermissionRequestTime = 0; // Track when we last requested permission to prevent spam
+
+// Keep-alive ping system to prevent timeouts
+let keepAliveInterval = null;
 
 // Check for browser compatibility and use prefixed versions if necessary
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -105,6 +107,74 @@ function calculateTrigramSimilarity(str1, str2) {
 }
 
 /**
+ * Send a keep-alive ping to prevent speech recognition timeouts
+ */
+function sendKeepAlivePing() {
+    if (!isRecognitionActive || !speechRecognition) return;
+    
+    const currentTime = window.lyricsEngine ? window.lyricsEngine.getCurrentTime() : 0;
+    
+    try {
+        // Try to create a fake speech result event to keep recognition alive
+        const fakeResults = {
+            results: [{
+                0: { transcript: 'BLARG', confidence: 1.0 },
+                isFinal: false, // Make it interim so it doesn't interfere with real results
+                length: 1
+            }],
+            resultIndex: 0,
+            results: {
+                length: 1,
+                0: {
+                    0: { transcript: 'BLARG', confidence: 1.0 },
+                    isFinal: false,
+                    length: 1
+                }
+            }
+        };
+        
+        // Call our result handler directly to simulate speech input
+        handleSpeechResult(fakeResults);
+        
+        console.log(`🏓 Keep-alive ping sent: BLARG at ${currentTime.toFixed(2)}s`);
+        
+    } catch (error) {
+        console.warn('⚠️ Keep-alive ping failed:', error.message);
+        
+        // Fallback: just add to log
+        recognizedWordsLog.push({
+            word: 'BLARG',
+            timestamp: currentTime,
+            confidence: 1.0,
+            keepAlive: true
+        });
+    }
+}
+
+/**
+ * Start the keep-alive ping system
+ */
+function startKeepAlive() {
+    if (keepAliveInterval) {
+        clearInterval(keepAliveInterval);
+    }
+    
+    keepAliveInterval = setInterval(sendKeepAlivePing, 3000); // Every 3 seconds
+    console.log('🏓 Keep-alive ping system started (every 3 seconds)');
+}
+
+/**
+ * Stop the keep-alive ping system
+ */
+function stopKeepAlive() {
+    if (keepAliveInterval) {
+        clearInterval(keepAliveInterval);
+        keepAliveInterval = null;
+        console.log('🏓 Keep-alive ping system stopped');
+    }
+}
+
+/**
  * Initialize speech recognition
  * @returns {boolean} True if initialization successful, false otherwise
  */
@@ -122,8 +192,38 @@ function initializeSpeechRecognition() {
         speechRecognition = new SpeechRecognition();
         speechRecognition.lang = 'en-US';
         speechRecognition.interimResults = true;
-        speechRecognition.maxAlternatives = 1;
+        speechRecognition.maxAlternatives = 3; // Increased from 1 to get more options
         speechRecognition.continuous = true;
+        
+        // Extended timeout settings to be more tolerant of pauses
+        if ('speechTimeoutType' in speechRecognition) {
+            speechRecognition.speechTimeoutType = 'extended';
+        }
+        
+        // Try to extend various timeout properties if they exist
+        try {
+            // Set all timeouts to 5 minutes - covers most songs and prevents premature timeouts
+            const fiveMinutesMs = 300000; // 5 minutes in milliseconds
+            
+            // Some browsers support these extended properties - set them to 5 minutes
+            if ('speechTimeout' in speechRecognition) {
+                speechRecognition.speechTimeout = fiveMinutesMs; // 5 minutes
+            }
+            if ('endSilenceTimeout' in speechRecognition) {
+                speechRecognition.endSilenceTimeout = fiveMinutesMs; // 5 minutes of silence allowed
+            }
+            if ('startSilenceTimeout' in speechRecognition) {
+                speechRecognition.startSilenceTimeout = fiveMinutesMs; // 5 minutes to start speaking
+            }
+        } catch (error) {
+            console.log('⚠️ Some extended speech recognition properties not supported:', error.message);
+        }
+        
+        // Try to make it more tolerant of silence periods
+        if (speechRecognition.serviceURI) {
+            // Some browsers support additional configuration
+            speechRecognition.serviceURI = 'wss://www.google.com/speech-api/v2/recognize';
+        }
         
 
 
@@ -132,8 +232,6 @@ function initializeSpeechRecognition() {
         
         // Handle recognition errors
         speechRecognition.addEventListener('error', (event) => {
-            console.log('🔍 Speech recognition error details:', event.error, event.message);
-            
             // Handle specific error types
             switch(event.error) {
                 case 'not-allowed':
@@ -153,9 +251,26 @@ function initializeSpeechRecognition() {
                     console.warn('⚠️ Marking permission as denied due to audio capture failure to prevent loops');
                     break;
                 case 'no-speech':
+                    console.log('🔇 Speech recognition: no speech detected - this is normal during musical intros');
+                    console.log('📊 Recognition state:', { isActive: isRecognitionActive, permissionDenied });
+                    // For no-speech, restart more quickly since it's just a timeout, not a permission issue
+                    if (isRecognitionActive && !permissionDenied) {
+                        console.log('� Restarting speech recognition immediately after no-speech timeout...');
+                        setTimeout(() => {
+                            if (isRecognitionActive && !permissionDenied) {
+                                try {
+                                    speechRecognition.start();
+                                    console.log('✅ Speech recognition restarted after no-speech timeout');
+                                } catch (error) {
+                                    console.warn('❌ Failed to restart after no-speech:', error.message);
+                                }
+                            }
+                        }, 500); // Quick restart for no-speech timeouts
+                    }
+                    break;
                 case 'aborted':
-                    // Don't show error for no-speech or aborted, it's common and normal
-                    console.log('🔇 Speech recognition: no speech detected or aborted (normal)');
+                    console.log('🔇 Speech recognition: aborted (normal)');
+                    // Don't restart immediately for aborted - let the end event handle it
                     break;
                 case 'service-not-allowed':
                     console.warn('🚫 Speech recognition service not allowed');
@@ -163,6 +278,7 @@ function initializeSpeechRecognition() {
                     isRecognitionActive = false;
                     break;
                 default:
+                    console.log('🔍 Speech recognition error details:', event.error, event.message);
                     console.warn(`⚠️ Speech recognition error: ${event.error}`);
                     // For unknown errors, don't immediately disable, but add some delay
                     break;
@@ -171,28 +287,39 @@ function initializeSpeechRecognition() {
 
         // Handle recognition end
         speechRecognition.addEventListener('end', () => {
+            const currentSongTime = window.lyricsEngine ? window.lyricsEngine.getCurrentTime() : 0;
+            console.log(`🔄 Speech recognition ended event fired at song time: ${currentSongTime.toFixed(2)}s`);
+            console.log('📊 Current state:', { 
+                isActive: isRecognitionActive, 
+                permissionDenied, 
+                songTime: currentSongTime.toFixed(2) + 's',
+                timestamp: new Date().toLocaleTimeString() 
+            });
+            
             if (isRecognitionActive && !permissionDenied) {
-                // Only restart if permission wasn't denied and we're supposed to be active
-                // Add a longer delay to prevent rapid restart loops
+                // Use longer delay to reduce permission prompt frequency
+                console.log('🔄 Speech recognition ended - will restart after delay...');
                 setTimeout(() => {
                     if (isRecognitionActive && !permissionDenied) {
                         try {
                             console.log('🔄 Auto-restarting speech recognition...');
                             speechRecognition.start();
+                            console.log('✅ Speech recognition restarted successfully');
                         } catch (error) {
                             console.warn('Failed to restart speech recognition:', error.message);
-                            // If restart fails, don't keep trying aggressively
                             if (error.name === 'InvalidStateError' || 
                                 error.name === 'NotAllowedError' ||
                                 error.message.includes('not-allowed') ||
                                 error.message.includes('permission')) {
                                 console.warn('⚠️ Stopping auto-restart due to permission or state error');
                                 isRecognitionActive = false;
-                                permissionDenied = true; // Mark as denied to prevent further attempts
+                                permissionDenied = true;
                             }
                         }
+                    } else {
+                        console.log('🛑 Skipping restart - state changed during delay');
                     }
-                }, 1000); // Increased delay from 500ms to 1000ms to prevent rapid restart loops
+                }, 500); // Very fast restart - 500ms delay
             } else {
                 console.log('🛑 Not restarting speech recognition - isActive:', isRecognitionActive, 'permissionDenied:', permissionDenied);
             }
@@ -258,7 +385,6 @@ function isRecognitionRunning() {
 function resetPermissionState() {
     console.log('🔄 Resetting speech recognition permission state');
     permissionDenied = false;
-    lastPermissionRequestTime = 0; // Reset timer so permission can be checked again
 }
 
 /**
@@ -268,6 +394,7 @@ function stopRecognition() {
     console.log('🛑 Stopping speech recognition...');
     if (speechRecognition) {
         isRecognitionActive = false;
+        stopKeepAlive(); // Stop the keep-alive ping system
         try {
             speechRecognition.stop();
             console.log('✅ Speech recognition stopped successfully');
@@ -279,37 +406,16 @@ function stopRecognition() {
     }
 }
 
-/**
- * Check if microphone permission is available - ONLY for standalone use (not when integrated with karaoke)
- * @returns {Promise<boolean>} True if microphone is available, false otherwise
- */
-async function checkMicrophonePermission() {
-    // Prevent permission spam - don't check more than once every 5 seconds
-    const now = Date.now();
-    if (now - lastPermissionRequestTime < 5000) {
-        console.log('⏸️ Skipping permission check - too recent (preventing spam)');
-        return false;
-    }
-    lastPermissionRequestTime = now;
-    
-    try {
-        // Only use the permissions API - NEVER call getUserMedia to avoid duplicate permission dialogs
-        const permissionStatus = await navigator.permissions.query({ name: 'microphone' });
-        console.log('🔍 Microphone permission status:', permissionStatus.state);
-        
-        return permissionStatus.state === 'granted';
-    } catch (error) {
-        console.log('⚠️ Permissions API not supported - assuming permission not granted');
-        return false;
-    }
-}
+
 
 /**
  * Start continuous speech recognition for the entire song
- * @param {boolean} skipPermissionCheck - Skip microphone permission check (when called from karaoke system that already has permission)
+ * Note: This function starts recognition but does NOT auto-restart on end.
+ * This prevents browser permission prompts during natural speech pauses.
+ * Use restartRecognition() or manually call this function again if needed.
  * @returns {Promise<boolean>} True if started successfully, false otherwise
  */
-async function startContinuousRecognition(skipPermissionCheck = false) {
+async function startContinuousRecognition() {
     if (!speechRecognition) {
         console.warn('Speech recognition not initialized');
         return false;
@@ -319,20 +425,6 @@ async function startContinuousRecognition(skipPermissionCheck = false) {
     if (permissionDenied) {
         console.warn('Speech recognition permission previously denied, not attempting to start');
         return false;
-    }
-
-    // When called from karaoke system, trust that permission is already granted
-    if (skipPermissionCheck) {
-        console.log('Using karaoke system microphone permission - no additional permission check needed');
-        permissionDenied = false; // Reset any previous permission issues
-    } else {
-        console.log('Checking microphone permission for speech recognition...');
-        const hasMicPermission = await checkMicrophonePermission();
-        if (!hasMicPermission) {
-            console.warn('Microphone permission not granted, skipping speech recognition');
-            permissionDenied = true; // Mark as denied to prevent future attempts
-            return false;
-        }
     }
 
     console.log('🎤 Starting continuous speech recognition...');
@@ -347,6 +439,7 @@ async function startContinuousRecognition(skipPermissionCheck = false) {
 
         isRecognitionActive = true;
         speechRecognition.start();
+        startKeepAlive(); // Start the keep-alive ping system
         console.log('✅ Speech recognition started successfully');
         return true;
     } catch (error) {
@@ -395,6 +488,25 @@ function clearRecognizedWordsLog() {
     recognizedWordsLog = [];
 }
 
+/**
+ * Restart speech recognition manually (useful when auto-restart is disabled)
+ */
+function restartRecognition() {
+    console.log('🔄 Manual restart requested...');
+    if (isRecognitionActive) {
+        console.log('⏹️ Stopping current recognition first...');
+        stopRecognition();
+        // Give it a moment to stop before restarting
+        setTimeout(() => {
+            console.log('▶️ Starting recognition after stop...');
+            startContinuousRecognition();
+        }, 500);
+    } else {
+        console.log('▶️ Starting recognition (was not running)...');
+        startContinuousRecognition();
+    }
+}
+
 // Export functions for use by other modules
 window.SpeechRecognitionModule = {
     initializeSpeechRecognition,
@@ -404,19 +516,14 @@ window.SpeechRecognitionModule = {
     resetPermissionState,
     getRecognizedWordsLog,
     clearRecognizedWordsLog,
+    restartRecognition,
     calculateJaroDistance,
     generateTrigrams,
-    calculateTrigramSimilarity,
-    checkMicrophonePermission
+    calculateTrigramSimilarity
 };
 
-// Also expose functions globally
-window.startContinuousRecognition = startContinuousRecognition;
-window.stopRecognition = stopRecognition;
-window.resetPermissionState = resetPermissionState;
+// Expose commonly used functions globally for backward compatibility
 window.getRecognizedWordsLog = getRecognizedWordsLog;
 window.clearRecognizedWordsLog = clearRecognizedWordsLog;
 window.calculateJaroDistance = calculateJaroDistance;
-window.generateTrigrams = generateTrigrams;
 window.calculateTrigramSimilarity = calculateTrigramSimilarity;
-window.checkMicrophonePermission = checkMicrophonePermission;

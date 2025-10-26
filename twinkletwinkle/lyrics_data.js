@@ -6,47 +6,9 @@
 // Global lyrics data for the Twinkle Twinkle Little Star karaoke game
 window.lyricsData = {
     total_song_length: 52.19,
-    mute_vocals_during_target: false,
+    mute_vocals_during_target: true,
     song_source: "song.mp3",
     music_source: "song-instrumental.mp3",
-    full_sentence: [
-        {
-            text: "Twinkle twinkle little star",
-            start_time: 17.0,
-            end_time: 23.1,
-            duration: 6.1
-        },
-        {
-            text: "How I wonder what you are",
-            start_time: 23.1,
-            end_time: 28.02,
-            duration: 4.92
-        },
-        {
-            text: "Up above the world so high",
-            start_time: 28.52,
-            end_time: 34.17,
-            duration: 5.65
-        },
-        {
-            text: "Like a diamond in the sky",
-            start_time: 34.17,
-            end_time: 39.97,
-            duration: 5.8
-        },
-        {
-            text: "Twinkle twinkle little star",
-            start_time: 39.97,
-            end_time: 45.77,
-            duration: 5.8
-        },
-        {
-            text: "How I wonder what you are",
-            start_time: 45.77,
-            end_time: 52.19,
-            duration: 6.42
-        }
-    ],
     sentences: [
         {
             image: null,
@@ -71,8 +33,7 @@ window.lyricsData = {
         {
             image: null,
             words: [
-                { text: "", start_time: 28.02, end_time: 28.52, target_word: false },
-                { text: "Up", start_time: 28.52, end_time: 29.27, target_word: false },
+                { text: "Up", start_time: 28.02, end_time: 29.27, target_word: false },
                 { text: "above", start_time: 29.27, end_time: 30.47, target_word: false },
                 { text: "the", start_time: 30.47, end_time: 31.07, target_word: true },
                 { text: "world", start_time: 31.07, end_time: 31.67, target_word: false },

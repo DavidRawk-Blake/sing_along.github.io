@@ -14,10 +14,6 @@ const AUDIO_MIME_TYPE = 'audio/mpeg';
 let isSpeechRecognitionEnabled = false;
 let isMicrophoneActive = false;
 
-// Fade-out management
-let fadeOutTimer = null;
-let isFadedOut = false;
-
 // Initialize sentence images in the image container
 function initializeSentenceImages() {
     const imageContainer = document.getElementById('imageContainer');
@@ -56,39 +52,6 @@ function initializeKaraoke() {
 
     // Initialize lyrics engine (data is now hardcoded, so this always succeeds)
     lyricsEngine = new LyricsEngine();
-    
-    // DEBUG: Log all sentences when song loads
-    console.log('🎵 KOOKABURRA SONG LOADED - DEBUGGING SENTENCES:');
-    console.log('='.repeat(60));
-    
-    if (window.lyricsData && window.lyricsData.sentences) {
-        console.log(`📊 Total sentences found: ${window.lyricsData.sentences.length}`);
-        console.log(`🎵 Song source: ${window.lyricsData.song_source}`);
-        console.log(`🎶 Music source: ${window.lyricsData.music_source}`);
-        console.log(`⏰ Generated: ${window.lyricsData.generated_timestamp}`);
-        console.log(`🎵 Total song length: ${window.lyricsData.total_song_length}s`);
-        console.log('');
-        
-        window.lyricsData.sentences.forEach((sentence, index) => {
-            const words = sentence.words.map(word => word.text).join(' ');
-            const startTime = sentence.words[0]?.start_time || 0;
-            const endTime = sentence.words[sentence.words.length - 1]?.end_time || 0;
-            console.log(`📝 Sentence ${index + 1} [${startTime}s - ${endTime}s]: "${words}"`);
-            console.log(`   Words count: ${sentence.words.length}`);
-            
-            // Log individual words for first few sentences
-            if (index < 3) {
-                sentence.words.forEach((word, wordIndex) => {
-                    console.log(`     Word ${wordIndex + 1}: "${word.text}" (${word.start_time}s - ${word.end_time}s)`);
-                });
-            }
-            console.log('');
-        });
-    } else {
-        console.error('❌ No lyrics data found! window.lyricsData is:', window.lyricsData);
-    }
-    
-    console.log('='.repeat(60));
     
     // Make lyrics engine globally accessible for speech recognition
     window.lyricsEngine = lyricsEngine;
@@ -207,8 +170,6 @@ function initializeKaraoke() {
 
 // Start lyrics display
 function startLyrics() {
-    fadeInLyrics(); // Restore opacity when starting
-    
     // Restart speech recognition when starting lyrics (if microphone is enabled)
     if (isSpeechRecognitionEnabled && isMicrophoneActive && window.SpeechRecognitionModule) {
         // Check if speech recognition is already running to avoid multiple starts
@@ -259,9 +220,6 @@ function stopLyrics() {
     } else {
         console.log('📝 Lyrics stopped - speech recognition was not active');
     }
-    
-    // Schedule fade-out 5 seconds after lyrics end
-    scheduleFadeOut();
 }
 
 // Rewind function for 5-second back functionality
@@ -294,52 +252,6 @@ function rewindFiveSeconds() {
             }, 200);
         }, 150); // Longer pause to ensure seek completes
     } 
-}
-
-// Schedule fade-out 5 seconds after lyrics end
-function scheduleFadeOut() {
-    // Clear any existing fade-out timer
-    if (fadeOutTimer) {
-        clearTimeout(fadeOutTimer);
-        fadeOutTimer = null;
-    }
-    
-    // Schedule fade-out for 5 seconds after lyrics end
-    fadeOutTimer = setTimeout(() => {
-        fadeOutLyrics();
-    }, 5000);
-}
-
-// Fade out the lyrics display slowly
-function fadeOutLyrics() {
-    const sentenceDisplay = document.getElementById('sentenceDisplay');
-    if (!sentenceDisplay || isFadedOut) return;
-    
-    console.log('Fading out lyrics display');
-    
-    // Apply smooth transition and fade to opacity 0
-    sentenceDisplay.style.transition = 'opacity 3s ease-out';
-    sentenceDisplay.style.opacity = '0';
-    isFadedOut = true;
-}
-
-// Restore lyrics display opacity when song restarts
-function fadeInLyrics() {
-    const sentenceDisplay = document.getElementById('sentenceDisplay');
-    if (!sentenceDisplay || !isFadedOut) return;
-    
-    console.log('Fading in lyrics display');
-    
-    // Clear any pending fade-out
-    if (fadeOutTimer) {
-        clearTimeout(fadeOutTimer);
-        fadeOutTimer = null;
-    }
-    
-    // Restore opacity smoothly
-    sentenceDisplay.style.transition = 'opacity 1s ease-in';
-    sentenceDisplay.style.opacity = '1';
-    isFadedOut = false;
 }
 
 // Skip forward function for 5-second ahead functionality
@@ -387,11 +299,6 @@ function togglePlayPause() {
     // Use engine's built-in toggle functionality
     lyricsEngine.togglePlayback();
     
-    // If we just started playing from pause, restore opacity
-    if (wasPlayingBeforeToggle === false && !lyricsEngine.isPaused()) {
-        fadeInLyrics();
-    }
-    
     // Update button appearances and provide visual feedback
     updatePlayButtonAppearance();
     updateRestartButtonAppearance();
@@ -432,7 +339,6 @@ function restartAction() {
     if (lyricsEngine.isPaused()) {
         // If paused, reset to beginning
         console.log('Resetting to beginning');
-        fadeInLyrics(); // Restore opacity when resetting
         lyricsEngine.reset(); // Encapsulated reset functionality
     } else {
         // If playing, rewind 5 seconds
